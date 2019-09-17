@@ -1,19 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using CritterServer.Domains;
+using Dapper;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Critters.NET_Server.Controllers
+namespace CritterServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class ValuesController : ControllerBase
     {
+        UserAuthenticationDomain domain;
+
+        public ValuesController(UserAuthenticationDomain domain)
+        {
+            this.domain = domain;
+        }
+
         // GET api/values
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
+            this.domain.CreateUserAccount();
             return new string[] { "value1", "value2" };
         }
 

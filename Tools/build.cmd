@@ -1,6 +1,6 @@
 @echo off 
 echo Preparing to build
-cd ../"Critters.NET Server"
+cd ../"CritterServer"
 echo Clean everything
 dotnet clean
 echo Cleaned, now build! 
