@@ -15,7 +15,7 @@ namespace CritterServer.Models
 
         public int Cash { get; set; }
 
-        public string Sex { get; set; }
+        public string Gender { get; set; }
         public string Birthdate { get; set; }
         public string City { get; set; }
         public string State { get; set; }

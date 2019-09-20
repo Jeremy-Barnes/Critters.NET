@@ -12,24 +12,34 @@ namespace CritterServer.Domains
 {
     public class UserAuthenticationDomain
     {
-        IDbConnection dbConnection;
+        IUserRepository userRepo;
 
-        public UserAuthenticationDomain(IDbConnection dbConnection)
+        public UserAuthenticationDomain(IUserRepository userRepo)
         {
-            this.dbConnection = dbConnection;
+            this.userRepo = userRepo;
         }
 
-        public void CreateUserAccount()
+        public int CreateUserAccount(User user)
         {
+            int createdId = -1;
             using (var trans = new TransactionScope(TransactionScopeOption.Required))
             {
-                dbConnection.TryOpen();
-                var x = dbConnection.Query<User>("select * from users");
-                dbConnection.Execute("INSERT INTO users(username, firstname, lastname, emailaddress, password, sex, birthdate, salt, city, state, country, postcode, tokenselector, tokenvalidator, cash, isactive)VALUES('test', 'fname', 'lname', 'test1', 'bbb', 'male', '12-05-1991', 'asdasdasd', 'Chicago', 'IL', 'USA', '60613', 'A', 'b', 100, true); ");
-                var y = dbConnection.Query<User>("select * from users");
+                //TODO transform the inbound data
+                createdId = userRepo.CreateUser(user);
 
                 trans.Complete();
             }
+            return createdId;
+        }
+
+        public User RetrieveUser(int userId)
+        {
+            return userRepo.RetrieveUserById(userId);
+        }
+
+        public User RetrieveUser(string login)
+        {
+            return null;
         }
     }
 
