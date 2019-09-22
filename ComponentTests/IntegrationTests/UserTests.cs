@@ -1,19 +1,35 @@
 using CritterServer.DataAccess;
 using CritterServer.Domains;
+using CritterServer.Domains.Components;
 using CritterServer.Models;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using Xunit;
 
-namespace ComponentTests
+namespace IntegrationTests
 {
     public class UserTestsContext
     {
+        private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
+
         public IDbConnection dbConnection;
         public UserAuthenticationDomain userAccountDomain;
         public IUserRepository userRepo;
+        public JwtProvider jwtProvider = new JwtProvider(
+            jwtSecretKey,
+            new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey)),
+                ValidIssuer = "critters!",
+                ValidateAudience = false,
+                ValidateActor = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                RequireExpirationTime = true
+            });
 
         public List<User> extantUsers = new List<User>();
 
@@ -23,7 +39,7 @@ namespace ComponentTests
             dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
             dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
             userRepo = new UserRepository(dbConnection);
-            userAccountDomain = new UserAuthenticationDomain(userRepo);
+            userAccountDomain = new UserAuthenticationDomain(userRepo, jwtProvider);
         }
 
         public User RandomUser()
@@ -62,10 +78,27 @@ namespace ComponentTests
         public void UserAccountCreateAndRetrieveWorks()
         {
             User randomUser = context.RandomUser();
-            int userId = context.userAccountDomain.CreateUserAccount(randomUser);
+            string jwt = context.userAccountDomain.CreateAccount(randomUser);
 
-            var retrievedDbUser = context.userAccountDomain.RetrieveUser(userId);
+            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.UserName);
             Assert.Equal(randomUser.UserName, retrievedDbUser.UserName);
+            Assert.NotEmpty(jwt);
+
+        }
+
+        [Fact]
+        public void UserLoginWorksAndCreatesValidJwt()
+        {
+            User randomUser = context.RandomUser();
+            string password = randomUser.Password;
+
+            context.userAccountDomain.CreateAccount(randomUser);
+            randomUser.Password = password; //gets overwritten as the hashed value during acct create
+
+            string jwt = context.userAccountDomain.Login(randomUser);
+
+            Assert.NotEmpty(jwt);
+            Assert.True(context.jwtProvider.ValidateToken(jwt));
         }
     }
 }

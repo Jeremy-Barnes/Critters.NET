@@ -18,7 +18,9 @@ namespace CritterServer
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+            WebHost.CreateDefaultBuilder(args).ConfigureAppConfiguration(configBuilder =>
+            {
+
+            }).UseStartup<Startup>();
     }
 }

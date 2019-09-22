@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Transactions;
 using CritterServer.DataAccess;
+using CritterServer.Domains.Components;
 using CritterServer.Models;
 using Dapper;
 
@@ -13,23 +14,54 @@ namespace CritterServer.Domains
     public class UserAuthenticationDomain
     {
         IUserRepository userRepo;
+        IJwtProvider jwtProvider;
 
-        public UserAuthenticationDomain(IUserRepository userRepo)
+        public UserAuthenticationDomain(IUserRepository userRepo, IJwtProvider jwtProvider)
         {
             this.userRepo = userRepo;
+            this.jwtProvider = jwtProvider;
         }
 
-        public int CreateUserAccount(User user)
+        public string CreateAccount(User user)
         {
-            int createdId = -1;
             using (var trans = new TransactionScope(TransactionScopeOption.Required))
             {
-                //TODO transform the inbound data
-                createdId = userRepo.CreateUser(user);
+                //TODO validate incoming properties (Birthday, gender, email, username)
+                user.Cash = 500; //TODO economics
+                user.IsActive = true;
+                user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
+                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password, user.Salt);
+
+                user.UserId = userRepo.CreateUser(user);
 
                 trans.Complete();
             }
-            return createdId;
+            user = RetrieveUser(user.UserId);
+            return jwtProvider.GenerateToken(user);
+        }
+
+        public string Login(User user)
+        {
+            User dbUser = null;
+            if(!string.IsNullOrEmpty(user.UserName))
+            {
+                dbUser = RetrieveUserByUserName(user.UserName);
+            }
+            else if (!string.IsNullOrEmpty(user.EmailAddress))
+            {
+                dbUser = RetrieveUserByEmail(user.EmailAddress);
+            }
+
+            if (dbUser != null)
+            {
+
+                string hashPassword = BCrypt.Net.BCrypt.HashPassword(user.Password, dbUser.Salt);
+                if (dbUser.Password == hashPassword) //success
+                {
+                    return jwtProvider.GenerateToken(user);
+                }                
+            }
+            throw new Exception();//todo make unauthorized
         }
 
         public User RetrieveUser(int userId)
@@ -37,9 +69,15 @@ namespace CritterServer.Domains
             return userRepo.RetrieveUserById(userId);
         }
 
-        public User RetrieveUser(string login)
+        public User RetrieveUserByUserName(string userName)
         {
-            return null;
+            return userRepo.RetrieveUserByUserName(userName);
+
+        }
+
+        public User RetrieveUserByEmail(string email)
+        {
+            return userRepo.RetrieveUserByUserName(email);
         }
     }
 

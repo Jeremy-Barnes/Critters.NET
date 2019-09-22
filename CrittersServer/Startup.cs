@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Threading.Tasks;
 using CritterServer.Domains;
 using CritterServer.DataAccess;
 using Microsoft.AspNetCore.Builder;
@@ -11,8 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using CritterServer.Domains.Components;
 
 namespace CritterServer
 {
@@ -36,8 +31,16 @@ namespace CritterServer
                 conn.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
                 return conn;
             });
+
+            //domains
             services.AddTransient<UserAuthenticationDomain>();
+
+            //repositories
             services.AddTransient<IUserRepository, UserRepository>();
+
+            //components
+            services.AddJwt(Configuration);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,7 +50,7 @@ namespace CritterServer
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseAuthentication();
             app.UseMvc();
         }
     }

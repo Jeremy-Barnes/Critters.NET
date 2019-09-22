@@ -14,8 +14,6 @@ CREATE TABLE users(
     postcode VARCHAR(20),
     cash INT NOT NULL,
     isActive boolean not null default 't',
-    tokenSelector VARCHAR,
-    tokenValidator VARCHAR,
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
     CHECK (gender IN ('male','female','other'))

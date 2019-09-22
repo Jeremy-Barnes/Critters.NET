@@ -24,8 +24,6 @@ namespace CritterServer.Models
          
         public string Password { get; set; }
         public string Salt { get; set; }
-        public string TokenSelector { get; set; }
-        public string TokenValidator { get; set; }
          
         public bool IsActive { get; set; }
 

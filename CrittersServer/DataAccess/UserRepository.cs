@@ -21,20 +21,19 @@ namespace CritterServer.DataAccess
         {
             dbConnection.TryOpen();
             int output = dbConnection.Query<int>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
-                "isActive, salt, tokenSelector, tokenValidator)" +
+                "isActive, salt)" +
                 "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
-                "@isActive, @salt, @tokenSelector, @tokenValidator) RETURNING userID",
+                "@isActive, @salt) RETURNING userID",
                 new
                 { userName = user.UserName, firstName = user.FirstName, lastName = user.LastName, emailAddress = user.EmailAddress, password = user.Password, gender = user.Gender.ToLower(), birthdate = Convert.ToDateTime(user.Birthdate), cash = user.Cash,
-                    city = user.City, state = user.State, country = user.Country, postcode = user.Postcode, isActive = user.IsActive, salt = user.Salt, tokenSelector = user.TokenSelector, tokenValidator = user.TokenValidator }).First();
+                    city = user.City, state = user.State, country = user.Country, postcode = user.Postcode, isActive = user.IsActive, salt = user.Salt}).First();
             return output;
         }
 
         public User RetrieveUserByEmail(string email)
         {
             dbConnection.TryOpen();
-            
-            throw new NotImplementedException();
+            return dbConnection.Query<User>("select * from users where emailAddress = @emailAddress", new { emailAddress = email }).FirstOrDefault();
         }
 
         public User RetrieveUserById(int userId)
@@ -46,8 +45,7 @@ namespace CritterServer.DataAccess
         public User RetrieveUserByUserName(string userName)
         {
             dbConnection.TryOpen();
-
-            throw new NotImplementedException();
+            return dbConnection.Query<User>("select * from users where userName = @userName", new { userName = userName }).FirstOrDefault();
         }
     }
 
