@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Sinks.File;
 using CritterServer.Domains.Components;
+using Serilog.Events;
 
 namespace CritterServer
 {
@@ -32,6 +35,8 @@ namespace CritterServer
                 return conn;
             });
 
+            configureLogging();
+
             //domains
             services.AddTransient<UserAuthenticationDomain>();
 
@@ -52,6 +57,32 @@ namespace CritterServer
             }
             app.UseAuthentication();
             app.UseMvc();
+        }
+
+        private void configureLogging()
+        {
+            var stringLevel = Configuration.GetSection("Logging:LogLevel:Default").Value;
+
+            LogEventLevel logLevel;
+            switch (stringLevel)
+            {
+                case "Verbose": logLevel = LogEventLevel.Verbose; break;
+                case "Debug": logLevel = LogEventLevel.Debug; break;
+                case "Information": logLevel = LogEventLevel.Information; break;
+                case "Warning": logLevel = LogEventLevel.Warning; break;
+                case "Error": logLevel = LogEventLevel.Error; break;
+                case "Fatal": logLevel = LogEventLevel.Fatal; break;
+                default: logLevel = LogEventLevel.Warning; break;
+            }
+
+            Log.Logger = new LoggerConfiguration()
+               .Enrich.FromLogContext()
+               .WriteTo.EventLog("Critters.NET", "Critters.NET", "343GuiltySpark")
+               .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
+               fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
+               rollOnFileSizeLimit: true).MinimumLevel.Is(logLevel)
+                   .CreateLogger();
+            Log.Warning("Logger configured to {debugLevel}", stringLevel);
         }
     }
 }

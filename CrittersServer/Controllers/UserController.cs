@@ -37,6 +37,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult Login([FromBody] User user)
         {
+            Serilog.Log.Information("Logging in {user}", user.UserName);
             domain.Login(user);
             return Ok(user);
         }
@@ -46,6 +47,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult GetUser()
         {
+            Serilog.Log.Information("Wow a JWT came in!!?!??!");
             return Ok();
         }
 

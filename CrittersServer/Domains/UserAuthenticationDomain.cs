@@ -8,6 +8,7 @@ using CritterServer.DataAccess;
 using CritterServer.Domains.Components;
 using CritterServer.Models;
 using Dapper;
+using Microsoft.Extensions.Logging;
 
 namespace CritterServer.Domains
 {
