@@ -14,6 +14,5 @@ namespace CritterServer.DataAccess
                 return;
             dbConnection.Open();
         }
-
     }
 }

@@ -25,8 +25,22 @@ namespace CritterServer.DataAccess
                 "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
                 "@isActive, @salt) RETURNING userID",
                 new
-                { userName = user.UserName, firstName = user.FirstName, lastName = user.LastName, emailAddress = user.EmailAddress, password = user.Password, gender = user.Gender.ToLower(), birthdate = Convert.ToDateTime(user.Birthdate), cash = user.Cash,
-                    city = user.City, state = user.State, country = user.Country, postcode = user.Postcode, isActive = user.IsActive, salt = user.Salt}).First();
+                {
+                    userName = user.UserName,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    emailAddress = user.EmailAddress,
+                    password = user.Password,
+                    gender = user.Gender.ToLower(),
+                    birthdate = Convert.ToDateTime(user.Birthdate),
+                    cash = user.Cash,
+                    city = user.City,
+                    state = user.State,
+                    country = user.Country,
+                    postcode = user.Postcode,
+                    isActive = user.IsActive,
+                    salt = user.Salt
+                }).First();
             return output;
         }
 

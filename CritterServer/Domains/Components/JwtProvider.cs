@@ -51,7 +51,7 @@ namespace CritterServer.Domains.Components
         {
             if (!string.IsNullOrEmpty(jwtString))
             {
-                if(CrackJwt(jwtString) != null)
+                if (CrackJwt(jwtString) != null)
                 {
                     return true;
                 }
@@ -100,7 +100,7 @@ namespace CritterServer.Domains.Components
                     RequireExpirationTime = true
                 };
             });
-            services.AddSingleton<IJwtProvider, JwtProvider>(sp => 
+            services.AddSingleton<IJwtProvider, JwtProvider>(sp =>
                 new JwtProvider(config.GetValue<string>("JwtSigningKey"), services.BuildServiceProvider().GetService<TokenValidationParameters>()));
 
             services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)

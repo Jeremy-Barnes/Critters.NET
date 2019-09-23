@@ -1,15 +1,16 @@
-using CritterServer.DataAccess;
-using CritterServer.Domains;
-using CritterServer.Domains.Components;
-using CritterServer.Models;
+﻿using CrittersServer.DataAccess;
+using CrittersServer.Domains;
+using CrittersServer.Domains.Components;
+using CrittersServer.Models;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Text;
 using Xunit;
 
-namespace IntegrationTests
+namespace Tests.IntegrationTests
 {
     public class UserTestsContext
     {

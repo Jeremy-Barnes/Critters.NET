@@ -80,8 +80,11 @@ namespace CritterServer
                .WriteTo.EventLog("Critters.NET", "Critters.NET", "343GuiltySpark")
                .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
                fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
-               rollOnFileSizeLimit: true).MinimumLevel.Is(logLevel)
+               rollOnFileSizeLimit: true)
+               .WriteTo.Debug()
+               .MinimumLevel.Is(logLevel)
                    .CreateLogger();
+
             Log.Warning("Logger configured to {debugLevel}", stringLevel);
         }
     }

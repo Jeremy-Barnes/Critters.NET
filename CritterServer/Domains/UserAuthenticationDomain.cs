@@ -9,7 +9,6 @@ using CritterServer.Domains.Components;
 using CritterServer.Models;
 using Dapper;
 using Microsoft.Extensions.Logging;
-
 namespace CritterServer.Domains
 {
     public class UserAuthenticationDomain
@@ -44,7 +43,7 @@ namespace CritterServer.Domains
         public string Login(User user)
         {
             User dbUser = null;
-            if(!string.IsNullOrEmpty(user.UserName))
+            if (!string.IsNullOrEmpty(user.UserName))
             {
                 dbUser = RetrieveUserByUserName(user.UserName);
             }
@@ -60,7 +59,7 @@ namespace CritterServer.Domains
                 if (dbUser.Password == hashPassword) //success
                 {
                     return jwtProvider.GenerateToken(user);
-                }                
+                }
             }
             throw new Exception();//todo make unauthorized
         }

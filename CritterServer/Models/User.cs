@@ -21,10 +21,10 @@ namespace CritterServer.Models
         public string State { get; set; }
         public string Country { get; set; }
         public string Postcode { get; set; }
-         
+
         public string Password { get; set; }
         public string Salt { get; set; }
-         
+
         public bool IsActive { get; set; }
 
     }

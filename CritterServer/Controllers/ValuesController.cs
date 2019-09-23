@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterServer.Domains;
-using Dapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CritterServer.Controllers
@@ -25,7 +22,7 @@ namespace CritterServer.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
-            return new string[] { "Hello" , "World" };
+            return new string[] { "Hello", "World" };
         }
 
         // GET api/values/5

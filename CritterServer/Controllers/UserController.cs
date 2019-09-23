@@ -15,7 +15,7 @@ namespace CritterServer.Controllers
 {
     [Route("api/user")]
     [ApiController]
-    public class UserController: ControllerBase
+    public class UserController : ControllerBase
     {
         UserAuthenticationDomain domain;
 
@@ -38,6 +38,7 @@ namespace CritterServer.Controllers
         public ActionResult Login([FromBody] User user)
         {
             Serilog.Log.Information("Logging in {user}", user.UserName);
+            Serilog.Log.Warning("");
             domain.Login(user);
             return Ok(user);
         }
