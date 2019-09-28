@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CrittersServer\CrittersServer.csproj" />
+    <ProjectReference Include="..\CritterServer\CritterServer.csproj" />
   </ItemGroup>
 
 </Project>

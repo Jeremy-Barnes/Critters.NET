@@ -31,11 +31,16 @@ namespace CritterServer.Domains.Components
 
         public string GenerateToken(User user)
         {
+            return GenerateToken(user.UserName);
+        }
+
+        public string GenerateToken(string userName)
+        {
             SecurityTokenDescriptor std = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, user.UserName)
+                    new Claim(ClaimTypes.Name, userName)
                 }),
                 Expires = DateTime.UtcNow.AddDays(14),
                 SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha384Signature),
@@ -79,6 +84,9 @@ namespace CritterServer.Domains.Components
     public interface IJwtProvider
     {
         string GenerateToken(User user);
+
+        string GenerateToken(string userName);
+
         bool ValidateToken(string jwtString);
         ClaimsPrincipal CrackJwt(string jwtString);
         SymmetricSecurityKey GetSigningKey();
@@ -88,8 +96,8 @@ namespace CritterServer.Domains.Components
     {
         public static IServiceCollection AddJwt(this IServiceCollection services, IConfiguration config)
         {
-            services.AddSingleton<Microsoft.IdentityModel.Tokens.TokenValidationParameters>(sp => {
-                return new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            services.AddSingleton<TokenValidationParameters>(sp => {
+                return new TokenValidationParameters
                 {
                     IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(config.GetValue<string>("JwtSigningKey"))),
                     ValidIssuer = "critters!",
@@ -103,8 +111,6 @@ namespace CritterServer.Domains.Components
             services.AddSingleton<IJwtProvider, JwtProvider>(sp =>
                 new JwtProvider(config.GetValue<string>("JwtSigningKey"), services.BuildServiceProvider().GetService<TokenValidationParameters>()));
 
-            services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(c => c.TokenValidationParameters = services.BuildServiceProvider().GetService<TokenValidationParameters>());
             return services;
         }
     }

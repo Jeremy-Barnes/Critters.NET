@@ -11,6 +11,8 @@ using Serilog;
 using Serilog.Sinks.File;
 using CritterServer.Domains.Components;
 using Serilog.Events;
+using CritterServer.Pipeline;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CritterServer
 {
@@ -31,11 +33,22 @@ namespace CritterServer
             services.AddScoped<IDbConnection>((sp) =>
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-                conn.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
+                conn.ConnectionString = Configuration.GetConnectionString("Sql");
                 return conn;
             });
 
             configureLogging();
+
+            services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(c => c.TokenValidationParameters = services.BuildServiceProvider().GetService<TokenValidationParameters>());
+
+            services.AddAuthentication("Cookie").AddCookie("Cookie", opts => {
+                opts.Cookie.Name = "critterlogin";
+                opts.Cookie.Expiration = null;
+                
+                opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>());
+                opts.DataProtectionProvider = new CookieDataProtectionProvider();
+            });
 
             //domains
             services.AddTransient<UserAuthenticationDomain>();
@@ -57,6 +70,8 @@ namespace CritterServer
             }
             app.UseAuthentication();
             app.UseMvc();
+            
+            app.UseMiddleware<ErrorMiddleware>();
         }
 
         private void configureLogging()
