@@ -22,7 +22,7 @@ namespace CritterServer.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
-            return new string[] { "Something", "Else" };
+            return new string[] { "Something", "Else", "But", "Also", "Hello World" };
         }
 
         // GET api/values/5
