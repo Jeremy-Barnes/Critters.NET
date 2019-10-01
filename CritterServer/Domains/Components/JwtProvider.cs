@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -42,7 +44,7 @@ namespace CritterServer.Domains.Components
                 {
                     new Claim(ClaimTypes.Name, userName)
                 }),
-                Expires = DateTime.UtcNow.AddDays(14),
+                Expires = DateTime.UtcNow.AddDays(14), //todo configurable, same value as the cookie in Startup
                 SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha384Signature),
                 IssuedAt = DateTime.UtcNow,
                 Issuer = "critters!",
@@ -75,8 +77,8 @@ namespace CritterServer.Domains.Components
             }
             catch (Exception ex)
             {
+                Log.Logger.Warning(ex, $"Invalid JWT {jwtString} was passed in and rejected.");
                 return null;
-                //TODO log this out, but don't error to user
             }
         }
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using System.Transactions;
 using CritterServer.DataAccess;
@@ -61,7 +62,7 @@ namespace CritterServer.Domains
                     return jwtProvider.GenerateToken(user);
                 }
             }
-            throw new Exception();//todo make unauthorized
+            throw new InvalidCredentialException($"The provided credentials were invalid, {user.UserName ?? user.EmailAddress}");//todo make unauthorized
         }
 
         public User RetrieveUser(int userId)

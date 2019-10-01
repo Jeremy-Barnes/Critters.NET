@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace CritterServer.Pipeline
@@ -25,7 +26,9 @@ namespace CritterServer.Pipeline
             } catch(Exception ex)
             {
                 Log.Error(ex, "Error handled in Middleware");
-                throw;
+                await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes(ex.Message));
+                context.Response.StatusCode = 401; //todo this needs some actual logic. This is a dumb hack that doesn't even work.
+              //  throw;
             }
         }
 

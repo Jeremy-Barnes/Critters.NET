@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using Serilog.Sinks.File;
 using CritterServer.Domains.Components;
 using Serilog.Events;
 using CritterServer.Pipeline;
 using Microsoft.IdentityModel.Tokens;
+using System;
 
 namespace CritterServer
 {
@@ -44,14 +44,14 @@ namespace CritterServer
 
             services.AddAuthentication("Cookie").AddCookie("Cookie", opts => {
                 opts.Cookie.Name = "critterlogin";
-                opts.Cookie.Expiration = null;
+                opts.Cookie.Expiration = new TimeSpan(14);//todo configurable
                 
                 opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>());
-                opts.DataProtectionProvider = new CookieDataProtectionProvider();
             });
 
             //domains
             services.AddTransient<UserAuthenticationDomain>();
+            services.AddTransient<ErrorMiddleware>();
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
@@ -69,9 +69,10 @@ namespace CritterServer
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
-            app.UseMvc();
             
             app.UseMiddleware<ErrorMiddleware>();
+
+            app.UseMvc();//last thing
         }
 
         private void configureLogging()

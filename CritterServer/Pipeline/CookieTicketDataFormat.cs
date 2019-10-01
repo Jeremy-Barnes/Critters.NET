@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -35,7 +36,11 @@ namespace CritterServer.Pipeline
 
         public AuthenticationTicket Unprotect(string protectedText, string purpose)
         {
-            return new AuthenticationTicket(jwt.CrackJwt(protectedText), "Cookie");
+            var authenticatedUser = jwt.CrackJwt(protectedText);
+            if (authenticatedUser == null)
+                throw new InvalidCredentialException("Sorry, you've been logged out, please log in again!");
+
+            return new AuthenticationTicket(authenticatedUser, "Cookie");
         }
     }
 }
