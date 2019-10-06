@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29230.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CritterServer", "CritterServer.csproj", "{500B3544-A504-4141-A487-FA77FD78432D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tst", "tst", "{26FDFC61-ED02-419F-A2CB-39838B597758}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "..\Tests\Tests.csproj", "{AF770077-3341-480B-81D9-71C75BC8CCEA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{500B3544-A504-4141-A487-FA77FD78432D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{500B3544-A504-4141-A487-FA77FD78432D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{500B3544-A504-4141-A487-FA77FD78432D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{500B3544-A504-4141-A487-FA77FD78432D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF770077-3341-480B-81D9-71C75BC8CCEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF770077-3341-480B-81D9-71C75BC8CCEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF770077-3341-480B-81D9-71C75BC8CCEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF770077-3341-480B-81D9-71C75BC8CCEA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AF770077-3341-480B-81D9-71C75BC8CCEA} = {26FDFC61-ED02-419F-A2CB-39838B597758}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A6E9FFBE-3B2F-4C6A-8BC7-1C61B802EF5D}
+	EndGlobalSection
+EndGlobal
