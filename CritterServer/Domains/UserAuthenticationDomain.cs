@@ -53,7 +53,7 @@ namespace CritterServer.Domains
                 dbUser = RetrieveUserByEmail(user.EmailAddress);
             }
 
-            if (dbUser != null)
+            if (dbUser != null && !string.IsNullOrEmpty(user.Password))
             {
 
                 string hashPassword = BCrypt.Net.BCrypt.HashPassword(user.Password, dbUser.Salt);
@@ -63,7 +63,7 @@ namespace CritterServer.Domains
                     return jwtProvider.GenerateToken(user);
                 }
             }
-            throw new InvalidCredentialException($"The provided credentials were invalid, {user.UserName ?? user.EmailAddress}");//todo make unauthorized
+            throw new InvalidCredentialException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}");//todo make unauthorized
         }
 
         public User RetrieveUser(int userId)
