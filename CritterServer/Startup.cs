@@ -13,6 +13,7 @@ using Serilog.Events;
 using CritterServer.Pipeline;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using CritterServer.Utilities.Serialization;
 
 namespace CritterServer
 {
@@ -28,7 +29,10 @@ namespace CritterServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                .AddDataContractResolver();
+
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
             services.AddScoped<IDbConnection>((sp) =>
             {
@@ -71,7 +75,7 @@ namespace CritterServer
             app.UseAuthentication();
             
             app.UseMiddleware<ErrorMiddleware>();
-
+            
             app.UseMvc();//last thing
         }
 

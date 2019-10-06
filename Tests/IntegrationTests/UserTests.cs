@@ -1,7 +1,7 @@
-﻿using CrittersServer.DataAccess;
-using CrittersServer.Domains;
-using CrittersServer.Domains.Components;
-using CrittersServer.Models;
+﻿using CritterServer.Models;
+using CritterServer.DataAccess;
+using CritterServer.Domains;
+using CritterServer.Domains.Components;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;

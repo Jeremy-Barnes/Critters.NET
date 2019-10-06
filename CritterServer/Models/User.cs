@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CritterServer.Utilities.Serialization;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,6 +9,7 @@ namespace CritterServer.Models
 {
     public class User
     {
+        [InternalOnly]
         public int UserId { get; set; }
         public string UserName { get; set; }
         public string FirstName { get; set; }
@@ -22,7 +25,9 @@ namespace CritterServer.Models
         public string Country { get; set; }
         public string Postcode { get; set; }
 
+        [InternalOnly]
         public string Password { get; set; }
+        [JsonIgnore]
         public string Salt { get; set; }
 
         public bool IsActive { get; set; }

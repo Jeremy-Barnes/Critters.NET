@@ -59,6 +59,7 @@ namespace CritterServer.Domains
                 string hashPassword = BCrypt.Net.BCrypt.HashPassword(user.Password, dbUser.Salt);
                 if (dbUser.Password == hashPassword) //success
                 {
+                    user = dbUser;
                     return jwtProvider.GenerateToken(user);
                 }
             }

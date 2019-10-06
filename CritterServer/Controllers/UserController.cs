@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using CritterServer.Contract;
 
 namespace CritterServer.Controllers
 {
@@ -26,25 +27,34 @@ namespace CritterServer.Controllers
         }
 
         [HttpPut("create")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult CreateAccount([FromBody] User user)
         {
-            string jwt = domain.CreateAccount(user);
+            UserAuthResponse response = new UserAuthResponse();
+            response.authToken = domain.CreateAccount(user);
+            response.user = user;
             addLoginCookie(this.HttpContext, user.UserName);
-            return Ok(user);
+            return Ok(response);
         }
 
         [HttpPost("login")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult Login([FromBody] User user)
         {
-            string jwt = domain.Login(user);
+            UserAuthResponse response = new UserAuthResponse();
+            response.authToken = domain.Login(user);
+            response.user = user;
             addLoginCookie(this.HttpContext, user.UserName);
-            return Ok(user);
+            return Ok(response);
         }
 
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
-        [HttpGet]
+        [Consumes("application/json")]
+        [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult GetUser()
         {
