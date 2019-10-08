@@ -32,7 +32,6 @@ namespace Tests.IntegrationTests
                 RequireExpirationTime = true
             });
 
-        public List<User> extantUsers = new List<User>();
 
         public UserTestsContext()
         {
@@ -43,7 +42,7 @@ namespace Tests.IntegrationTests
             userAccountDomain = new UserAuthenticationDomain(userRepo, jwtProvider);
         }
 
-        public User RandomUser()
+        public static User RandomUser()
         {
             User randomUser = new User()
             {
@@ -61,7 +60,6 @@ namespace Tests.IntegrationTests
                 State = "Illinois",
                 UserName = Guid.NewGuid().ToString().Substring(0, 6)
             };
-            this.extantUsers.Add(randomUser);
             return randomUser;
         }
     }
@@ -78,7 +76,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void UserAccountCreateAndRetrieveWorks()
         {
-            User randomUser = context.RandomUser();
+            User randomUser = UserTestsContext.RandomUser();
             string jwt = context.userAccountDomain.CreateAccount(randomUser);
 
             var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.UserName);
@@ -90,7 +88,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void UserLoginWorksAndCreatesValidJwt()
         {
-            User randomUser = context.RandomUser();
+            User randomUser = UserTestsContext.RandomUser();
             string password = randomUser.Password;
 
             context.userAccountDomain.CreateAccount(randomUser);

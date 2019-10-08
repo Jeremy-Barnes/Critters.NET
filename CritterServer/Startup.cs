@@ -55,13 +55,17 @@ namespace CritterServer
 
             //domains
             services.AddTransient<UserAuthenticationDomain>();
+            services.AddTransient<NpcDomain>();
             services.AddTransient<ErrorMiddleware>();
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<INpcRepository, NpcRepository>();
+
 
             //components
             services.AddJwt(Configuration);
+            services.AddSingleton<NpcScriptProvider>();
 
         }
 
