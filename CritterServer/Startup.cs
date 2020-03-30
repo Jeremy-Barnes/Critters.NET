@@ -40,6 +40,8 @@ namespace CritterServer
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");
                 return conn;
             });
+            services.AddTransient<ErrorMiddleware>();//should always be earliest in the pipe
+
 
             configureLogging();
 
@@ -48,7 +50,7 @@ namespace CritterServer
 
             services.AddAuthentication("Cookie").AddCookie("Cookie", opts => {
                 opts.Cookie.Name = "critterlogin";
-                opts.Cookie.Expiration = new TimeSpan(14);//todo configurable
+                opts.Cookie.Expiration = new TimeSpan(14,0,0,0);//todo configurable
                 
                 opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>());
             });
@@ -56,7 +58,6 @@ namespace CritterServer
             //domains
             services.AddTransient<UserAuthenticationDomain>();
             services.AddTransient<NpcDomain>();
-            services.AddTransient<ErrorMiddleware>();
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
