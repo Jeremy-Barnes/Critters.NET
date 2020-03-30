@@ -19,11 +19,11 @@ namespace CritterServer.Controllers
             this.domain = domain;
         }
 
-        [HttpPost("login")]
+        [HttpPost("test")]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult Login()
+        public ActionResult Test()
         {
             return Ok(domain.Test());
         }
