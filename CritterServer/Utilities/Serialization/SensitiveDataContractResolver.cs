@@ -19,7 +19,7 @@ namespace CritterServer.Utilities.Serialization
                 {
                     return false;
                 };
-            
+
             return property;
         }
     }

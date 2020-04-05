@@ -1,6 +1,5 @@
 ﻿using CritterServer.Domains.Components;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.DataProtection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
