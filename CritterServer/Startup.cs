@@ -96,7 +96,7 @@ namespace CritterServer
 
             Log.Logger = new LoggerConfiguration()
                .Enrich.FromLogContext()
-               .WriteTo.EventLog("Critters.NET", "Critters.NET", "343GuiltySpark")
+               .WriteTo.EventLog("Critters.NET", "Critters.NET")
                .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
                fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
                rollOnFileSizeLimit: true)
