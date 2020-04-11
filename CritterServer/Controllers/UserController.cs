@@ -68,7 +68,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult Logout()
         {
-            this.HttpContext.SignOutAsync();
+            this.HttpContext.SignOutAsync("Cookie");
             return Ok();
         }
 
