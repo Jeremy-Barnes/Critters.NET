@@ -54,47 +54,17 @@ namespace CritterServer.Pipeline
 
         public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context) 
         {
-            context.HttpContext.SignOutAsync();
-            return Task.Run(() => { });
+            return context.HttpContext.SignOutAsync("Cookie");
         }
+
         public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
         {
-            context.HttpContext.SignOutAsync("Cookie");
-
-            return Task.Run(() => { });
-
+            return context.HttpContext.SignOutAsync("Cookie");
         }
+
         public override Task RedirectToLogout(RedirectContext<CookieAuthenticationOptions> context)
         {
-            context.HttpContext.SignOutAsync();
-
-            return Task.Run(() => { });
-
-        }
-        public override Task RedirectToReturnUrl(RedirectContext<CookieAuthenticationOptions> context)
-        {
-            return Task.Run(() => { });
-
-        }
-        public override Task SignedIn(CookieSignedInContext context)
-        {
-            return Task.Run(() => { });
-
-        }
-        public override Task SigningIn(CookieSigningInContext context)
-        {
-            return Task.Run(() => { });
-
-        }
-        public override Task SigningOut(CookieSigningOutContext context)
-        {
-            return Task.Run(() => { });
-
-        }
-        public override Task ValidatePrincipal(CookieValidatePrincipalContext context)
-        {
-            return Task.Run(() => { });
-
+            return context.HttpContext.SignOutAsync("Cookie");
         }
     }
 }
