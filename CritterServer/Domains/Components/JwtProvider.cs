@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Domains.Components
 {
+    ///<inheritdoc/>
     public class JwtProvider : IJwtProvider
     {
         private string SecretKey;
@@ -83,6 +84,10 @@ namespace CritterServer.Domains.Components
         }
     }
 
+    /// <summary>
+    /// Used to create and crack JWTs for cookies. 
+    /// Pipeline handles authorization heaaders magically (using TokenValidationParameters created in JwtExtensions.AddJwt below
+    /// </summary>
     public interface IJwtProvider
     {
         string GenerateToken(User user);
@@ -96,6 +101,12 @@ namespace CritterServer.Domains.Components
 
     public static class JwtExtensions
     {
+        /// <summary>
+        /// Extension method
+        /// Adds pipeline support for JWT Auth Headers (Bearer tokens)
+        /// Adds JwtProvider as a service so arbitrary code can create and decode JWTs (useful for putting JWTs into cookies)
+        /// </summary>
+        /// <returns></returns>
         public static IServiceCollection AddJwt(this IServiceCollection services, IConfiguration config)
         {
             services.AddSingleton<TokenValidationParameters>(sp => {

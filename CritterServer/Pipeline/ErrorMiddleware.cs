@@ -45,7 +45,5 @@ namespace CritterServer.Pipeline
                 await context.Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody));
             }
         }
-
-
     }
 }
