@@ -14,6 +14,7 @@ using CritterServer.Pipeline;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using CritterServer.Utilities.Serialization;
+using Microsoft.AspNetCore.Http;
 
 namespace CritterServer
 {
@@ -29,6 +30,7 @@ namespace CritterServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //framework
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddDataContractResolver();
@@ -43,14 +45,16 @@ namespace CritterServer
 
             configureLogging();
 
+            //auth
             services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(c => c.TokenValidationParameters = services.BuildServiceProvider().GetService<TokenValidationParameters>());
 
-            services.AddAuthentication("Cookie").AddCookie("Cookie", opts => {
+            services.AddAuthentication()
+                .AddCookie("Cookie", opts => {
                 opts.Cookie.Name = "critterlogin";
                 opts.Cookie.Expiration = new TimeSpan(14);//todo configurable
-                
-                opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>());
+                opts.EventsType = typeof(CookieEventHandler);
+                opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>(), services.BuildServiceProvider().GetService<IHttpContextAccessor>());
             });
 
             //domains
@@ -62,6 +66,8 @@ namespace CritterServer
 
             //components
             services.AddJwt(Configuration);
+            services.AddHttpContextAccessor();
+            services.AddScoped<CookieEventHandler>();
 
         }
 

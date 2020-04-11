@@ -1,6 +1,8 @@
 ﻿using CritterServer.Domains.Components;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +15,12 @@ namespace CritterServer.Pipeline
     public class CookieTicketDataFormat : ISecureDataFormat<AuthenticationTicket>
     {
         IJwtProvider jwt;
+        IHttpContextAccessor contextAccessor;
 
-        public CookieTicketDataFormat(IJwtProvider jwt)
+        public CookieTicketDataFormat(IJwtProvider jwt, IHttpContextAccessor contextAccessor)
         {
             this.jwt = jwt;
+            this.contextAccessor = contextAccessor;
         }
 
         public string Protect(AuthenticationTicket data)
@@ -37,10 +41,60 @@ namespace CritterServer.Pipeline
         public AuthenticationTicket Unprotect(string protectedText, string purpose)
         {
             var authenticatedUser = jwt.CrackJwt(protectedText);
-            if (authenticatedUser == null)
-                throw new InvalidCredentialException("Sorry, you've been logged out, please log in again!");
-
+            if (authenticatedUser == null) {
+                return null;
+            }
             return new AuthenticationTicket(authenticatedUser, "Cookie");
+        }
+    }
+
+    public class CookieEventHandler : CookieAuthenticationEvents
+    {
+        public CookieEventHandler() { }
+
+        public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context) 
+        {
+            context.HttpContext.SignOutAsync();
+            return Task.Run(() => { });
+        }
+        public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            context.HttpContext.SignOutAsync("Cookie");
+
+            return Task.Run(() => { });
+
+        }
+        public override Task RedirectToLogout(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            context.HttpContext.SignOutAsync();
+
+            return Task.Run(() => { });
+
+        }
+        public override Task RedirectToReturnUrl(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            return Task.Run(() => { });
+
+        }
+        public override Task SignedIn(CookieSignedInContext context)
+        {
+            return Task.Run(() => { });
+
+        }
+        public override Task SigningIn(CookieSigningInContext context)
+        {
+            return Task.Run(() => { });
+
+        }
+        public override Task SigningOut(CookieSigningOutContext context)
+        {
+            return Task.Run(() => { });
+
+        }
+        public override Task ValidatePrincipal(CookieValidatePrincipalContext context)
+        {
+            return Task.Run(() => { });
+
         }
     }
 }
