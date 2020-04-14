@@ -30,10 +30,10 @@ namespace CritterServer.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult CreateAccount([FromBody] User user)
+        public async Task<ActionResult> CreateAccount([FromBody] User user)
         {
             UserAuthResponse response = new UserAuthResponse();
-            response.authToken = domain.CreateAccount(user);
+            response.authToken = await domain.CreateAccount(user);
             response.user = user;
             addLoginCookie(this.HttpContext, user.UserName);
             return Ok(response);

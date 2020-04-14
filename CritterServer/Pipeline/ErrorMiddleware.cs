@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CritterServer.Contract;
+using Microsoft.AspNetCore.Http;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,12 @@ namespace CritterServer.Pipeline
             try
             {
                 await next.Invoke(context);
+            }
+            catch(CritterException cex) 
+            {
+                Log.Information(cex, cex.InternalMessage);
+                responseCode = (int)cex.HttpStatus;
+                responseBody = cex.ClientMessage;
             }
             catch (InvalidCredentialException icex)
             {

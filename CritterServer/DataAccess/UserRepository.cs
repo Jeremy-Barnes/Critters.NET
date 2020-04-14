@@ -61,6 +61,22 @@ namespace CritterServer.DataAccess
             dbConnection.TryOpen();
             return dbConnection.Query<User>("select * from users where userName = @userName", new { userName = userName }).FirstOrDefault();
         }
+
+        public async Task<bool> UserExistsByUserNameOrEmail(string userName, string email)
+        {
+            try
+            {
+                string whereClause =
+                    (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
+                    (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
+                dbConnection.TryOpen();
+                var searchResult = await dbConnection.QueryAsync<bool>($"select exists (select 1 from users where {whereClause} )", new { userName = userName, email = email });
+                return searchResult.FirstOrDefault();
+            } catch(Exception ex)
+            {
+                return true;
+            }
+        }
     }
 
     public interface IUserRepository : IRepository
@@ -69,5 +85,6 @@ namespace CritterServer.DataAccess
         User RetrieveUserById(int userId);
         User RetrieveUserByEmail(string email);
         User RetrieveUserByUserName(string userName);
+        Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
     }
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using System.Transactions;
+using CritterServer.Contract;
 using CritterServer.DataAccess;
 using CritterServer.Domains.Components;
 using CritterServer.Models;
@@ -23,11 +24,11 @@ namespace CritterServer.Domains
             this.jwtProvider = jwtProvider;
         }
 
-        public string CreateAccount(User user)
+        public async Task<string> CreateAccount(User user)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required))
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                //TODO validate incoming properties (Birthday, gender, email, username)
+                await validateUser(user);
                 user.Cash = 500; //TODO economics
                 user.IsActive = true;
                 user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
@@ -80,6 +81,20 @@ namespace CritterServer.Domains
         public User RetrieveUserByEmail(string email)
         {
             return userRepo.RetrieveUserByUserName(email);
+        }
+
+        private async Task validateUser(User user) //TODO validate incoming properties (gender)
+
+        {
+            if (await userRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress))
+            {
+                throw new CritterException { ClientMessage = $"Sorry, someone already exists with that name or email!", HttpStatus = System.Net.HttpStatusCode.Conflict, InternalMessage = $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}" };
+            }
+            DateTime birthday;
+            if(!DateTime.TryParse(user.Birthdate, out birthday))
+            {
+                throw new CritterException { ClientMessage = $"No one was born on {birthday}, we checked.", HttpStatus = System.Net.HttpStatusCode.BadRequest, InternalMessage = "Invalid birthday" };
+            }
         }
     }
 
