@@ -1,5 +1,6 @@
 ﻿using CritterServer.Contract;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,14 @@ namespace CritterServer.Pipeline
             }
             catch(CritterException cex) 
             {
-                Log.Information(cex, cex.InternalMessage);
+                switch(cex.LogLevelOverride)
+                {
+                    case LogLevel.Debug: Log.Debug(cex, cex.InternalMessage); break;
+                    case LogLevel.Information: Log.Information(cex, cex.InternalMessage); break;
+                    case LogLevel.Warning: Log.Warning(cex, cex.InternalMessage); break;
+                    case LogLevel.None: break;
+                    default: Log.Error(cex, cex.InternalMessage); break;
+                }
                 responseCode = (int)cex.HttpStatus;
                 responseBody = cex.ClientMessage;
             }
