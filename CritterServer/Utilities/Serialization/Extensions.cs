@@ -8,12 +8,13 @@ namespace CritterServer.Utilities.Serialization
 {
     public static class Extensions
     {
-        public static void AddDataContractResolver(this IMvcBuilder builder)
+        public static IMvcBuilder AddDataContractResolver(this IMvcBuilder builder)
         {
             builder.AddJsonOptions(opts =>
             {
                  opts.SerializerSettings.ContractResolver = new SensitiveDataContractResolver();
             });
+            return builder;
         }
 
     }

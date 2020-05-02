@@ -33,7 +33,10 @@ namespace CritterServer
             //framework
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddDataContractResolver();
+                .AddDataContractResolver().AddMvcOptions((options) => 
+                {
+                    options.Filters.Add<UserFilter>();
+                });
 
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
             services.AddScoped<IDbConnection>((sp) =>
