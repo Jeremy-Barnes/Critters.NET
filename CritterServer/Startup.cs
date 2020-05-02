@@ -72,6 +72,8 @@ namespace CritterServer
             services.AddJwt(Configuration);
             services.AddHttpContextAccessor();
             services.AddScoped<CookieEventHandler>();
+            services.AddTransient<UserFilter>();
+
 
         }
 

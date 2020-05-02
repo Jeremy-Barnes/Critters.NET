@@ -29,6 +29,7 @@ namespace CritterServer.Controllers
         }
 
         [HttpPut("create")]
+        [UserValidate("user", UserValidate.ValidationType.All)]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -37,7 +38,7 @@ namespace CritterServer.Controllers
             UserAuthResponse response = new UserAuthResponse();
             response.authToken = await domain.CreateAccount(user);
             response.user = user;
-            addLoginCookie(this.HttpContext, user.UserName);
+            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(response);
         }
 
@@ -50,18 +51,19 @@ namespace CritterServer.Controllers
             UserAuthResponse response = new UserAuthResponse();
             response.authToken = domain.Login(user);
             response.user = user;
-            addLoginCookie(this.HttpContext, user.UserName);
+            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(response);
         }
 
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [Consumes("application/json")]
         [Produces("application/json")]
+
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult GetUser()
         {
             User user = domain.RetrieveUserByUserName(HttpContext.User.Identity.Name);
-            addLoginCookie(this.HttpContext, userName: user.UserName);
+            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(user);
         }
 
@@ -74,14 +76,16 @@ namespace CritterServer.Controllers
             return Ok();
         }
 
-        private async void addLoginCookie(HttpContext context, string userName)
+        private async void addLoginCookie(HttpContext context, string userName, string email)
         {
             await this.HttpContext.SignInAsync("Cookie", 
                 new ClaimsPrincipal(
                     new ClaimsIdentity(
                         new List<Claim>
                         {
-                            new Claim(ClaimTypes.Name, userName)
+                            new Claim(ClaimTypes.Name, userName),
+                            new Claim(ClaimTypes.Email, email)
+
                         }
                     )
                 )
@@ -89,4 +93,6 @@ namespace CritterServer.Controllers
         }
 
     }
+
+  
 }

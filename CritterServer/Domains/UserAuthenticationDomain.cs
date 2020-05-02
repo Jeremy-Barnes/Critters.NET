@@ -28,7 +28,6 @@ namespace CritterServer.Domains
         {
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                await validateUser(user);
                 user.Cash = 500; //TODO economics
                 user.IsActive = true;
                 user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
@@ -81,19 +80,6 @@ namespace CritterServer.Domains
         public User RetrieveUserByEmail(string email)
         {
             return userRepo.RetrieveUserByEmail(email);
-        }
-
-        private async Task validateUser(User user) //TODO validate incoming properties (gender)
-        {
-            if (await userRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress))
-            {
-                throw new CritterException($"Sorry, someone already exists with that name or email!", $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}", System.Net.HttpStatusCode.Conflict);
-            }
-            DateTime birthday;
-            if(!DateTime.TryParse(user.Birthdate, out birthday))
-            {
-                throw new CritterException($"No one was born on {birthday}, we checked.", "Invalid birthday", System.Net.HttpStatusCode.BadRequest);
-            }
         }
     }
 
