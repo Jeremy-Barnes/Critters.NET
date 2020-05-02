@@ -64,7 +64,7 @@ namespace CritterServer.Domains
                     return jwtProvider.GenerateToken(user);
                 }
             }
-            throw new InvalidCredentialException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}");//todo make unauthorized
+            throw new CritterException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}", null, System.Net.HttpStatusCode.Unauthorized);
         }
 
         public User RetrieveUser(int userId)
@@ -80,20 +80,19 @@ namespace CritterServer.Domains
 
         public User RetrieveUserByEmail(string email)
         {
-            return userRepo.RetrieveUserByUserName(email);
+            return userRepo.RetrieveUserByEmail(email);
         }
 
         private async Task validateUser(User user) //TODO validate incoming properties (gender)
-
         {
             if (await userRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress))
             {
-                throw new CritterException { ClientMessage = $"Sorry, someone already exists with that name or email!", HttpStatus = System.Net.HttpStatusCode.Conflict, InternalMessage = $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}" };
+                throw new CritterException($"Sorry, someone already exists with that name or email!", $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}", System.Net.HttpStatusCode.Conflict);
             }
             DateTime birthday;
             if(!DateTime.TryParse(user.Birthdate, out birthday))
             {
-                throw new CritterException { ClientMessage = $"No one was born on {birthday}, we checked.", HttpStatus = System.Net.HttpStatusCode.BadRequest, InternalMessage = "Invalid birthday" };
+                throw new CritterException($"No one was born on {birthday}, we checked.", "Invalid birthday", System.Net.HttpStatusCode.BadRequest);
             }
         }
     }
