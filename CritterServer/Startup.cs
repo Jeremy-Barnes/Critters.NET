@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using CritterServer.Utilities.Serialization;
 using Microsoft.AspNetCore.Http;
+using CritterServer.Pipeline.Middleware;
 
 namespace CritterServer
 {

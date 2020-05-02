@@ -9,7 +9,7 @@ using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CritterServer.Pipeline
+namespace CritterServer.Pipeline.Middleware
 {
     public class ErrorMiddleware
     {

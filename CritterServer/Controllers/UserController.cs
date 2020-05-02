@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using CritterServer.Contract;
+using CritterServer.Pipeline;
+using CritterServer.Pipeline.Middleware;
 
 namespace CritterServer.Controllers
 {
