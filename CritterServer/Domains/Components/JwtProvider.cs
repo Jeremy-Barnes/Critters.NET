@@ -1,4 +1,5 @@
 ﻿using CritterServer.Models;
+using CritterServer.Pipeline.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -32,18 +33,23 @@ namespace CritterServer.Domains.Components
             return SigningKey;
         }
 
+
         public string GenerateToken(User user)
         {
-            return GenerateToken(user.UserName);
+            UserFilter.UserNameIsValidForm(user);
+            UserFilter.EmailIsValidForm(user);
+            return GenerateToken(user.UserName, user.EmailAddress);
         }
 
-        public string GenerateToken(string userName)
+        public string GenerateToken(string userName, string email)
         {
             SecurityTokenDescriptor std = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, userName)
+                    new Claim(ClaimTypes.Name, userName),
+                    new Claim(ClaimTypes.Email, email)
+
                 }),
                 Expires = DateTime.UtcNow.AddDays(14), //todo configurable, same value as the cookie in Startup
                 SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha384Signature),
@@ -92,7 +98,7 @@ namespace CritterServer.Domains.Components
     {
         string GenerateToken(User user);
 
-        string GenerateToken(string userName);
+        string GenerateToken(string userName, string email);
 
         bool ValidateToken(string jwtString);
         ClaimsPrincipal CrackJwt(string jwtString);

@@ -40,7 +40,7 @@ namespace Tests.UnitTests
         {
             JwtProvider jwtProvider = new JwtProvider(jwtSecretKey1, tokenParams1);
 
-            string jwt = jwtProvider.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME" });
+            string jwt = jwtProvider.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME", EmailAddress = "a@a.com" });
             Assert.True(jwtProvider.ValidateToken(jwt));
         }
 
@@ -52,8 +52,8 @@ namespace Tests.UnitTests
             JwtProvider jwtProvider1 = new JwtProvider(jwtSecretKey1, tokenParams1);
             JwtProvider jwtProvider2 = new JwtProvider(jwtSecretKey2, tokenParams2);
 
-            string jwt1 = jwtProvider1.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME" });
-            string jwt2 = jwtProvider2.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME" });
+            string jwt1 = jwtProvider1.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME", EmailAddress = "a@a.com" });
+            string jwt2 = jwtProvider2.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME", EmailAddress = "a@a.com" });
 
             Assert.False(jwtProvider2.ValidateToken(jwt1));
             Assert.True(jwtProvider1.ValidateToken(jwt1));

@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using CritterServer.Utilities.Serialization;
 using Microsoft.AspNetCore.Http;
+using CritterServer.Pipeline.Middleware;
 
 namespace CritterServer
 {
@@ -33,7 +34,10 @@ namespace CritterServer
             //framework
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
-                .AddDataContractResolver();
+                .AddDataContractResolver().AddMvcOptions((options) => 
+                {
+                    options.Filters.Add<UserFilter>();
+                });
 
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
             services.AddScoped<IDbConnection>((sp) =>
@@ -68,6 +72,8 @@ namespace CritterServer
             services.AddJwt(Configuration);
             services.AddHttpContextAccessor();
             services.AddScoped<CookieEventHandler>();
+            services.AddTransient<UserFilter>();
+
 
         }
 

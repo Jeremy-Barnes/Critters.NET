@@ -79,9 +79,9 @@ namespace Tests.IntegrationTests
         public void UserAccountCreateAndRetrieveWorks()
         {
             User randomUser = context.RandomUser();
-            string jwt = context.userAccountDomain.CreateAccount(randomUser);
+            string jwt = context.userAccountDomain.CreateAccount(randomUser).Result;
 
-            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.UserName);
+            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress);
             Assert.Equal(randomUser.UserName, retrievedDbUser.UserName);
             Assert.NotEmpty(jwt);
 
@@ -93,13 +93,30 @@ namespace Tests.IntegrationTests
             User randomUser = context.RandomUser();
             string password = randomUser.Password;
 
-            context.userAccountDomain.CreateAccount(randomUser);
+            context.userAccountDomain.CreateAccount(randomUser).Wait();
             randomUser.Password = password; //gets overwritten as the hashed value during acct create
 
             string jwt = context.userAccountDomain.Login(randomUser);
 
             Assert.NotEmpty(jwt);
             Assert.True(context.jwtProvider.ValidateToken(jwt));
+        }
+
+        [Fact]
+        public void DuplicateCreateFails()
+        {
+            User randomUser = context.RandomUser();
+            string password = randomUser.Password;
+
+            context.userAccountDomain.CreateAccount(randomUser).Wait();
+            randomUser.Password = password; //gets overwritten as the hashed value during acct create
+
+            string jwt = context.userAccountDomain.Login(randomUser);
+
+            Assert.NotEmpty(jwt);
+            Assert.True(context.jwtProvider.ValidateToken(jwt));
+
+            Assert.ThrowsAny<Exception>(() => context.userAccountDomain.CreateAccount(randomUser).Result);
         }
     }
 }

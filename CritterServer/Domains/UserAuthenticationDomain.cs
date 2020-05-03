@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using System.Transactions;
+using CritterServer.Contract;
 using CritterServer.DataAccess;
 using CritterServer.Domains.Components;
 using CritterServer.Models;
@@ -23,11 +24,10 @@ namespace CritterServer.Domains
             this.jwtProvider = jwtProvider;
         }
 
-        public string CreateAccount(User user)
+        public async Task<string> CreateAccount(User user)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required))
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                //TODO validate incoming properties (Birthday, gender, email, username)
                 user.Cash = 500; //TODO economics
                 user.IsActive = true;
                 user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
@@ -63,7 +63,7 @@ namespace CritterServer.Domains
                     return jwtProvider.GenerateToken(user);
                 }
             }
-            throw new InvalidCredentialException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}");//todo make unauthorized
+            throw new CritterException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}", null, System.Net.HttpStatusCode.Unauthorized);
         }
 
         public User RetrieveUser(int userId)
@@ -79,7 +79,7 @@ namespace CritterServer.Domains
 
         public User RetrieveUserByEmail(string email)
         {
-            return userRepo.RetrieveUserByUserName(email);
+            return userRepo.RetrieveUserByEmail(email);
         }
     }
 

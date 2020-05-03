@@ -30,7 +30,7 @@ namespace CritterServer.Pipeline
 
         public string Protect(AuthenticationTicket data, string purpose)
         {
-            return jwt.GenerateToken(data.Principal.Identity.Name);
+            return jwt.GenerateToken(data.Principal.Identity.Name, data.Principal.FindFirst(ClaimTypes.Email)?.Value);
         }
 
         public AuthenticationTicket Unprotect(string protectedText)

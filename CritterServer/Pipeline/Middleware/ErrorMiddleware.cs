@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CritterServer.Contract;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -7,7 +9,7 @@ using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CritterServer.Pipeline
+namespace CritterServer.Pipeline.Middleware
 {
     public class ErrorMiddleware
     {
@@ -26,6 +28,19 @@ namespace CritterServer.Pipeline
             try
             {
                 await next.Invoke(context);
+            }
+            catch(CritterException cex) 
+            {
+                switch(cex.LogLevelOverride)
+                {
+                    case LogLevel.Debug: Log.Debug(cex, cex.InternalMessage); break;
+                    case LogLevel.Information: Log.Information(cex, cex.InternalMessage); break;
+                    case LogLevel.Warning: Log.Warning(cex, cex.InternalMessage); break;
+                    case LogLevel.None: break;
+                    default: Log.Error(cex, cex.InternalMessage); break;
+                }
+                responseCode = (int)cex.HttpStatus;
+                responseBody = cex.ClientMessage;
             }
             catch (InvalidCredentialException icex)
             {
