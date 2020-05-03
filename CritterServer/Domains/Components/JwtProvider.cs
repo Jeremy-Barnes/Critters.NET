@@ -1,4 +1,5 @@
 ﻿using CritterServer.Models;
+using CritterServer.Pipeline.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -32,8 +33,11 @@ namespace CritterServer.Domains.Components
             return SigningKey;
         }
 
+
         public string GenerateToken(User user)
         {
+            UserFilter.UserNameIsValidForm(user);
+            UserFilter.EmailIsValidForm(user);
             return GenerateToken(user.UserName, user.EmailAddress);
         }
 
