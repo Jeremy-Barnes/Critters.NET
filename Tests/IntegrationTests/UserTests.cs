@@ -12,6 +12,10 @@ using Xunit;
 
 namespace Tests.IntegrationTests
 {
+    /// <summary>
+    /// Creaated once, reused for all tests in UserTests
+    /// Used to hold expensive resources that can be reused (like a DB connection!)
+    /// </summary>
     public class UserTestsContext
     {
         private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
@@ -21,7 +25,7 @@ namespace Tests.IntegrationTests
         public IUserRepository userRepo;
         public JwtProvider jwtProvider = new JwtProvider(
             jwtSecretKey,
-            new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            new TokenValidationParameters
             {
                 IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey)),
                 ValidIssuer = "critters!",
