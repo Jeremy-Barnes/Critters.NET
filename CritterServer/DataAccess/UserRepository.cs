@@ -50,10 +50,11 @@ namespace CritterServer.DataAccess
             return dbConnection.Query<User>("select * from users where emailAddress = @emailAddress", new { emailAddress = email }).FirstOrDefault();
         }
 
-        public User RetrieveUserById(int userId)
+        public IEnumerable<User> RetrieveUsersByIds(params int[] userIds)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("select * from users where userID = @userID", new { userID = userId }).FirstOrDefault();
+            return dbConnection.Query<User>("SELECT * FROM users WHERE userID = ANY(@userIdList)",
+                new { userIdList = userIds.ToList() });
         }
 
         public User RetrieveUserByUserName(string userName)
@@ -82,7 +83,7 @@ namespace CritterServer.DataAccess
     public interface IUserRepository : IRepository
     {
         int CreateUser(User user);
-        User RetrieveUserById(int userId);
+        IEnumerable<User> RetrieveUsersByIds(params int[] userIds);
         User RetrieveUserByEmail(string email);
         User RetrieveUserByUserName(string userName);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);

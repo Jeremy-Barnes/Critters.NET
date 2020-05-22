@@ -21,14 +21,14 @@ namespace CritterServer.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        UserAuthenticationDomain domain;
+        UserDomain domain;
 
-        public UserController(UserAuthenticationDomain domain)
+        public UserController(UserDomain domain)
         {
             this.domain = domain;
         }
 
-        [HttpPut("create")]
+        [HttpPost("create")]
         [UserValidate("user", UserValidate.ValidationType.All)]
         [Consumes("application/json")]
         [Produces("application/json")]

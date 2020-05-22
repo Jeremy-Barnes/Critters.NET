@@ -21,7 +21,7 @@ namespace Tests.IntegrationTests
         private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
 
         public IDbConnection dbConnection;
-        public UserAuthenticationDomain userAccountDomain;
+        public UserDomain userAccountDomain;
         public IUserRepository userRepo;
         public JwtProvider jwtProvider = new JwtProvider(
             jwtSecretKey,
@@ -44,14 +44,14 @@ namespace Tests.IntegrationTests
             dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
             dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
             userRepo = new UserRepository(dbConnection);
-            userAccountDomain = new UserAuthenticationDomain(userRepo, jwtProvider);
+            userAccountDomain = new UserDomain(userRepo, jwtProvider);
         }
 
         public User RandomUser()
         {
             User randomUser = new User()
             {
-                Birthdate = DateTime.UtcNow.ToShortDateString(),
+                Birthdate = DateTime.UtcNow,
                 City = "Chicago",
                 Country = "USA",
                 EmailAddress = $"{Guid.NewGuid().ToString().Substring(0, 6)}@{Guid.NewGuid().ToString().Substring(0, 6)}.com",

@@ -54,13 +54,12 @@ namespace CritterServer
                                       .AllowAnyMethod()
                                       .AllowAnyHeader()
                                       .AllowCredentials();
-                                      //.Build();
                                   });
             });
 
             //db
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            services.AddScoped<IDbConnection>((sp) =>
+            services.AddTransient<IDbConnection>((sp) =>
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");
@@ -82,7 +81,7 @@ namespace CritterServer
                             // If the request is for our SignalR hubs
                             var path = context.HttpContext.Request.Path;
                             if (!string.IsNullOrEmpty(accessToken) &&
-                                (path.StartsWithSegments("/nethub")))
+                                (path.StartsWithSegments("/notificationhub")))
                             {
                                 // Read the token out of the query string
                                 context.Token = accessToken;
@@ -113,11 +112,14 @@ namespace CritterServer
             //set up DI stuff
 
             //domains
-            services.AddTransient<UserAuthenticationDomain>();
+            services.AddTransient<UserDomain>();
+            services.AddTransient<NotificationDomain>();
+
             services.AddTransient<ErrorMiddleware>();
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IMessageRepository, MessageRepository>();
 
             //components
             services.AddJwt(Configuration);
@@ -141,7 +143,7 @@ namespace CritterServer
             app.UseMiddleware<ErrorMiddleware>();
             app.UseSignalR(route =>
             {
-                route.MapHub<INetworkHub>("/notificationhub");
+                route.MapHub<NotificationHub>("/notificationhub");
             });
 
             app.UseMvc();//always last thing

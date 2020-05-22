@@ -13,12 +13,12 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 namespace CritterServer.Domains
 {
-    public class UserAuthenticationDomain
+    public class UserDomain
     {
         IUserRepository userRepo;
         IJwtProvider jwtProvider;
 
-        public UserAuthenticationDomain(IUserRepository userRepo, IJwtProvider jwtProvider)
+        public UserDomain(IUserRepository userRepo, IJwtProvider jwtProvider)
         {
             this.userRepo = userRepo;
             this.jwtProvider = jwtProvider;
@@ -68,7 +68,12 @@ namespace CritterServer.Domains
 
         public User RetrieveUser(int userId)
         {
-            return userRepo.RetrieveUserById(userId);
+            return userRepo.RetrieveUsersByIds(userId).FirstOrDefault();
+        }
+
+        public List<User> RetrieveUsers(List<int> userIds)
+        {
+            return userRepo.RetrieveUsersByIds(userIds.ToArray()).ToList();
         }
 
         public User RetrieveUserByUserName(string userName)

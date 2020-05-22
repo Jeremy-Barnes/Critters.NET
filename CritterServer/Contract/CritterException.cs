@@ -25,7 +25,26 @@ namespace CritterServer.Contract
         [InternalOnly]
         public LogLevel LogLevelOverride { get; set; } = LogLevel.Information;
 
-        public CritterException(string ClientMessage, string InternalMessage, HttpStatusCode HttpCode, Exception innerException = null) : base(InternalMessage, innerException)
+        public CritterException(string ClientMessage, string InternalMessage, HttpStatusCode HttpCode, Exception InnerException = null, LogLevel LogLevelOverride = LogLevel.Information) 
+            : base(InternalMessage, InnerException)
+        {
+            this.InternalMessage = InternalMessage ?? ClientMessage;
+            this.ClientMessage = ClientMessage;
+            this.HttpStatus = HttpCode;
+            this.LogLevelOverride = LogLevelOverride;
+        }
+
+        public CritterException(string ClientMessage, string InternalMessage, HttpStatusCode HttpCode, LogLevel LogLevelOverride = LogLevel.Information)
+           : base(InternalMessage, null)
+        {
+            this.InternalMessage = InternalMessage ?? ClientMessage;
+            this.ClientMessage = ClientMessage;
+            this.HttpStatus = HttpCode;
+            this.LogLevelOverride = LogLevelOverride;
+        }
+
+        public CritterException(string ClientMessage, string InternalMessage, HttpStatusCode HttpCode)
+          : base(InternalMessage, null)
         {
             this.InternalMessage = InternalMessage ?? ClientMessage;
             this.ClientMessage = ClientMessage;
