@@ -1,15 +1,13 @@
-﻿using CritterServer.DataAccess;
+﻿using CritterServer.Contract;
 using CritterServer.Domains;
 using CritterServer.Models;
 using CritterServer.Pipeline.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace CritterServer.Controllers
@@ -29,25 +27,27 @@ namespace CritterServer.Controllers
         [HttpGet("new")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> RetrieveUnreadMessages()
+        public async Task<ActionResult> RetrieveUnreadMessages([FromQuery]int? lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            return Ok();
+            var channelsAndMessages = await domain.GetMessages(false, lastMessageId, activeUser);
+            return Ok(channelsAndMessages);
         }
 
         [HttpGet()]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> RetrieveMessages() => await RetrieveMessagesPage(1);
+        public async Task<ActionResult> RetrieveMessages([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser) => await RetrieveMessagesPage(null, activeUser);
 
-        [HttpGet("page/{pageNumber}")]
+        [HttpGet("page/{lastMessageId}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> RetrieveMessagesPage(int pageNumber)
+        public async Task<ActionResult> RetrieveMessagesPage(int? lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            return Ok();
+            var channelsAndMessages = await domain.GetMessages(false, lastMessageId, activeUser);
+            return Ok(channelsAndMessages);
         }
 
-        [HttpPost()]
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> SendMessage([FromBody] Message message, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
@@ -55,7 +55,7 @@ namespace CritterServer.Controllers
             return Ok(new { MessageId = message.MessageId, DateSent = message.DateSent });//lightweight JSON object
         }
 
-        [HttpPatch("{messageId}")]
+        [HttpPatch]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> ReadMessage(List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
@@ -63,13 +63,51 @@ namespace CritterServer.Controllers
             return Ok();
         }
 
-        [HttpDelete("{messageId}")]
+        [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> DeleteMessage(List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> DeleteMessage([FromBody]List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
 
             await domain.ReadMessage(messageIds, activeUser);
             return Ok();
+        }
+
+        [HttpGet("thread/{lastMessageId}")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> RetrieveThread(int lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            var messageThread = await domain.RetrieveThread(lastMessageId, activeUser);
+            return Ok(messageThread);
+        }
+
+        [HttpPost("channel")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> CreateChannel([FromBody]ChannelDetails channel, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            var newChannelId = await domain.CreateChannel(activeUser, channel.Channel?.ChannelName, channel.UserNames);
+            return Ok(newChannelId);
+        }
+
+        [HttpGet("channel/{channelIdsCSV}")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> RetrieveChannel(string channelIdsCSV, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            if (channelIdsCSV.Length < 100)
+            {
+                try
+                {
+                    var channelIds = channelIdsCSV.Split(',').Select(csv => Int32.Parse(csv)).ToList();
+                    List<ChannelDetails> channelDetails = await domain.GetChannels(channelIds, activeUser);
+                    return Ok(channelDetails);
+                } catch(Exception ex)
+                {
+                    throw new CritterException("Sorry, that wasn't a valid list of channel IDs", $"{channelIdsCSV} provided to RetrieveChannel", System.Net.HttpStatusCode.BadRequest, ex);
+                }
+            }
+            return BadRequest();
         }
 
     }

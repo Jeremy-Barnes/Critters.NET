@@ -6,13 +6,15 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Contract
 {
-    public class ChannelConversation
+    public class ChannelDetails
     {
         public List<Message> Messages { get; set; }
+        public List<User> Users { get; set; }
+
         public List<string> UserNames { get; set; }
         public Channel Channel { get; set; }
 
-        public ChannelConversation()
+        public ChannelDetails()
         {
             Messages = new List<Message>();
             UserNames = new List<string>();

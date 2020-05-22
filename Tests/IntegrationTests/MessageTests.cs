@@ -92,7 +92,7 @@ namespace Tests.IntegrationTests
             return randomUser;
         }
 
-        public List<int> SendMessage(User sender, User receiver, int times, int channel)
+        public List<int> SendMessage(User sender, User receiver, int times, int channel, int? parentId = null)
         {
             List<int> messageIds = new List<int>();
             for (int i = 0; i < times; i++) {
@@ -101,7 +101,8 @@ namespace Tests.IntegrationTests
                     MessageSubject = $"This message created at {DateTime.UtcNow}",
                     MessageText = $"My dearest {receiver.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{sender.FirstName}",
                     SenderUserName = sender.UserName,
-                    ChannelId = channel
+                    ChannelId = channel,
+                    ParentMessageId = parentId
                 },
                     sender).Result);
             }
@@ -121,7 +122,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void CreateChannelAddsCreator()
         {
-            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser1, $"{TestUtils.GetRandomString(30)}Component", context.extantUsers.Select(s => s.UserName).ToList()).Result;
+            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser1, $"{TestUtils.GetRandomString(30)}Component", null).Result;
             Assert.IsType<int>(generatedChannelId);
             var channels = context.messageDomain.FindChannelWithUsers(null, context.AUser1).Result;
             Assert.Contains(channels, c => c.ChannelId == generatedChannelId);
@@ -186,6 +187,42 @@ namespace Tests.IntegrationTests
             Assert.Equal(messageIDs.Count, conversationChannels.SelectMany(cc => cc.Messages).Count());
         }
 
+
+        [Fact]
+        public void RetrieveThreadRetrievesAll()
+        {
+            var receiver = context.RandomUser();
+            var sender = context.RandomUser();
+            context.userAccountDomain.CreateAccount(receiver).Wait();
+            context.userAccountDomain.CreateAccount(sender).Wait();
+
+            var channelId = context.messageDomain.CreateChannel(sender, $"{TestUtils.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            var messageIDs = context.SendMessage(sender, receiver, 5, channelId);
+            messageIDs = messageIDs.Concat(context.SendMessage(receiver, sender, 5, channelId)).ToList();
+            messageIDs = messageIDs.Concat(context.SendMessage(sender, receiver, 5, channelId)).ToList();
+
+            List<int> replIds = new List<int>();
+            int? parent2 = null;
+            for (int i = 0; i < 10; i++) {
+                if (parent2.HasValue) replIds.Add(parent2.Value);
+                var parent1 = context.SendMessage(receiver, sender, 1, channelId, parent2).First();
+                replIds.Add(parent1);
+
+                parent2 = context.SendMessage(sender, receiver, 1, channelId, parent1).First();
+            }
+            replIds.Add(parent2.Value);
+
+            var replyThread = context.messageDomain.RetrieveThread(parent2.Value, receiver).Result;
+
+            Assert.Equal(channelId, replyThread.Channel.ChannelId);
+            Assert.All(replyThread.Messages, (m) => replIds.Contains(m.MessageId));
+
+            Assert.Equal(replIds.Count, replyThread.Messages.Count);
+        }
+
+
+
+
         [Theory]
         [InlineData(true, true)]
         [InlineData(true, false)]
@@ -210,7 +247,7 @@ namespace Tests.IntegrationTests
             if (read)
             {
                 reducedBy += 1;
-                context.messageDomain.DeleteMessage(new List<int> { originalMessageIds[12] }, receiver).Wait();
+                context.messageDomain.ReadMessage(new List<int> { originalMessageIds[12] }, receiver).Wait();
                 disallowedMessageIds.Add(originalMessageIds[12]);
 
             }
@@ -262,8 +299,6 @@ namespace Tests.IntegrationTests
             messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations3.Last().MessageId, receiver).Result;
             var messageBatchLast = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
             Assert.Empty(messageBatchLast); //300 sent, 300 retrieved, none left
-
-
         }
     }
 }

@@ -47,7 +47,7 @@ namespace CritterServer.DataAccess
         public User RetrieveUserByEmail(string email)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("select * from users where emailAddress = @emailAddress", new { emailAddress = email }).FirstOrDefault();
+            return dbConnection.Query<User>("SELECT * from users WHERE emailAddress = @emailAddress", new { emailAddress = email }).FirstOrDefault();
         }
 
         public IEnumerable<User> RetrieveUsersByIds(params int[] userIds)
@@ -60,7 +60,7 @@ namespace CritterServer.DataAccess
         public User RetrieveUserByUserName(string userName)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("select * from users where userName = @userName", new { userName = userName }).FirstOrDefault();
+            return dbConnection.Query<User>("SELECT * FROM users WHERE userName = @userName", new { userName = userName }).FirstOrDefault();
         }
 
         public async Task<bool> UserExistsByUserNameOrEmail(string userName, string email)
@@ -71,7 +71,7 @@ namespace CritterServer.DataAccess
                     (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
                     (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
                 dbConnection.TryOpen();
-                var searchResult = await dbConnection.QueryAsync<bool>($"select exists (select 1 from users where {whereClause} )", new { userName = userName, email = email });
+                var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
                 return searchResult.FirstOrDefault();
             } catch(Exception ex)
             {

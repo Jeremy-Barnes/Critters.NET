@@ -47,48 +47,31 @@ namespace CritterServer.DataAccess
             return newMessageId;
         }
 
-        public async Task<List<Message>> RetrieveConversation(int channelId, int userId, int? pageDelimiterMessageId)
+        public async Task<List<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId)
         {
             dbConnection.TryOpen();
-
-            var messageOutput = await dbConnection.QueryAsync<Message>(
-            $@"
-            SELECT m.*
-            FROM messages m
-            INNER JOIN channelUsers ch ON ch.channelID = @channelId AND ch.memberID = @userId AND m.channelID = @channelId
-            {(pageDelimiterMessageId.HasValue ? "AND messageID < @pageDelimiterMessageId" : "")}
-            ORDER BY m.dateSent desc LIMIT 100",
-            new
-            {
-                channelId = channelId,
-                pageDelimiterMessageId = pageDelimiterMessageId ?? int.MaxValue
-            });
-            return messageOutput.ToList();
+            var output = await dbConnection.QueryAsync<Message>(
+                $@"WITH RECURSIVE allMessages AS (
+                    SELECT * FROM messages rootMessage  
+                        WHERE rootMessage.messageID = @rootId
+                        AND exists(select 1 from channelUsers cu where cu.channelID = rootMessage.channelid and memberID = @userId)
+                    UNION ALL (SELECT children.* FROM messages children 
+                    JOIN allMessages 
+                        ON children.messageID = allMessages.parentMessageID
+                        AND children.messageID < @pageDelimiterMessageId)
+		        )
+                SELECT *
+                FROM allMessages
+                WHERE deleted = false
+                ORDER BY dateSent desc LIMIT 100",
+               new
+               {
+                   userId,
+                   rootId = pageDelimiterMessageId,
+                   pageDelimiterMessageId = pageDelimiterMessageId
+               });
+            return output.ToList();
         }
-
-
-        //public async Task<List<Message>> RetrieveReplyThread(int rootMessageId, int userId, int? pageDelimiterMessageId)
-        //{
-        //    dbConnection.TryOpen();
-        //    var output = await dbConnection.QueryAsync<Message>(
-        //        $@"WITH RECURSIVE allMessages AS (
-        //            SELECT * FROM messages rootMessage  
-        //                WHERE rootMessage.messageID = @rootId AND (senderUserID = @userId or recipientUserID = @userId)
-        //            UNION ALL (SELECT children.* FROM messages children JOIN allMessages ON children.parentMessageID = allMessages.messageID 
-        //            {(pageDelimiterMessageId.HasValue ? "AND children.messageID < @pageDelimiterMessageId" : "")})
-		      //  )
-        //        SELECT *
-        //        FROM allMessages
-        //        WHERE deleted = false
-        //        ORDER BY dateSent desc LIMIT 100",
-        //       new
-        //       {
-        //           userId,
-        //           rootId = rootMessageId,
-        //           pageDelimiterMessageId = pageDelimiterMessageId ?? int.MaxValue
-        //       });
-        //    return output.ToList();
-        //}
 
         public async Task<List<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
         {
@@ -231,13 +214,27 @@ namespace CritterServer.DataAccess
 
             return channels.ToList();
         }
+
+        public async Task<IEnumerable<Channel>> GetChannel(params int[] channelIds)
+        {
+            dbConnection.TryOpen();
+            var output = await dbConnection.QueryAsync<Channel>("SELECT * FROM channels" +
+               "WHERE channelID = ANY(@channelIds)",
+               new
+               {
+                   channelIds
+               });
+            return output;
+        }
+
     }
 
     public interface IMessageRepository : IRepository
     {
         Task<int> CreateMessage(Message message, List<int> recipientUserIds, int senderUserId);
-        Task<List<Message>> RetrieveConversation(int channelId, int userId, int? pageDelimiterMessageId);
+        //Task<List<Message>> RetrieveChannelConversation(int channelId, int userId, int? pageDelimiterMessageId);
         Task<List<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue);
+        Task<List<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId);
         Task<int> UpdateMessageStatus(IEnumerable<int> deleteMessageIds, IEnumerable<int> readMessageIds, int userId);
 
         Task<List<int>> GetAllChannelMemberIds(int channelId);
@@ -245,6 +242,9 @@ namespace CritterServer.DataAccess
         Task<int> CreateChannel(string channelName);
         Task AddUsersToChannel(int channelId, List<int> userIds);
         Task<List<Channel>> FindMembershipChannel(List<int> userIds, bool exactMatch);
+        Task<IEnumerable<Channel>> GetChannel(params int[] channelId);
+
+
 
     }
 }

@@ -27,60 +27,40 @@ namespace CritterServer.Domains
             this.hubContext = hubContext;
         }
 
-        public async Task<List<ChannelConversation>> GetMessages(bool unreadOnly, int? lastMessageRetrieved, User activeUser)
+        public async Task<List<ChannelDetails>> GetMessages(bool unreadOnly, int? lastMessageRetrieved, User activeUser)
         {
             List<Message> messages;
             messages = await messageRepo.RetrieveMessagesByDate(activeUser.UserId, null, unreadOnly, lastMessageRetrieved ?? Int32.MaxValue);
 
-
-            Dictionary<int, Message> messageMap = new Dictionary<int, Message>();
-            messages.ToDictionary(m => m.MessageId);
-            //IEnumerable<int> parentIds = messages.Where(m => m.ParentMessageId.HasValue).Select(m => m.ParentMessageId.Value).Distinct();
-            //IEnumerable<Message> leafNodes = messages.Where(m => !parentIds.Contains(m.MessageId));
-            //IEnumerable<Conversation> conversations = leafNodes.Select(leafNode => constructConversation(leafNode, messageMap));
-            List<ChannelConversation> channelMessages = new List<ChannelConversation>();
-            var channels = messages.GroupBy(m => m.ChannelId);
-            foreach(var channel in channels)
+            List<ChannelDetails> channelMessages = new List<ChannelDetails>();
+            var messagesGroupedByChannel = messages.GroupBy(m => m.ChannelId);
+            var channelData = (await messageRepo.GetChannel(messagesGroupedByChannel.Select(mgbc => mgbc.Key).ToArray())).ToDictionary(c => c.ChannelId);
+            foreach (var channel in messagesGroupedByChannel)
             {
-                channelMessages.Add(new ChannelConversation() {
+                channelMessages.Add(new ChannelDetails()
+                {
                     Messages = channel.ToList(),
+                    Channel = channelData[channel.Key],
+                    UserNames = messages.Select(m => m.SenderUserName).Distinct().ToList()
                 });
             }
-            //now we have a list of unique conversations, but if I reply to the same message twice, a day apart, that should be counted as one conversation.
-            //Conversations are trees flattened into lists
-
-            ////if they share a subject, same conversation;
-            //IEnumerable<IGrouping<int, Conversation>> mergedConversations = conversations.GroupBy(c => messageMap[c.messageIds[0]].ChannelId.Value);
-
-            //List<Conversation> inbox = new List<Conversation>();
-            //foreach(var mergeGroup in mergedConversations)
-            //{
-            //    Conversation thread = mergeGroup.First();
-            //    if(mergeGroup.Count() > 1)
-            //    {
-            //        thread.messageIds = mergeGroup.SelectMany(c => c.messageIds).OrderBy(id => id).ToList();
-            //        thread.userNames = mergeGroup.SelectMany(c => c.userNames).ToList();
-            //    }
-            //    inbox.Add(thread);
-
-            //}
-
             return channelMessages;
         }
 
-        //private ChannelConversation constructConversation(Message message, Dictionary<int, Message> messageMap, ChannelConversation conversation = null)
-        //{
-        //    if(conversation == null)
-        //    {
-        //        conversation = new ChannelConversation();
-        //    }
-        //    conversation.messageIds.Add(message.MessageId);
-        //    if(message.ParentMessageId != null)
-        //    {
-        //        constructConversation(messageMap[message.ParentMessageId.Value], messageMap, conversation);
-        //    }
-        //    return conversation;
-        //}
+        public async Task<ChannelDetails> RetrieveThread(int lastMessageRetrieved, User activeUser)
+        {
+            List<Message> messages;
+            messages = await messageRepo.RetrieveReplyThread(activeUser.UserId, lastMessageRetrieved);
+            if(messages.Count == 0)
+            {
+                return null;
+            }
+            return new ChannelDetails()
+            {
+                Messages = messages,
+                Channel = new Channel() { ChannelId = messages[0].ChannelId },
+            };
+        }
 
         public async Task<int> SendMessage(Message message, User activeUser)
         {
@@ -191,6 +171,22 @@ namespace CritterServer.Domains
             }
         }
 
-
+        public async Task<List<ChannelDetails>> GetChannels(List<int> channelIds, User activeUser)
+        {
+            var channels = await messageRepo.GetChannel(channelIds.ToArray());
+            Dictionary<int, List<int>> channelIdToUserIds = new Dictionary<int, List<int>>();
+            foreach (var channel in channels) 
+            {
+                channelIdToUserIds.Add(channel.ChannelId, await messageRepo.GetAllChannelMemberIds(channel.ChannelId));
+            }
+            var users = userDomain.RetrieveUsers(channelIdToUserIds.SelectMany(val => val.Value).ToList());//.SelectMany<int>((int v) => v).ToList();
+            var channelsDetails = channels.Select(c => new ChannelDetails()
+            {
+                Channel = c,
+                Users = users.Where(u => channelIdToUserIds[c.ChannelId].Contains(u.UserId)).ToList()
+            }).ToList();
+            channelsDetails.ForEach(cd => cd.UserNames = cd.Users.Select(u => u.UserName).ToList());
+            return channelsDetails;
+        }
     }//class
 }//namespace
