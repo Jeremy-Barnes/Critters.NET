@@ -24,13 +24,13 @@ namespace CritterServer.Controllers
             this.domain = domain;
         }
 
-        [HttpGet("new")]
+        [HttpGet("new/{lastMessageId:int?}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> RetrieveUnreadMessages([FromQuery]int? lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> RetrieveUnreadMessages(int? lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            var channelsAndMessages = await domain.GetMessages(false, lastMessageId, activeUser);
-            return Ok(channelsAndMessages);
+            var channelsAndMessages = await domain.GetMessages(true, lastMessageId, activeUser);
+            return Ok(new { ChannelDetails = channelsAndMessages });
         }
 
         [HttpGet()]
@@ -87,7 +87,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> CreateChannel([FromBody]ChannelDetails channel, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
             var newChannelId = await domain.CreateChannel(activeUser, channel.Channel?.ChannelName, channel.UserNames);
-            return Ok(newChannelId);
+            return Ok(new { ChannelId = newChannelId });
         }
 
         [HttpGet("channel/{channelIdsCSV}")]

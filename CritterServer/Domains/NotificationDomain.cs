@@ -110,7 +110,7 @@ namespace CritterServer.Domains
                 userIds.Add(recipient.UserId);
             }
 
-            return await messageRepo.FindMembershipChannel(userIds, false);
+            return await messageRepo.FindChannelWithMembers(userIds, false);
         }
 
         public async Task<int> CreateChannel(User activeUser, string groupTitle, List<string> addUserNames)
@@ -135,6 +135,8 @@ namespace CritterServer.Domains
                 channelId = await messageRepo.CreateChannel(groupTitle);
                 recipientIds.Add(activeUser.UserId);
                 await messageRepo.AddUsersToChannel(channelId, recipientIds);
+
+                trans.Complete();
             }
             return channelId;
         }
@@ -173,6 +175,12 @@ namespace CritterServer.Domains
 
         public async Task<List<ChannelDetails>> GetChannels(List<int> channelIds, User activeUser)
         {
+            var allUserChannels = await messageRepo.GetChannelsForUser(activeUser.UserId);
+
+            if (channelIds == null || !channelIds.Any()) 
+                channelIds = allUserChannels.ToList();
+            else 
+                channelIds = channelIds.Intersect(allUserChannels).ToList();
             var channels = await messageRepo.GetChannel(channelIds.ToArray());
             Dictionary<int, List<int>> channelIdToUserIds = new Dictionary<int, List<int>>();
             foreach (var channel in channels) 

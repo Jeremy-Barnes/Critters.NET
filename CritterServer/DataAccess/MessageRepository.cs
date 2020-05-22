@@ -177,17 +177,21 @@ namespace CritterServer.DataAccess
         public async Task AddUsersToChannel(int channelId, List<int> userIds)
         {
             dbConnection.TryOpen();
-            await dbConnection.ExecuteAsync("INSERT INTO channelUsers(channelID, memberID)" +
-               "VALUES(@channelId, @userId) RETURNING channelID",
+            int rowsUpdated = await dbConnection.ExecuteAsync("INSERT INTO channelUsers(channelID, memberID)" +
+               "VALUES(@channelId, @userId)",
                userIds.Distinct().Select(uid =>
                new
                {
                    userId = uid,
                    channelId
                }).ToArray());
+            if(rowsUpdated != userIds.Count)
+            {
+                throw new Exception();
+            }
         }
 
-        public async Task<List<Channel>> FindMembershipChannel(List<int> userIds, bool exactMatch)
+        public async Task<List<Channel>> FindChannelWithMembers(List<int> userIds, bool exactMatch)
         {
             dbConnection.TryOpen();
             await dbConnection.ExecuteAsync(@"
@@ -218,11 +222,23 @@ namespace CritterServer.DataAccess
         public async Task<IEnumerable<Channel>> GetChannel(params int[] channelIds)
         {
             dbConnection.TryOpen();
-            var output = await dbConnection.QueryAsync<Channel>("SELECT * FROM channels" +
-               "WHERE channelID = ANY(@channelIds)",
+            var output = await dbConnection.QueryAsync<Channel>(@"
+                SELECT * FROM channels
+                WHERE channelID = ANY(@channelIds)",
                new
                {
                    channelIds
+               });
+            return output;
+        }
+
+        public async Task<IEnumerable<int>> GetChannelsForUser(int userId)
+        {
+            dbConnection.TryOpen();
+            var output = await dbConnection.QueryAsync<int>("SELECT channelID FROM channelUsers WHERE memberID = @userId",
+               new
+               {
+                   userId = userId
                });
             return output;
         }
@@ -241,8 +257,10 @@ namespace CritterServer.DataAccess
         Task<bool> UserIsChannelMember(int channelId, int userId);
         Task<int> CreateChannel(string channelName);
         Task AddUsersToChannel(int channelId, List<int> userIds);
-        Task<List<Channel>> FindMembershipChannel(List<int> userIds, bool exactMatch);
+        Task<List<Channel>> FindChannelWithMembers(List<int> userIds, bool exactMatch);
         Task<IEnumerable<Channel>> GetChannel(params int[] channelId);
+        Task<IEnumerable<int>> GetChannelsForUser(int userId);
+
 
 
 

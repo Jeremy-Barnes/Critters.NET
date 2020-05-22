@@ -220,7 +220,19 @@ namespace Tests.IntegrationTests
             Assert.Equal(replIds.Count, replyThread.Messages.Count);
         }
 
+        [Fact]
+        public void GetChannelsGetsAllChannelsForUser()
+        {
+            var channelOwner = context.RandomUser();
+            context.userAccountDomain.CreateAccount(channelOwner).Wait();
 
+            var channelIds = new List<int>(); 
+            for(int i = 0; i < 10; i++)
+            channelIds.Add(context.messageDomain.CreateChannel(channelOwner, $"{TestUtils.GetRandomString(6)} Component Test Channel", new List<string>() { channelOwner.UserName }).Result);
+
+            var channels = context.messageDomain.GetChannels(channelIds, channelOwner);
+            Assert.Equal(channels.Result.Select(c => c.Channel.ChannelId).ToList(), channelIds);
+        }
 
 
         [Theory]
