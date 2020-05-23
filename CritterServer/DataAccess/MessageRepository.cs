@@ -18,7 +18,7 @@ namespace CritterServer.DataAccess
             this.dbConnection = dbConnection;
         }
 
-        public async Task<int> CreateMessage(Message message, List<int> recipientUserIds, int senderUserId)
+        public async Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId)
         {
             dbConnection.TryOpen();
             int newMessageId = (await dbConnection.QueryAsync<int>("INSERT INTO messages(senderUserID, dateSent, messageText, messageSubject, deleted, parentMessageID, channelID)" +
@@ -47,7 +47,7 @@ namespace CritterServer.DataAccess
             return newMessageId;
         }
 
-        public async Task<List<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId)
+        public async Task<IEnumerable<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId)
         {
             dbConnection.TryOpen();
             var output = await dbConnection.QueryAsync<Message>(
@@ -70,10 +70,10 @@ namespace CritterServer.DataAccess
                    rootId = pageDelimiterMessageId,
                    pageDelimiterMessageId = pageDelimiterMessageId
                });
-            return output.ToList();
+            return output;
         }
 
-        public async Task<List<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
+        public async Task<IEnumerable<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
         {
             dbConnection.TryOpen();
 
@@ -100,7 +100,7 @@ namespace CritterServer.DataAccess
                    pageDelimiterMessageId = pageDelimiterMessageId,
                    channelId = channelId
                });
-            return output.ToList();
+            return output;
         }
 
         public async Task<int> UpdateMessageStatus(IEnumerable<int> deleteMessageIds, IEnumerable<int> readMessageIds, int userId)
@@ -114,7 +114,7 @@ namespace CritterServer.DataAccess
                     WHERE messageID = ANY (@readMessageIDs) AND recipientID = @userID",
                    new
                    {
-                       readMessageIDs = readMessageIds.ToList(),
+                       readMessageIDs = readMessageIds.AsList(),
                        userID = userId
                    });
                 return output;
@@ -136,7 +136,7 @@ namespace CritterServer.DataAccess
             throw new InvalidOperationException("You cannot update an empty list of messages. User " + userId);
         }
 
-        public async Task<List<int>> GetAllChannelMemberIds(int channelId)
+        public async Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId)
         {
             dbConnection.TryOpen();
             var output = await dbConnection.QueryAsync<int>(
@@ -146,7 +146,7 @@ namespace CritterServer.DataAccess
                {
                    channelId
                });
-            return output.ToList();
+            return output;
         }
 
         public async Task<bool> UserIsChannelMember(int channelId, int userId)
@@ -174,7 +174,7 @@ namespace CritterServer.DataAccess
             return output;
         }
 
-        public async Task AddUsersToChannel(int channelId, List<int> userIds)
+        public async Task AddUsersToChannel(int channelId, IEnumerable<int> userIds)
         {
             dbConnection.TryOpen();
             int rowsUpdated = await dbConnection.ExecuteAsync("INSERT INTO channelUsers(channelID, memberID)" +
@@ -185,13 +185,13 @@ namespace CritterServer.DataAccess
                    userId = uid,
                    channelId
                }).ToArray());
-            if(rowsUpdated != userIds.Count)
+            if(rowsUpdated != userIds.Count())
             {
                 throw new Exception();
             }
         }
 
-        public async Task<List<Channel>> FindChannelWithMembers(List<int> userIds, bool exactMatch)
+        public async Task<IEnumerable<Channel>> FindChannelWithMembers(IEnumerable<int> userIds, bool exactMatch)
         {
             dbConnection.TryOpen();
             await dbConnection.ExecuteAsync(@"
@@ -214,9 +214,9 @@ namespace CritterServer.DataAccess
 
             var channels = await dbConnection.QueryAsync<Channel>(@"
                 SELECT * FROM channels where channelID = ANY (@channelIDs)
-                ", new { channelIDs = channelIDsInt.ToList()});
+                ", new { channelIDs = channelIDsInt.AsList()});
 
-            return channels.ToList();
+            return channels;//.List();
         }
 
         public async Task<IEnumerable<Channel>> GetChannel(params int[] channelIds)
@@ -247,17 +247,17 @@ namespace CritterServer.DataAccess
 
     public interface IMessageRepository : IRepository
     {
-        Task<int> CreateMessage(Message message, List<int> recipientUserIds, int senderUserId);
+        Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId);
         //Task<List<Message>> RetrieveChannelConversation(int channelId, int userId, int? pageDelimiterMessageId);
-        Task<List<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue);
-        Task<List<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId);
+        Task<IEnumerable<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue);
+        Task<IEnumerable<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId);
         Task<int> UpdateMessageStatus(IEnumerable<int> deleteMessageIds, IEnumerable<int> readMessageIds, int userId);
 
-        Task<List<int>> GetAllChannelMemberIds(int channelId);
+        Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId);
         Task<bool> UserIsChannelMember(int channelId, int userId);
         Task<int> CreateChannel(string channelName);
-        Task AddUsersToChannel(int channelId, List<int> userIds);
-        Task<List<Channel>> FindChannelWithMembers(List<int> userIds, bool exactMatch);
+        Task AddUsersToChannel(int channelId, IEnumerable<int> userIds);
+        Task<IEnumerable<Channel>> FindChannelWithMembers(IEnumerable<int> userIds, bool exactMatch);
         Task<IEnumerable<Channel>> GetChannel(params int[] channelId);
         Task<IEnumerable<int>> GetChannelsForUser(int userId);
 

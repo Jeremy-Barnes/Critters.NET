@@ -71,7 +71,7 @@ namespace CritterServer.Domains
             return userRepo.RetrieveUsersByIds(userId).FirstOrDefault();
         }
 
-        public List<User> RetrieveUsers(List<int> userIds)
+        public List<User> RetrieveUsers(IEnumerable<int> userIds)
         {
             return userRepo.RetrieveUsersByIds(userIds.ToArray()).ToList();
         }

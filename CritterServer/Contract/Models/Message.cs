@@ -11,12 +11,12 @@ namespace CritterServer.Models
     public class Message
     {
         public int MessageId { get; set; }
-        public string SenderUserName { get; set; }
+        [InternalOnly]
+        public int SenderUserId { get; set; }
         public DateTime DateSent { get; set; }
         public string MessageText { get; set; }
         public string MessageSubject { get; set; }
         public int? ParentMessageId{ get; set; }
-        [Required]
         public int ChannelId { get; set; }
 
         public string MessagePreview(int? truncateAfter)

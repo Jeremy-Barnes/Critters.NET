@@ -27,12 +27,12 @@ namespace CritterServer.Contract
 
     public class MessageAlert : Notification
     {
-        public Message message { get; set; }
+        public MessageDetails message { get; set; }
 
-        public MessageAlert(Message message)
+        public MessageAlert(MessageDetails message)
         {
             this.message = message;
-            this.AlertText = $"New message from: {message.SenderUserName}: {message.MessagePreview(50)}";
+            this.AlertText = $"New message from: {message.SenderUsername}: {message.Message.MessagePreview(50)}";
         }
     }
 }

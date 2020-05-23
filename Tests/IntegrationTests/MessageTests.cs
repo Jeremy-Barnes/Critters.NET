@@ -100,7 +100,6 @@ namespace Tests.IntegrationTests
                 {
                     MessageSubject = $"This message created at {DateTime.UtcNow}",
                     MessageText = $"My dearest {receiver.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{sender.FirstName}",
-                    SenderUserName = sender.UserName,
                     ChannelId = channel,
                     ParentMessageId = parentId
                 },
@@ -135,7 +134,6 @@ namespace Tests.IntegrationTests
             var messageIdGenerated = context.messageDomain.SendMessage(new Message { 
                 MessageSubject = $"This message created at {DateTime.UtcNow}", 
                 MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
-                SenderUserName = context.AUser1.UserName,
                 ChannelId = generatedChannelId
             },
                 context.AUser1).Result;
@@ -152,7 +150,6 @@ namespace Tests.IntegrationTests
             {
                 MessageSubject = $"This message created at {DateTime.UtcNow}",
                 MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
-                SenderUserName = context.AUser1.UserName
             },
                 context.AUser1).Wait());
         }
@@ -164,7 +161,6 @@ namespace Tests.IntegrationTests
             {
                 MessageSubject = $"This message created at {DateTime.UtcNow}",
                 MessageText = $"{TestUtils.GetRandomString(6)} My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
-                SenderUserName = context.AUser1.UserName,
                 ChannelId = -1
             },
                 context.AUser1).Wait());
@@ -215,9 +211,9 @@ namespace Tests.IntegrationTests
             var replyThread = context.messageDomain.RetrieveThread(parent2.Value, receiver).Result;
 
             Assert.Equal(channelId, replyThread.Channel.ChannelId);
-            Assert.All(replyThread.Messages, (m) => replIds.Contains(m.MessageId));
+            Assert.All(replyThread.Messages, (m) => replIds.Contains(m.Message.MessageId));
 
-            Assert.Equal(replIds.Count, replyThread.Messages.Count);
+            Assert.Equal(replIds.Count, replyThread.Messages.Count());
         }
 
         [Fact]
@@ -273,7 +269,7 @@ namespace Tests.IntegrationTests
             messagesAcrossAllChannels = context.messageDomain.GetMessages(true, null, receiver).Result;
             Assert.Equal(originalMessageIds.Count - reducedBy, messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Count());
 
-            var mergedConversationsMessageIds = messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Select(m => m.MessageId);
+            var mergedConversationsMessageIds = messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Select(m => m.Message.MessageId);
 
             foreach (int removedMessageId in disallowedMessageIds)
             {
@@ -298,17 +294,17 @@ namespace Tests.IntegrationTests
             var mergedConversations = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
             Assert.Equal(100, mergedConversations.Count()); //we only page out 100 messages at once
 
-            messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations.Last().MessageId, receiver).Result;
+            messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations.Last().Message.MessageId, receiver).Result;
             var mergedConversations2 = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
             Assert.Equal(100, mergedConversations2.Count()); //we only page out 100 messages at once
 
-            Assert.False(mergedConversations2.Any(m => mergedConversations.Any(m2 => m2.MessageId == m.MessageId)));
+            Assert.False(mergedConversations2.Any(m => mergedConversations.Any(m2 => m2.Message.MessageId == m.Message.MessageId)));
 
-            messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations2.Last().MessageId, receiver).Result;
+            messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations2.Last().Message.MessageId, receiver).Result;
             var mergedConversations3 = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
             Assert.Equal(100, mergedConversations3.Count()); //we only page out 100 messages at once
 
-            messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations3.Last().MessageId, receiver).Result;
+            messagesAcrossAllChannels = context.messageDomain.GetMessages(unreadOnly, mergedConversations3.Last().Message.MessageId, receiver).Result;
             var messageBatchLast = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
             Assert.Empty(messageBatchLast); //300 sent, 300 retrieved, none left
         }

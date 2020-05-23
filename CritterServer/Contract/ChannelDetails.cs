@@ -8,15 +8,15 @@ namespace CritterServer.Contract
 {
     public class ChannelDetails
     {
-        public List<Message> Messages { get; set; }
-        public List<User> Users { get; set; }
+        public IEnumerable<MessageDetails> Messages { get; set; }
+        public IEnumerable<User> Users { get; set; }
 
-        public List<string> UserNames { get; set; }
+        public IEnumerable<string> UserNames { get; set; }
         public Channel Channel { get; set; }
 
         public ChannelDetails()
         {
-            Messages = new List<Message>();
+            Messages = new List<MessageDetails>();
             UserNames = new List<string>();
         }
 
