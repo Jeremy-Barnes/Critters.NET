@@ -113,7 +113,7 @@ namespace CritterServer
 
             //domains
             services.AddTransient<UserDomain>();
-            services.AddTransient<NotificationDomain>();
+            services.AddTransient<MessageDomain>();
 
             services.AddTransient<ErrorMiddleware>();
 

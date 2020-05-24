@@ -2,6 +2,7 @@
 using CritterServer.Domains;
 using CritterServer.Models;
 using CritterServer.Pipeline.Middleware;
+using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,11 @@ namespace CritterServer.Controllers
     [Route("api/[controller]")]
     [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
     [ApiController]
-    public class NotificationController : ControllerBase
+    public class MessageController : ControllerBase
     {
-        NotificationDomain domain;
+        MessageDomain domain;
 
-        public NotificationController(NotificationDomain domain)
+        public MessageController(MessageDomain domain)
         {
             this.domain = domain;
         }
@@ -90,6 +91,12 @@ namespace CritterServer.Controllers
             return Ok(new { ChannelId = newChannelId });
         }
 
+
+        [HttpGet("channel")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> RetrieveChannel([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser) => await RetrieveChannel("", activeUser);
+
         [HttpGet("channel/{channelIdsCSV}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -99,7 +106,7 @@ namespace CritterServer.Controllers
             {
                 try
                 {
-                    var channelIds = channelIdsCSV.Split(',').Select(csv => Int32.Parse(csv)).ToList();
+                    var channelIds = channelIdsCSV.Length > 0 ? channelIdsCSV.Split(',').Select(csv => Int32.Parse(csv)).AsList() : null;
                     List<ChannelDetails> channelDetails = await domain.GetChannels(channelIds, activeUser);
                     return Ok(channelDetails);
                 } catch(Exception ex)

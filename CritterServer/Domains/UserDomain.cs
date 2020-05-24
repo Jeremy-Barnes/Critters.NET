@@ -41,12 +41,12 @@ namespace CritterServer.Domains
             return jwtProvider.GenerateToken(user);
         }
 
-        public string Login(User user)
+        public async Task<string> Login(User user)
         {
             User dbUser = null;
             if (!string.IsNullOrEmpty(user.UserName))
             {
-                dbUser = RetrieveUserByUserName(user.UserName);
+                dbUser = await RetrieveUserByUserName(user.UserName);
             }
             else if (!string.IsNullOrEmpty(user.EmailAddress))
             {
@@ -76,9 +76,9 @@ namespace CritterServer.Domains
             return userRepo.RetrieveUsersByIds(userIds.ToArray()).ToList();
         }
 
-        public User RetrieveUserByUserName(string userName)
+        public async Task<User> RetrieveUserByUserName(string userName)
         {
-            return userRepo.RetrieveUserByUserName(userName);
+            return await userRepo.RetrieveUserByUserName(userName);
 
         }
 

@@ -24,7 +24,7 @@ namespace Tests.IntegrationTests
 
         public IDbConnection dbConnection;
         public UserDomain userAccountDomain;
-        public NotificationDomain messageDomain;
+        public MessageDomain messageDomain;
         public IUserRepository userRepo;
         public IMessageRepository messageRepo;
 
@@ -57,7 +57,7 @@ namespace Tests.IntegrationTests
             userRepo = new UserRepository(dbConnection);
             userAccountDomain = new UserDomain(userRepo, jwtProvider);
             messageRepo = new MessageRepository(dbConnection);
-            messageDomain = new NotificationDomain(messageRepo, userAccountDomain, null);
+            messageDomain = new MessageDomain(messageRepo, userAccountDomain, null);
 
             AUser1 = RandomUser();
             AUser2 = RandomUser();

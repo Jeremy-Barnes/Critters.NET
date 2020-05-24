@@ -46,10 +46,10 @@ namespace CritterServer.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult Login([FromBody] User user)
+        public async Task<ActionResult> Login([FromBody] User user)
         {
             UserAuthResponse response = new UserAuthResponse();
-            response.authToken = domain.Login(user);
+            response.authToken = await domain.Login(user);
             response.user = user;
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(response);
@@ -60,9 +60,9 @@ namespace CritterServer.Controllers
         [Produces("application/json")]
 
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult GetUser()
+        public async Task<ActionResult> GetUser()
         {
-            User user = domain.RetrieveUserByUserName(HttpContext.User.Identity.Name);
+            User user = await domain.RetrieveUserByUserName(HttpContext.User.Identity.Name);
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(user);
         }

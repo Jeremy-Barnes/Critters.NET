@@ -42,6 +42,10 @@ namespace CritterServer.Domains
         {
             this.Clients.AllExcept(currentConnectionId).ReceiveNotification(new Notification($"{username} has {(isConnecting ? "come online!" : "left.")}"));
         }
+        protected override void Dispose(bool disposing)
+        {
+            //this.Dispose();
+        }
     }
 
     public interface IUserClient

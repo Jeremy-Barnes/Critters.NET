@@ -100,7 +100,7 @@ namespace Tests.IntegrationTests
             context.userAccountDomain.CreateAccount(randomUser).Wait();
             randomUser.Password = password; //gets overwritten as the hashed value during acct create
 
-            string jwt = context.userAccountDomain.Login(randomUser);
+            string jwt = context.userAccountDomain.Login(randomUser).Result;
 
             Assert.NotEmpty(jwt);
             Assert.True(context.jwtProvider.ValidateToken(jwt));
@@ -115,7 +115,7 @@ namespace Tests.IntegrationTests
             context.userAccountDomain.CreateAccount(randomUser).Wait();
             randomUser.Password = password; //gets overwritten as the hashed value during acct create
 
-            string jwt = context.userAccountDomain.Login(randomUser);
+            string jwt = context.userAccountDomain.Login(randomUser).Result;
 
             Assert.NotEmpty(jwt);
             Assert.True(context.jwtProvider.ValidateToken(jwt));

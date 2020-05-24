@@ -15,12 +15,12 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 namespace CritterServer.Domains
 {
-    public class NotificationDomain
+    public class MessageDomain
     {
         IMessageRepository messageRepo;
         UserDomain userDomain;
         IHubContext<NotificationHub, IUserClient> hubContext;
-        public NotificationDomain(IMessageRepository messageRepo, UserDomain userDomain, IHubContext<NotificationHub, IUserClient> hubContext)
+        public MessageDomain(IMessageRepository messageRepo, UserDomain userDomain, IHubContext<NotificationHub, IUserClient> hubContext)
         {
             this.messageRepo = messageRepo;
             this.userDomain = userDomain;
@@ -60,22 +60,16 @@ namespace CritterServer.Domains
                         System.Net.HttpStatusCode.BadRequest);
                 }
                 recipientIds = await messageRepo.GetAllChannelMemberIds(message.ChannelId);
-            
-                message.MessageId = await messageRepo.CreateMessage(message, recipientIds, activeUser.UserId);
+                
+                message.MessageId = await messageRepo.CreateMessage(message, recipientIds.Where(id => id != activeUser.UserId), activeUser.UserId);
 
                 trans.Complete();
             }
             List<User> recipientUsers = userDomain.RetrieveUsers(recipientIds);
 
-            foreach (User user in recipientUsers) //TODO just send to the group
-            {
-                if (user.IsActive)
-                {
-                    var clients = hubContext?.Clients.User(user.UserName);
-                    clients?.ReceiveNotification(new MessageAlert(new MessageDetails() { Message = message, SenderUsername = activeUser.UserName }));
-                }
-            }
-
+            hubContext?.Clients?.GroupExcept(NotificationHub.GetChannelGroupIdentifier(message.ChannelId), activeUser.UserName)
+                ?.ReceiveNotification(new MessageAlert(new MessageDetails() { Message = message, SenderUsername = activeUser.UserName }));
+            
             return message.MessageId;
         }
 
@@ -86,7 +80,7 @@ namespace CritterServer.Domains
             if(userNames != null)
             foreach(var userName in userNames)
             {
-                var recipient = userDomain.RetrieveUserByUserName(userName);
+                var recipient = await userDomain.RetrieveUserByUserName(userName);
                 if (recipient == null || !recipient.IsActive)
                 {
                     throw new CritterException($"Could not find a group for {userName}!", $"Invalid message recipient provided - {userName}", System.Net.HttpStatusCode.BadRequest);
@@ -107,7 +101,7 @@ namespace CritterServer.Domains
                 {
                     foreach (var userName in addUserNames)
                     {
-                        var recipient = userDomain.RetrieveUserByUserName(userName);
+                        var recipient = await userDomain.RetrieveUserByUserName(userName);
                         if (recipient == null || !recipient.IsActive)
                         {
                             throw new CritterException($"Could not add {userName} to a group!", $"Invalid message recipient provided - {userName}", System.Net.HttpStatusCode.BadRequest);

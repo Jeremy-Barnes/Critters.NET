@@ -57,10 +57,12 @@ namespace CritterServer.DataAccess
                 new { userIdList = userIds.ToList() });
         }
 
-        public User RetrieveUserByUserName(string userName)
+        public async Task<User> RetrieveUserByUserName(string userName)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("SELECT * FROM users WHERE userName = @userName", new { userName = userName }).FirstOrDefault();
+            var user = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = @userName", new { userName });//.FirstOrDefault();
+
+            return user.FirstOrDefault();
         }
 
         public async Task<bool> UserExistsByUserNameOrEmail(string userName, string email)
@@ -85,7 +87,7 @@ namespace CritterServer.DataAccess
         int CreateUser(User user);
         IEnumerable<User> RetrieveUsersByIds(params int[] userIds);
         User RetrieveUserByEmail(string email);
-        User RetrieveUserByUserName(string userName);
+        Task<User> RetrieveUserByUserName(string userName);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
     }
 }

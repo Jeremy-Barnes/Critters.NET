@@ -17,17 +17,16 @@ namespace CritterServer.Pipeline.Middleware
             this.userRepository = userRepository;
         }
 
-        public Task BindModelAsync(ModelBindingContext bindingContext)
+        public async Task BindModelAsync(ModelBindingContext bindingContext)
         {
             if (bindingContext == null)
             {
                 throw new ArgumentNullException(nameof(bindingContext));
             }
 
-            var userModel = userRepository.RetrieveUserByUserName(bindingContext.HttpContext.User.Identity.Name);
+            var userModel = await userRepository.RetrieveUserByUserName(bindingContext.HttpContext.User.Identity.Name);
 
             bindingContext.Result = ModelBindingResult.Success(userModel);
-            return Task.CompletedTask;
         }
     }
 }

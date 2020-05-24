@@ -10,21 +10,22 @@ class Greeter {
         this.signalRConnection = new signalR.HubConnectionBuilder().withUrl("http://localhost:59010/notificationhub",
             {
                 accessTokenFactory: () =>
-                    "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImouYmFybmVzIiwiZW1haWwiOiJqZXJlbWlhaC5iYXJuZXNAb3V0bG9vay5jb20iLCJuYmYiOjE1ODg5OTk2MTIsImV4cCI6MTU5MDIwOTIxMiwiaWF0IjoxNTg4OTk5NjEyLCJpc3MiOiJjcml0dGVycyEifQ.w9yNPZtYLhxTOutWhpdG-Ou0p_ymvYKtxlDcpHDIY1ejHGJy7dLmnOnTmxpkXLIS"
+                    "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImMuZGlwc29uIiwiZW1haWwiOiJqYWJhcm5lczIxMTJAZ21haWwuY29tIiwibmJmIjoxNTkwMTY2MjkwLCJleHAiOjE1OTEzNzU4OTAsImlhdCI6MTU5MDE2NjI5MCwiaXNzIjoiY3JpdHRlcnMhIn0.hyM_bGStaTpeayOV8CetLi9oCguTZ6BSaX99-T02Ja0OZA4mE7FlYlUR8leHLScz"
 
             }).build();
-        this.signalRConnection.on("ReceiveNotification", (notification: Notification) => { alert(notification.Message);});
+        this.signalRConnection.on("ReceiveNotification", (notification: Notification) => { alert(notification.AlertText);});
         this.signalRConnection.start();
     }
 
     invokeSignalRServer(wo: number) {
-        setInterval(() => this.signalRConnection.invoke("Connect"), 5000);
+        setInterval(() => this.signalRConnection.invoke("Connect"), 1000*25);
     }
 }
 
 class Notification {
-    Message: string;
+    AlertText: string;
 }
+
 
 window.onload = () => {
     var greeter = new Greeter();
