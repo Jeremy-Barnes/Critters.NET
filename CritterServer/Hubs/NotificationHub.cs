@@ -1,4 +1,6 @@
 ﻿using CritterServer.Contract;
+using CritterServer.Models;
+using CritterServer.Pipeline.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -13,8 +15,16 @@ namespace CritterServer.Domains
 {
     [Route("api/notifications")]
     [ApiController]
-    public class NotificationHub : Hub<IUserClient>, ControllerBase
+    public class NotificationHub : Hub<IUserClient>
     {
+        private readonly MessageDomain messageDomain;
+        private readonly UserDomain userDomain;
+        public NotificationHub(MessageDomain messageDomain, UserDomain userDomain)
+        {
+            this.messageDomain = messageDomain;
+            this.userDomain = userDomain;
+        }
+
         public override Task OnConnectedAsync()
         {
             notifyNewConnectionState(this.Context.User.Identity.Name, this.Context.ConnectionId, true);
@@ -35,13 +45,25 @@ namespace CritterServer.Domains
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         public void Connect()
         {
-
+            var username = this.Context.GetHttpContext().User.Identity.Name;
+            User activeUser = userDomain.RetrieveUserByUserName(username).Result;
+            var channels = messageDomain.GetChannels(null, activeUser).Result;
+            foreach (var channel in channels)
+            {
+                this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(channel.Channel.ChannelId)).Wait();
+            }
         }
 
         private void notifyNewConnectionState(string username, string currentConnectionId, bool isConnecting)
         {
             this.Clients.AllExcept(currentConnectionId).ReceiveNotification(new Notification($"{username} has {(isConnecting ? "come online!" : "left.")}"));
         }
+
+        public static string GetChannelGroupIdentifier(int channelId)
+        {
+            return $"ChatChannel{channelId}";
+        }
+
         protected override void Dispose(bool disposing)
         {
             //this.Dispose();
