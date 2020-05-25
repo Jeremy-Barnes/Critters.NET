@@ -211,12 +211,17 @@ namespace CritterServer.DataAccess
                 {(exactMatch ? "AND COUNT(cu.memberID) = (SELECT COUNT(*) FROM findChannelMembers);" : "")}
                 ");
             var channelIDsInt = channelIDs.Where(c => c.HasValue).Select(c => c.Value);
-
-            var channels = await dbConnection.QueryAsync<Channel>(@"
+            if (channelIDsInt != null && channelIDsInt.Any())
+            {
+                var channels = await dbConnection.QueryAsync<Channel>(@"
                 SELECT * FROM channels where channelID = ANY (@channelIDs)
-                ", new { channelIDs = channelIDsInt.AsList()});
+                ", new { channelIDs = channelIDsInt.AsList() });
 
-            return channels;//.List();
+                return channels;
+            } else
+            {
+                return new List<Channel>();
+            }
         }
 
         public async Task<IEnumerable<Channel>> GetChannel(params int[] channelIds)
