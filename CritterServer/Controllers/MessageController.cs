@@ -45,7 +45,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> RetrieveMessagesPage(int? lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
             var channelsAndMessages = await domain.GetMessages(false, lastMessageId, activeUser);
-            return Ok(channelsAndMessages);
+            return Ok(new { ChannelDetails = channelsAndMessages });
         }
 
         [HttpPost]
