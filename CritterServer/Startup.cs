@@ -16,6 +16,7 @@ using System;
 using CritterServer.Utilities.Serialization;
 using Microsoft.AspNetCore.Http;
 using CritterServer.Pipeline.Middleware;
+using Microsoft.Extensions.Hosting;
 
 namespace CritterServer
 {
@@ -33,10 +34,11 @@ namespace CritterServer
         {
             //framework
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .AddDataContractResolver().AddMvcOptions((options) => 
                 {
                     options.Filters.Add<UserFilter>();
+                    options.EnableEndpointRouting = true;
                 });
 
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
@@ -56,7 +58,7 @@ namespace CritterServer
             services.AddAuthentication()
                 .AddCookie("Cookie", opts => {
                 opts.Cookie.Name = "critterlogin";
-                opts.Cookie.Expiration = new TimeSpan(14);//todo configurable
+                opts.ExpireTimeSpan = new TimeSpan(14);//todo configurable
                 opts.EventsType = typeof(CookieEventHandler);
                 opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>(), services.BuildServiceProvider().GetService<IHttpContextAccessor>());
             });
@@ -78,17 +80,21 @@ namespace CritterServer
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseRouting();
+            app.UseAuthorization();
             app.UseAuthentication();
             
             app.UseMiddleware<ErrorMiddleware>();
             
-            app.UseMvc();//last thing
+           app.UseEndpoints(endpoints => {
+               endpoints.MapControllers();
+           }); ;//last thing
         }
 
         private void configureLogging()

@@ -1,9 +1,16 @@
+CREATE COLLATION case_insensitive_collat (
+  provider = 'icu',
+  locale = '@colStrength=secondary',
+  deterministic = false
+);
+
+
 CREATE TABLE users(
     userID SERIAL NOT NULL PRIMARY KEY,
-    userName VARCHAR(24) NOT NULL,
+    userName VARCHAR(24) NOT NULL COLLATE public.case_insensitive_collat,
     firstName VARCHAR(24),
     lastName VARCHAR(24),
-    emailAddress VARCHAR(100) NOT NULL,
+    emailAddress VARCHAR(100) NOT NULL COLLATE public.case_insensitive_collat,
     password VARCHAR NOT NULL,
     gender VARCHAR(8) NOT NULL,
     birthdate DATE NOT NULL,
