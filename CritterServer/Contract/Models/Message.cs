@@ -21,7 +21,7 @@ namespace CritterServer.Models
 
         public string MessagePreview(int? truncateAfter)
         {
-            string preview = string.IsNullOrEmpty(MessageSubject) ? MessageText : MessageSubject;
+            string preview = (MessageSubject ?? MessageText) ?? "";
             if (truncateAfter.HasValue)
             {
                 preview = preview.Substring(0, Math.Min(truncateAfter.Value, preview.Length));
