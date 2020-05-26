@@ -67,18 +67,12 @@ namespace CritterServer.DataAccess
 
         public async Task<bool> UserExistsByUserNameOrEmail(string userName, string email)
         {
-            try
-            {
-                string whereClause =
-                    (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
-                    (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
-                dbConnection.TryOpen();
-                var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
-                return searchResult.FirstOrDefault();
-            } catch(Exception ex)
-            {
-                return true;
-            }
+            string whereClause =
+                (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
+                (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
+            dbConnection.TryOpen();
+            var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
+            return searchResult.FirstOrDefault();
         }
     }
 

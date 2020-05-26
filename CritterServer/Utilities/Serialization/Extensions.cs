@@ -10,7 +10,7 @@ namespace CritterServer.Utilities.Serialization
     {
         public static IMvcBuilder AddDataContractResolver(this IMvcBuilder builder)
         {
-            builder.AddJsonOptions(opts =>
+            builder.AddNewtonsoftJson(opts =>
             {
                  opts.SerializerSettings.ContractResolver = new SensitiveDataContractResolver();
                 opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;

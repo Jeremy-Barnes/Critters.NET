@@ -1,5 +1,9 @@
 ﻿using CritterServer.Models;
+using CritterServer.Pipeline;
 using CritterServer.Pipeline.Middleware;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -51,7 +56,7 @@ namespace CritterServer.Domains.Components
                     new Claim(ClaimTypes.Email, email)
 
                 }),
-                Expires = DateTime.UtcNow.AddDays(14), //todo configurable, same value as the cookie in Startup
+                Expires = DateTime.UtcNow.AddDays(14), //todo configurable, same value as the cookie
                 SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha384Signature),
                 IssuedAt = DateTime.UtcNow,
                 Issuer = "critters!",
@@ -115,22 +120,56 @@ namespace CritterServer.Domains.Components
         /// <returns></returns>
         public static IServiceCollection AddJwt(this IServiceCollection services, IConfiguration config)
         {
-            services.AddSingleton<TokenValidationParameters>(sp => {
-                return new TokenValidationParameters
+            string secretKey = config.GetValue<string>("JwtSigningKey");
+            var jwtProvider = new JwtProvider(secretKey, getTokenValidationParameters(secretKey));
+            //services.AddSingleton<JwtBearerOptions>(new JwtBearerOptions()
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(jbo => {
+                jbo.TokenValidationParameters = getTokenValidationParameters(secretKey);
+                jbo.Events = new JwtBearerEvents
                 {
-                    IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(config.GetValue<string>("JwtSigningKey"))),
-                    ValidIssuer = "critters!",
-                    ValidateAudience = false,
-                    ValidateActor = false,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    RequireExpirationTime = true
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+
+                        // If the request is for our SignalR hubs
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/notificationhub")))
+                        {
+                            // Read the token out of the query string
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
-            services.AddSingleton<IJwtProvider, JwtProvider>(sp =>
-                new JwtProvider(config.GetValue<string>("JwtSigningKey"), services.BuildServiceProvider().GetService<TokenValidationParameters>()));
+
+            services.AddSingleton<IJwtProvider, JwtProvider>(sp => jwtProvider);
+
+            services.AddAuthentication()
+                .AddCookie("Cookie", opts => {
+                    opts.Cookie.Name = "critterlogin";
+                    opts.ExpireTimeSpan = new TimeSpan(14);//todo configurable
+                    opts.EventsType = typeof(CookieEventHandler);
+                    opts.TicketDataFormat = new CookieTicketDataFormat(jwtProvider);
+                });
+
 
             return services;
+        }
+
+        private static TokenValidationParameters getTokenValidationParameters(string jwtSigningKey)
+        { 
+            return new TokenValidationParameters
+            {
+                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSigningKey)),
+                ValidIssuer = "critters!",
+                ValidateAudience = false,
+                ValidateActor = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                RequireExpirationTime = true
+            };
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterServer.Models;
@@ -78,20 +77,18 @@ namespace CritterServer.Controllers
 
         private async void addLoginCookie(HttpContext context, string userName, string email)
         {
-            await this.HttpContext.SignInAsync("Cookie", 
-                new ClaimsPrincipal(
+            var claims = new ClaimsPrincipal(
                     new ClaimsIdentity(
                         new List<Claim>
                         {
                             new Claim(ClaimTypes.Name, userName),
                             new Claim(ClaimTypes.Email, email)
-
-                        }
+                        }, "Cookie"
                     )
-                )
-            );
+                );
+            context.User = claims;
+            await this.HttpContext.SignInAsync("Cookie", claims);
         }
-
     }
 
   

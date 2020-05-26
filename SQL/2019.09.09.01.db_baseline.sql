@@ -1,9 +1,15 @@
+CREATE COLLATION case_insensitive_collat (
+  provider = 'icu',
+  locale = '@colStrength=secondary',
+  deterministic = false
+);
+
 CREATE TABLE IF NOT EXISTS users(
     userID SERIAL NOT NULL PRIMARY KEY,
-    userName VARCHAR(24) NOT NULL,
+    userName VARCHAR(24) NOT NULL COLLATE public.case_insensitive_collat,
     firstName VARCHAR(24),
     lastName VARCHAR(24),
-    emailAddress VARCHAR(100) NOT NULL,
+    emailAddress VARCHAR(100) NOT NULL COLLATE public.case_insensitive_collat,
     password VARCHAR NOT NULL,
     gender VARCHAR(8) NOT NULL,
     birthdate DATE NOT NULL,
@@ -14,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users(
     postcode VARCHAR(20),
     cash INT NOT NULL,
     isActive boolean not null DEFAULT 't',
+	dateJoined TIMESTAMP not null DEFAULT NOW(),
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
     CHECK (gender IN ('male','female','other'))
@@ -50,5 +57,3 @@ CREATE TABLE IF NOT EXISTS readReceipts(
     read BOOLEAN NOT NULL DEFAULT 'f',
     PRIMARY KEY (messageID, recipientID)
 );
-
-ALTER TABLE users ADD COLUMN dateJoined TIMESTAMP not null DEFAULT NOW();
