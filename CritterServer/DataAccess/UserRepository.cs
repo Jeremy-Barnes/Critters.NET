@@ -44,47 +44,44 @@ namespace CritterServer.DataAccess
             return output;
         }
 
-        public User RetrieveUserByEmail(string email)
+        public async Task<User> RetrieveUserByEmail(string email)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("select * from users where emailAddress = @emailAddress", new { emailAddress = email }).FirstOrDefault();
+            return (await dbConnection.QueryAsync<User>("SELECT * from users WHERE emailAddress = @emailAddress AND isActive = true", new { emailAddress = email })).FirstOrDefault();
         }
 
-        public User RetrieveUserById(int userId)
+        public async Task<IEnumerable<User>> RetrieveUsersByIds(params int[] userIds)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("select * from users where userID = @userID", new { userID = userId }).FirstOrDefault();
+            return await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userID = ANY(@userIdList) AND isActive = true",
+                new { userIdList = userIds.Distinct().AsList() });
         }
 
-        public User RetrieveUserByUserName(string userName)
+        public async Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames)
         {
             dbConnection.TryOpen();
-            return dbConnection.Query<User>("select * from users where userName = @userName", new { userName = userName }).FirstOrDefault();
+            var users = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = ANY(@userNameList) AND isActive = true", new { userNameList = userNames.Distinct().AsList() });
+
+            return users;
         }
 
         public async Task<bool> UserExistsByUserNameOrEmail(string userName, string email)
         {
-            try
-            {
-                string whereClause =
-                    (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
-                    (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
-                dbConnection.TryOpen();
-                var searchResult = await dbConnection.QueryAsync<bool>($"select exists (select 1 from users where {whereClause} )", new { userName = userName, email = email });
-                return searchResult.FirstOrDefault();
-            } catch(Exception ex)
-            {
-                return true;
-            }
+            string whereClause =
+                (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
+                (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
+            dbConnection.TryOpen();
+            var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
+            return searchResult.FirstOrDefault();
         }
     }
 
     public interface IUserRepository : IRepository
     {
         int CreateUser(User user);
-        User RetrieveUserById(int userId);
-        User RetrieveUserByEmail(string email);
-        User RetrieveUserByUserName(string userName);
+        Task<IEnumerable<User>> RetrieveUsersByIds(params int[] userIds);
+        Task<User> RetrieveUserByEmail(string email);
+        Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
     }
 }

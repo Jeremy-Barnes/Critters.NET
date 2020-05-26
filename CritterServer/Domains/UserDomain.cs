@@ -13,12 +13,12 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 namespace CritterServer.Domains
 {
-    public class UserAuthenticationDomain
+    public class UserDomain
     {
         IUserRepository userRepo;
         IJwtProvider jwtProvider;
 
-        public UserAuthenticationDomain(IUserRepository userRepo, IJwtProvider jwtProvider)
+        public UserDomain(IUserRepository userRepo, IJwtProvider jwtProvider)
         {
             this.userRepo = userRepo;
             this.jwtProvider = jwtProvider;
@@ -37,20 +37,20 @@ namespace CritterServer.Domains
 
                 trans.Complete();
             }
-            user = RetrieveUser(user.UserId);
+            user = await RetrieveUser(user.UserId);
             return jwtProvider.GenerateToken(user);
         }
 
-        public string Login(User user)
+        public async Task<string> Login(User user)
         {
             User dbUser = null;
             if (!string.IsNullOrEmpty(user.UserName))
             {
-                dbUser = RetrieveUserByUserName(user.UserName);
+                dbUser = await RetrieveUserByUserName(user.UserName);
             }
             else if (!string.IsNullOrEmpty(user.EmailAddress))
             {
-                dbUser = RetrieveUserByEmail(user.EmailAddress);
+                dbUser = await RetrieveUserByEmail(user.EmailAddress);
             }
 
             if (dbUser != null && !string.IsNullOrEmpty(user.Password))
@@ -66,20 +66,30 @@ namespace CritterServer.Domains
             throw new CritterException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}", null, System.Net.HttpStatusCode.Unauthorized);
         }
 
-        public User RetrieveUser(int userId)
+        public async Task<User> RetrieveUser(int userId)
         {
-            return userRepo.RetrieveUserById(userId);
+            return (await userRepo.RetrieveUsersByIds(userId)).FirstOrDefault();
         }
 
-        public User RetrieveUserByUserName(string userName)
+        public async Task<List<User>> RetrieveUsers(IEnumerable<int> userIds)
         {
-            return userRepo.RetrieveUserByUserName(userName);
+            return (await userRepo.RetrieveUsersByIds(userIds.ToArray())).AsList();
+        }
+
+        public async Task<User> RetrieveUserByUserName(string userName)
+        {
+            return (await userRepo.RetrieveUsersByUserName(userName)).FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<User>> RetrieveUsersByUserName(IEnumerable<string> userNames)
+        {
+            return await userRepo.RetrieveUsersByUserName(userNames.ToArray());
 
         }
 
-        public User RetrieveUserByEmail(string email)
+        public async Task<User> RetrieveUserByEmail(string email)
         {
-            return userRepo.RetrieveUserByEmail(email);
+            return await userRepo.RetrieveUserByEmail(email);
         }
     }
 

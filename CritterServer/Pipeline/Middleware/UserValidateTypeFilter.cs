@@ -87,12 +87,12 @@ namespace CritterServer.Pipeline.Middleware
                                 case UserValidate.ValidationType.UserNameIsValidForm: UserNameIsValidForm(validationParam); break;
                                 case UserValidate.ValidationType.GenderOptionIsValidForm: GenderOptionIsValidForm(validationParam); break;
                                 case UserValidate.ValidationType.NewEmailOrUserNameIsNotTaken: await UserNameOrEmailIsNotDuplicated(validationParam, context.HttpContext.User); break;
-                                case UserValidate.ValidationType.BirthdateIsValidForm: BirthdateIsValidForm(validationParam); break;
+                                case UserValidate.ValidationType.BirthdateIsValidForm: BirthdateIsValid(validationParam); break;
 
                                 case UserValidate.ValidationType.All: //blech, good enough
                                     EmailIsValidForm(validationParam); UserNameIsValidForm(validationParam); GenderOptionIsValidForm(validationParam); 
                                     await UserNameOrEmailIsNotDuplicated(validationParam, context.HttpContext.User);
-                                    BirthdateIsValidForm(validationParam);
+                                    BirthdateIsValid(validationParam);
                                     break;
                             }
                         }
@@ -134,13 +134,12 @@ namespace CritterServer.Pipeline.Middleware
             return !conflictFound;
         }
 
-        public static bool BirthdateIsValidForm(User user, bool throwOnInvalid = true)
+        public static bool BirthdateIsValid(User user, bool throwOnInvalid = true)
         {
-            DateTime birthday;
-            if (!DateTime.TryParse(user.Birthdate, out birthday))
-            {
+            if ((user.Birthdate < new DateTime(1903, 1, 2) || DateTime.UtcNow < user.Birthdate)) //no one born in the future, but we will allow Kane Tanaka, 
+            {                                                                                         //the worlds oldest person, to sign up if she'd like
                 if (throwOnInvalid)
-                    throw new CritterException($"No one was born on {birthday}, we checked.", "Invalid birthday", System.Net.HttpStatusCode.BadRequest);
+                    throw new CritterException($"No one was born on {user.Birthdate}, we checked.", "Invalid birthday", System.Net.HttpStatusCode.BadRequest);
                 return false;
             }
             return true;

@@ -12,9 +12,9 @@ namespace CritterServer.Controllers
     [ApiController]
     public class AdministrationController : ControllerBase
     {
-        UserAuthenticationDomain domain;
+        UserDomain domain;
 
-        public AdministrationController(UserAuthenticationDomain domain)
+        public AdministrationController(UserDomain domain)
         {
             this.domain = domain;
         }

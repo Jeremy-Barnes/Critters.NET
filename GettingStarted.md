@@ -13,6 +13,8 @@ Set Master Password for pgAdmin --- pgGodModeLocal
 
 go to Services in windows and turn postgresql-x64-11 to manual
 
+go to your install directory (D:\Program Files\PostgreSQL\11\data) and open postgresql.conf aand set max_prepared_transactions = 1 (its commented out and 0 by default)
+
 Open PGAdmin 4
 
 In the left hand pane open Servers > PostgreSQL 11 > right click on 'postgres' and go to Query Tool

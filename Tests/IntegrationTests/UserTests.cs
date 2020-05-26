@@ -12,16 +12,20 @@ using Xunit;
 
 namespace Tests.IntegrationTests
 {
+    /// <summary>
+    /// Creaated once, reused for all tests in UserTests
+    /// Used to hold expensive resources that can be reused (like a DB connection!)
+    /// </summary>
     public class UserTestsContext
     {
         private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
 
         public IDbConnection dbConnection;
-        public UserAuthenticationDomain userAccountDomain;
+        public UserDomain userAccountDomain;
         public IUserRepository userRepo;
         public JwtProvider jwtProvider = new JwtProvider(
             jwtSecretKey,
-            new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            new TokenValidationParameters
             {
                 IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey)),
                 ValidIssuer = "critters!",
@@ -40,14 +44,14 @@ namespace Tests.IntegrationTests
             dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
             dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
             userRepo = new UserRepository(dbConnection);
-            userAccountDomain = new UserAuthenticationDomain(userRepo, jwtProvider);
+            userAccountDomain = new UserDomain(userRepo, jwtProvider);
         }
 
         public User RandomUser()
         {
             User randomUser = new User()
             {
-                Birthdate = DateTime.UtcNow.ToShortDateString(),
+                Birthdate = DateTime.UtcNow,
                 City = "Chicago",
                 Country = "USA",
                 EmailAddress = $"{Guid.NewGuid().ToString().Substring(0, 6)}@{Guid.NewGuid().ToString().Substring(0, 6)}.com",
@@ -81,7 +85,7 @@ namespace Tests.IntegrationTests
             User randomUser = context.RandomUser();
             string jwt = context.userAccountDomain.CreateAccount(randomUser).Result;
 
-            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress);
+            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress).Result;
             Assert.Equal(randomUser.UserName, retrievedDbUser.UserName);
             Assert.NotEmpty(jwt);
 
@@ -96,7 +100,7 @@ namespace Tests.IntegrationTests
             context.userAccountDomain.CreateAccount(randomUser).Wait();
             randomUser.Password = password; //gets overwritten as the hashed value during acct create
 
-            string jwt = context.userAccountDomain.Login(randomUser);
+            string jwt = context.userAccountDomain.Login(randomUser).Result;
 
             Assert.NotEmpty(jwt);
             Assert.True(context.jwtProvider.ValidateToken(jwt));
@@ -111,7 +115,7 @@ namespace Tests.IntegrationTests
             context.userAccountDomain.CreateAccount(randomUser).Wait();
             randomUser.Password = password; //gets overwritten as the hashed value during acct create
 
-            string jwt = context.userAccountDomain.Login(randomUser);
+            string jwt = context.userAccountDomain.Login(randomUser).Result;
 
             Assert.NotEmpty(jwt);
             Assert.True(context.jwtProvider.ValidateToken(jwt));

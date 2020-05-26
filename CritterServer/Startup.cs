@@ -16,12 +16,17 @@ using System;
 using CritterServer.Utilities.Serialization;
 using Microsoft.AspNetCore.Http;
 using CritterServer.Pipeline.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication;
 
 namespace CritterServer
 {
     public class Startup
     {
+        readonly string PermittedOrigins = "XMenOrigins";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -32,17 +37,31 @@ namespace CritterServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //framework
+#region Framework
+            //request pipeline
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
-                .AddDataContractResolver().AddMvcOptions((options) => 
+                .AddDataContractResolver().AddMvcOptions((options) => //get your Filters here! Request Pipeline Filters, right here!  
                 {
                     options.Filters.Add<UserFilter>();
                     options.EnableEndpointRouting = true;
                 });
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: PermittedOrigins,
+                                  builder =>
+                                  {
+                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202")
+                                      .AllowAnyMethod()
+                                      .AllowAnyHeader()
+                                      .AllowCredentials();
+                                  });
+            });
+
+            //db
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            services.AddScoped<IDbConnection>((sp) =>
+            services.AddTransient<IDbConnection>((sp) =>
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");
@@ -52,26 +71,30 @@ namespace CritterServer
             configureLogging();
 
             //auth
-            services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(c => c.TokenValidationParameters = services.BuildServiceProvider().GetService<TokenValidationParameters>());
+            services.AddJwt(Configuration);
 
-            services.AddAuthentication()
-                .AddCookie("Cookie", opts => {
-                opts.Cookie.Name = "critterlogin";
-                opts.ExpireTimeSpan = new TimeSpan(14);//todo configurable
-                opts.EventsType = typeof(CookieEventHandler);
-                opts.TicketDataFormat = new CookieTicketDataFormat(services.BuildServiceProvider().GetService<IJwtProvider>(), services.BuildServiceProvider().GetService<IHttpContextAccessor>());
+            services.AddSignalR()
+                .AddNewtonsoftJsonProtocol(options =>
+            {
+                options.PayloadSerializerSettings.ContractResolver = new SensitiveDataContractResolver();
             });
 
+
+            #endregion Framework
+
+            //set up DI stuff
+
             //domains
-            services.AddTransient<UserAuthenticationDomain>();
+            services.AddTransient<UserDomain>();
+            services.AddTransient<MessageDomain>();
+
             services.AddTransient<ErrorMiddleware>();
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IMessageRepository, MessageRepository>();
 
             //components
-            services.AddJwt(Configuration);
             services.AddHttpContextAccessor();
             services.AddScoped<CookieEventHandler>();
             services.AddTransient<UserFilter>();
@@ -89,12 +112,14 @@ namespace CritterServer
             app.UseRouting();
             app.UseAuthorization();
             app.UseAuthentication();
-            
+            app.UseCors(PermittedOrigins);
+
             app.UseMiddleware<ErrorMiddleware>();
             
            app.UseEndpoints(endpoints => {
                endpoints.MapControllers();
-           }); ;//last thing
+               endpoints.MapHub<NotificationHub>("/notificationhub");
+           });//last thing
         }
 
         private void configureLogging()

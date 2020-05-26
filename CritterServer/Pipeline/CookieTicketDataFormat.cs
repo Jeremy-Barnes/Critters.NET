@@ -15,12 +15,10 @@ namespace CritterServer.Pipeline
     public class CookieTicketDataFormat : ISecureDataFormat<AuthenticationTicket>
     {
         IJwtProvider jwt;
-        IHttpContextAccessor contextAccessor;
 
-        public CookieTicketDataFormat(IJwtProvider jwt, IHttpContextAccessor contextAccessor)
+        public CookieTicketDataFormat(IJwtProvider jwt)
         {
             this.jwt = jwt;
-            this.contextAccessor = contextAccessor;
         }
 
         public string Protect(AuthenticationTicket data)
