@@ -60,7 +60,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> ReadMessage(List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            await domain.ReadMessage(messageIds, activeUser);
+            await domain.ReadMessages(messageIds, activeUser);
             return Ok();
         }
 
@@ -69,7 +69,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> DeleteMessage([FromBody]List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
 
-            await domain.ReadMessage(messageIds, activeUser);
+            await domain.DeleteMessages(messageIds, activeUser);
             return Ok();
         }
 

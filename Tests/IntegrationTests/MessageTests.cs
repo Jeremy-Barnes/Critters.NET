@@ -255,14 +255,14 @@ namespace Tests.IntegrationTests
             if (read)
             {
                 reducedBy += 1;
-                context.messageDomain.ReadMessage(new List<int> { originalMessageIds[12] }, receiver).Wait();
+                context.messageDomain.ReadMessages(new List<int> { originalMessageIds[12] }, receiver).Wait();
                 disallowedMessageIds.Add(originalMessageIds[12]);
 
             }
             if (delete)
             {
                 reducedBy += 1; 
-                context.messageDomain.DeleteMessage(new List<int> { originalMessageIds[6] }, receiver).Wait();
+                context.messageDomain.DeleteMessages(new List<int> { originalMessageIds[6] }, receiver).Wait();
                 disallowedMessageIds.Add(originalMessageIds[6]);
             }
 
