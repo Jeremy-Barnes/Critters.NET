@@ -37,7 +37,7 @@ namespace CritterServer.Domains
 
                 trans.Complete();
             }
-            user = RetrieveUser(user.UserId);
+            user = await RetrieveUser(user.UserId);
             return jwtProvider.GenerateToken(user);
         }
 
@@ -50,7 +50,7 @@ namespace CritterServer.Domains
             }
             else if (!string.IsNullOrEmpty(user.EmailAddress))
             {
-                dbUser = RetrieveUserByEmail(user.EmailAddress);
+                dbUser = await RetrieveUserByEmail(user.EmailAddress);
             }
 
             if (dbUser != null && !string.IsNullOrEmpty(user.Password))
@@ -66,25 +66,30 @@ namespace CritterServer.Domains
             throw new CritterException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}", null, System.Net.HttpStatusCode.Unauthorized);
         }
 
-        public User RetrieveUser(int userId)
+        public async Task<User> RetrieveUser(int userId)
         {
-            return userRepo.RetrieveUsersByIds(userId).FirstOrDefault();
+            return (await userRepo.RetrieveUsersByIds(userId)).FirstOrDefault();
         }
 
-        public List<User> RetrieveUsers(IEnumerable<int> userIds)
+        public async Task<List<User>> RetrieveUsers(IEnumerable<int> userIds)
         {
-            return userRepo.RetrieveUsersByIds(userIds.ToArray()).ToList();
+            return (await userRepo.RetrieveUsersByIds(userIds.ToArray())).AsList();
         }
 
         public async Task<User> RetrieveUserByUserName(string userName)
         {
-            return await userRepo.RetrieveUserByUserName(userName);
+            return (await userRepo.RetrieveUsersByUserName(userName)).FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<User>> RetrieveUsersByUserName(IEnumerable<string> userNames)
+        {
+            return await userRepo.RetrieveUsersByUserName(userNames.ToArray());
 
         }
 
-        public User RetrieveUserByEmail(string email)
+        public async Task<User> RetrieveUserByEmail(string email)
         {
-            return userRepo.RetrieveUserByEmail(email);
+            return await userRepo.RetrieveUserByEmail(email);
         }
     }
 

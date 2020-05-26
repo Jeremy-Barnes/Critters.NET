@@ -85,7 +85,7 @@ namespace Tests.IntegrationTests
             User randomUser = context.RandomUser();
             string jwt = context.userAccountDomain.CreateAccount(randomUser).Result;
 
-            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress);
+            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress).Result;
             Assert.Equal(randomUser.UserName, retrievedDbUser.UserName);
             Assert.NotEmpty(jwt);
 

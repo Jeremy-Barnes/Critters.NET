@@ -1,4 +1,5 @@
 ﻿using CritterServer.DataAccess;
+using CritterServer.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace CritterServer.Pipeline.Middleware
                 throw new ArgumentNullException(nameof(bindingContext));
             }
 
-            var userModel = await userRepository.RetrieveUserByUserName(bindingContext.HttpContext.User.Identity.Name);
+            User userModel = (await userRepository.RetrieveUsersByUserName(bindingContext.HttpContext.User.Identity.Name)).First();
 
             bindingContext.Result = ModelBindingResult.Success(userModel);
         }

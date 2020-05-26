@@ -60,7 +60,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> ReadMessage(List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            await domain.ReadMessage(messageIds, activeUser);
+            await domain.ReadMessages(messageIds, activeUser);
             return Ok();
         }
 
@@ -69,7 +69,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> DeleteMessage([FromBody]List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
 
-            await domain.ReadMessage(messageIds, activeUser);
+            await domain.DeleteMessages(messageIds, activeUser);
             return Ok();
         }
 
@@ -79,7 +79,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> RetrieveThread(int lastMessageId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
             var messageThread = await domain.RetrieveThread(lastMessageId, activeUser);
-            return Ok(messageThread);
+            return Ok(new { ChannelDetails = messageThread });
         }
 
         [HttpPost("channel")]
@@ -107,8 +107,8 @@ namespace CritterServer.Controllers
                 try
                 {
                     var channelIds = channelIdsCSV.Length > 0 ? channelIdsCSV.Split(',').Select(csv => Int32.Parse(csv)).AsList() : null;
-                    List<ChannelDetails> channelDetails = await domain.GetChannels(channelIds, activeUser);
-                    return Ok(channelDetails);
+                    var channelDetails = await domain.GetChannels(channelIds, activeUser);
+                    return Ok(new { ChannelDetails = channelDetails});
                 } catch(Exception ex)
                 {
                     throw new CritterException("Sorry, that wasn't a valid list of channel IDs", $"{channelIdsCSV} provided to RetrieveChannel", System.Net.HttpStatusCode.BadRequest, ex);

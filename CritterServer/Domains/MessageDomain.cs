@@ -30,7 +30,7 @@ namespace CritterServer.Domains
         public async Task<List<ChannelDetails>> GetMessages(bool unreadOnly, int? lastMessageRetrieved, User activeUser)
         {
             List<Message> messages;
-            messages = (await messageRepo.RetrieveMessagesByDate(activeUser.UserId, null, unreadOnly, lastMessageRetrieved ?? Int32.MaxValue)).AsList();
+            messages = (await messageRepo.RetrieveMessagesSinceMessage(activeUser.UserId, null, unreadOnly, lastMessageRetrieved ?? Int32.MaxValue)).AsList();
 
             return await messagesToChannelInfo(messages);
         }
@@ -65,7 +65,6 @@ namespace CritterServer.Domains
 
                 trans.Complete();
             }
-            List<User> recipientUsers = userDomain.RetrieveUsers(recipientIds);
 
             hubContext?.Clients?.GroupExcept(NotificationHub.GetChannelGroupIdentifier(message.ChannelId), activeUser.UserName)
                 ?.ReceiveNotification(new MessageAlert(new MessageDetails() { Message = message, SenderUsername = activeUser.UserName }));
@@ -77,18 +76,21 @@ namespace CritterServer.Domains
         {
             List<int> userIds = new List<int>();
             userIds.Add(activeUser.UserId);
-            if(userNames != null)
-            foreach(var userName in userNames)
+            if (userNames != null)
             {
-                var recipient = await userDomain.RetrieveUserByUserName(userName);
-                if (recipient == null || !recipient.IsActive)
+                var recipients = (await userDomain.RetrieveUsersByUserName(userNames)).ToDictionary(u => u.UserName);
+
+                foreach (var userName in userNames)
                 {
-                    throw new CritterException($"Could not find a group for {userName}!", $"Invalid message recipient provided - {userName}", System.Net.HttpStatusCode.BadRequest);
+                    if (!recipients.ContainsKey(userName) || !recipients[userName].IsActive)
+                    {
+                        throw new CritterException($"Could not find a group for {userName}!", $"Invalid message recipient provided - {userName}", System.Net.HttpStatusCode.BadRequest);
+                    }
+                    userIds.Add(recipients[userName].UserId);
                 }
-                userIds.Add(recipient.UserId);
             }
 
-            return await messageRepo.FindChannelWithMembers(userIds, false);
+            return await messageRepo.FindChannelsWithMembers(userIds, false);
         }
 
         public async Task<int> CreateChannel(User activeUser, string groupTitle, IEnumerable<string> addUserNames)
@@ -99,27 +101,27 @@ namespace CritterServer.Domains
             {
                 if (addUserNames != null && addUserNames.Count() > 0)
                 {
+                    var recipients = (await userDomain.RetrieveUsersByUserName(addUserNames)).ToDictionary(u => u.UserName);
                     foreach (var userName in addUserNames)
                     {
-                        var recipient = await userDomain.RetrieveUserByUserName(userName);
-                        if (recipient == null || !recipient.IsActive)
+                        if (!recipients.ContainsKey(userName) || !recipients[userName].IsActive)
                         {
                             throw new CritterException($"Could not add {userName} to a group!", $"Invalid message recipient provided - {userName}", System.Net.HttpStatusCode.BadRequest);
                         }
-                        recipientIds.Add(recipient.UserId);
+                        recipientIds.Add(recipients[userName].UserId);
                     }
                 }
                 if (string.IsNullOrEmpty(groupTitle)) groupTitle = string.Join(", ", addUserNames);
                 channelId = await messageRepo.CreateChannel(groupTitle);
                 recipientIds.Add(activeUser.UserId);
-                await messageRepo.AddUsersToChannel(channelId, recipientIds.Distinct());
+                await messageRepo.AddUsersToChannel(channelId, recipientIds);
 
                 trans.Complete();
             }
             return channelId;
         }
 
-        public async Task DeleteMessage(IEnumerable<int> messages, User activeUser)
+        public async Task DeleteMessages(IEnumerable<int> messages, User activeUser)
         {
             if (messages == null || messages.Count() == 0)
             {
@@ -130,12 +132,12 @@ namespace CritterServer.Domains
 
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                var outp = await messageRepo.UpdateMessageStatus(messages, null, activeUser.UserId);
+                var outp = await messageRepo.DeleteMessages(messages, activeUser.UserId);
                 trans.Complete();
             }
         }
 
-        public async Task ReadMessage(IEnumerable<int> messages, User activeUser)
+        public async Task ReadMessages(IEnumerable<int> messages, User activeUser)
         {
             if (messages == null || messages.Count() == 0)
             {
@@ -146,42 +148,41 @@ namespace CritterServer.Domains
 
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                var outp = await messageRepo.UpdateMessageStatus(null, messages, activeUser.UserId);
+                var outp = await messageRepo.ReadMessages(messages, activeUser.UserId);
                 trans.Complete();
             }
         }
 
-        public async Task<List<ChannelDetails>> GetChannels(IEnumerable<int> channelIds, User activeUser)
+        public async Task<IEnumerable<ChannelDetails>> GetChannels(IEnumerable<int> channelIds, User activeUser)
         {
             var allUserChannelIds = await messageRepo.GetChannelsForUser(activeUser.UserId);
 
             if (channelIds == null || !channelIds.Any()) 
-                channelIds = allUserChannelIds.ToList();
+                channelIds = allUserChannelIds;
             else 
-                channelIds = channelIds.Intersect(allUserChannelIds).ToList();
-            var channels = await messageRepo.GetChannel(channelIds.ToArray());
+                channelIds = channelIds.Intersect(allUserChannelIds);
+            var channels = await messageRepo.GetChannels(channelIds.ToArray());
             Dictionary<int, IEnumerable<int>> channelIdToUserIds = new Dictionary<int, IEnumerable<int>>();
             foreach (var channel in channels) 
             {
                 channelIdToUserIds.Add(channel.ChannelId, await messageRepo.GetAllChannelMemberIds(channel.ChannelId));
             }
-            var users = userDomain.RetrieveUsers(channelIdToUserIds.SelectMany(val => val.Value).ToList());//.SelectMany<int>((int v) => v).ToList();
+            var users = await userDomain.RetrieveUsers(channelIdToUserIds.SelectMany(val => val.Value));
             var channelsDetails = channels.Select(c => {
-                var channelUsers = users.Where(u => channelIdToUserIds[c.ChannelId].Contains(u.UserId)).ToList();
+                var channelUsers = users.Where(u => channelIdToUserIds[c.ChannelId].Contains(u.UserId));
                 return new ChannelDetails()
                 {
                     Channel = c,
                     Users = channelUsers,
-                    UserNames = channelUsers.Select(u => u.UserName).ToList()
-                }; }).ToList();
-            channelsDetails.ForEach(cd => cd.UserNames = cd.Users.Select(u => u.UserName).ToList());
+                    UserNames = channelUsers.Select(u => u.UserName)
+                }; });
             return channelsDetails;
         }
 
-        private IEnumerable<MessageDetails> messageToMessageDetails(IEnumerable<Message> messages, Dictionary<int, User> userIdToUserMap)
+        private async Task<IEnumerable<MessageDetails>> messageToMessageDetails(IEnumerable<Message> messages, Dictionary<int, User> userIdToUserMap)
         {
             if(userIdToUserMap == null || !userIdToUserMap.Any())
-                userIdToUserMap = userDomain.RetrieveUsers(messages.Select(m => m.SenderUserId)).ToDictionary(u => u.UserId);
+                userIdToUserMap = (await userDomain.RetrieveUsers(messages.Select(m => m.SenderUserId))).ToDictionary(u => u.UserId);
 
             var messageDetails = messages.Select(m => new MessageDetails()
             {
@@ -195,15 +196,15 @@ namespace CritterServer.Domains
         {
             IEnumerable<IGrouping<int, Message>> messagesGroupedByChannel = messages.GroupBy(m => m.ChannelId);
             
-            Dictionary<int, Channel> channelIdMap = (await messageRepo.GetChannel(messagesGroupedByChannel.Select(mgbc => mgbc.Key).ToArray())).ToDictionary(c => c.ChannelId);
-            Dictionary<int, User> userIdMap = userDomain.RetrieveUsers(messages.Select(m => m.SenderUserId)).ToDictionary(u => u.UserId);//, u => u.UserName);
+            Dictionary<int, Channel> channelIdMap = (await messageRepo.GetChannels(messagesGroupedByChannel.Select(mgbc => mgbc.Key).ToArray())).ToDictionary(c => c.ChannelId);
+            Dictionary<int, User> userIdMap = (await userDomain.RetrieveUsers(messages.Select(m => m.SenderUserId))).ToDictionary(u => u.UserId);
 
             List<ChannelDetails> channelMessages = new List<ChannelDetails>();
             foreach (var channelsMessages in messagesGroupedByChannel)
             {
                 channelMessages.Add(new ChannelDetails()
                 {
-                    Messages = messageToMessageDetails(channelsMessages, userIdMap),
+                    Messages = await messageToMessageDetails(channelsMessages, userIdMap),
                     Channel = channelIdMap[channelsMessages.Key],
                     UserNames = channelsMessages.Select(m => userIdMap[m.SenderUserId].UserName).Distinct(),
                     Users = channelsMessages.Select(m => userIdMap[m.SenderUserId])

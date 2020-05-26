@@ -73,7 +73,7 @@ namespace CritterServer.DataAccess
             return output;
         }
 
-        public async Task<IEnumerable<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
+        public async Task<IEnumerable<Message>> RetrieveMessagesSinceMessage(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
         {
             dbConnection.TryOpen();
 
@@ -103,37 +103,34 @@ namespace CritterServer.DataAccess
             return output;
         }
 
-        public async Task<int> UpdateMessageStatus(IEnumerable<int> deleteMessageIds, IEnumerable<int> readMessageIds, int userId)
+        public async Task<int> ReadMessages(IEnumerable<int> readMessageIds, int userId)
         {
             dbConnection.TryOpen();
-            if (readMessageIds?.Any() ?? false)
-            {
-                int output = await dbConnection.ExecuteAsync(
-                    $@"UPDATE readReceipts 
-                    SET read = true
-                    WHERE messageID = ANY (@readMessageIDs) AND recipientID = @userID",
-                   new
-                   {
-                       readMessageIDs = readMessageIds.AsList(),
-                       userID = userId
-                   });
-                return output;
-            }
+            int output = await dbConnection.ExecuteAsync(
+                $@"UPDATE readReceipts 
+                SET read = true
+                WHERE messageID = ANY (@readMessageIDs) AND recipientID = @userID",
+                new
+                {
+                    readMessageIDs = readMessageIds.AsList(),
+                    userID = userId
+                });
+            return output;
+        }
 
-            if (deleteMessageIds?.Any() ?? false)
-            {
+        public async Task<int> DeleteMessages(IEnumerable<int> deleteMessageIds, int userId)
+        {
+            dbConnection.TryOpen();
                 int output = await dbConnection.ExecuteAsync(
                     $@"UPDATE messages 
                     SET deleted = true
                     WHERE messageID = ANY (@deleteMessageIDs)",
-                   new
-                   {
-                       deleteMessageIDs = deleteMessageIds,
-                       userID = userId
-                   });
+                    new
+                    {
+                        deleteMessageIDs = deleteMessageIds,
+                        userID = userId
+                    });
                 return output;
-            }
-            throw new InvalidOperationException("You cannot update an empty list of messages. User " + userId);
         }
 
         public async Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId)
@@ -185,13 +182,9 @@ namespace CritterServer.DataAccess
                    userId = uid,
                    channelId
                }).ToArray());
-            if(rowsUpdated != userIds.Count())
-            {
-                throw new Exception();
-            }
         }
 
-        public async Task<IEnumerable<Channel>> FindChannelWithMembers(IEnumerable<int> userIds, bool exactMatch)
+        public async Task<IEnumerable<Channel>> FindChannelsWithMembers(IEnumerable<int> userIds, bool exactMatch)
         {
             dbConnection.TryOpen();
             await dbConnection.ExecuteAsync(@"
@@ -224,7 +217,7 @@ namespace CritterServer.DataAccess
             }
         }
 
-        public async Task<IEnumerable<Channel>> GetChannel(params int[] channelIds)
+        public async Task<IEnumerable<Channel>> GetChannels(params int[] channelIds)
         {
             dbConnection.TryOpen();
             var output = await dbConnection.QueryAsync<Channel>(@"
@@ -254,16 +247,17 @@ namespace CritterServer.DataAccess
     {
         Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId);
         //Task<List<Message>> RetrieveChannelConversation(int channelId, int userId, int? pageDelimiterMessageId);
-        Task<IEnumerable<Message>> RetrieveMessagesByDate(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue);
+        Task<IEnumerable<Message>> RetrieveMessagesSinceMessage(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue);
         Task<IEnumerable<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId);
-        Task<int> UpdateMessageStatus(IEnumerable<int> deleteMessageIds, IEnumerable<int> readMessageIds, int userId);
+        Task<int> ReadMessages(IEnumerable<int> readMessageIds, int userId);
+        Task<int> DeleteMessages(IEnumerable<int> deleteMessageIds, int userId);
 
         Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId);
         Task<bool> UserIsChannelMember(int channelId, int userId);
         Task<int> CreateChannel(string channelName);
         Task AddUsersToChannel(int channelId, IEnumerable<int> userIds);
-        Task<IEnumerable<Channel>> FindChannelWithMembers(IEnumerable<int> userIds, bool exactMatch);
-        Task<IEnumerable<Channel>> GetChannel(params int[] channelId);
+        Task<IEnumerable<Channel>> FindChannelsWithMembers(IEnumerable<int> userIds, bool exactMatch);
+        Task<IEnumerable<Channel>> GetChannels(params int[] channelId);
         Task<IEnumerable<int>> GetChannelsForUser(int userId);
 
 
