@@ -1,8 +1,8 @@
-Download https://www.postgresql.org/download/windows/ -> https://www.enterprisedb.com/downloads/postgres-postgresql-downloads -> 11.5 Windows x86-64 (or 32)
+Download https://www.postgresql.org/download/windows/ -> https://www.enterprisedb.com/downloads/postgres-postgresql-downloads -> 12.3 Windows x86-64 (or 32)
 Run exe
-install dir = D:\Program Files\PostgreSQL\11
+install dir = C:\Program Files\PostgreSQL\12
 Install all components
-Set postgres's data directory to D:\Program Files\PostgreSQL\11\data
+Set postgres's data directory to C:\Program Files\PostgreSQL\12\data
 username: postgres password: pgadminlocal (using placeholder passwords consistently here)
 port 5432
 
@@ -11,13 +11,13 @@ open pgadmin4
 Set Master Password for pgAdmin --- pgGodModeLocal
 
 
-go to Services in windows and turn postgresql-x64-11 to manual
+go to Services in windows and turn postgresql-x64-12 to manual
 
-go to your install directory (D:\Program Files\PostgreSQL\11\data) and open postgresql.conf aand set max_prepared_transactions = 1 (its commented out and 0 by default)
+go to your install directory (C:\Program Files\PostgreSQL\12\data) and open postgresql.conf and set max_prepared_transactions = 1 (its commented out and 0 by default)
 
 Open PGAdmin 4
 
-In the left hand pane open Servers > PostgreSQL 11 > right click on 'postgres' and go to Query Tool
+In the left hand pane open Servers > PostgreSQL 12 > Databases > right click on db 'postgres' and go to Query Tool
 Execute: 
 	CREATE DATABASE "CrittersDB"
     WITH 
@@ -25,7 +25,7 @@ Execute:
     ENCODING = 'UTF8'
     CONNECTION LIMIT = -1;
 
-In the left hand pane open Servers > PostgreSQL 11 > right click on 'CrittersDB' and go to Query Tool
+In the left hand pane open Servers > PostgreSQL 12 > Databases > right click on 'CrittersDB' and go to Query Tool
 
 Run these commands: 
 
