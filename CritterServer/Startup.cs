@@ -89,7 +89,8 @@ namespace CritterServer
             services.AddTransient<MessageDomain>();
             services.AddTransient<ErrorMiddleware>();
 
-            services.AddHostedService<GameManagerService>();
+            services.AddSingleton<GameManagerService>();
+            services.AddSingleton<IHostedService>(sp => sp.GetService<GameManagerService>());
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();

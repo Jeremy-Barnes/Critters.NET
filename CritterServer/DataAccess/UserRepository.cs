@@ -74,6 +74,12 @@ namespace CritterServer.DataAccess
             var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
             return searchResult.FirstOrDefault();
         }
+
+        public async Task UpdateUserCash(int newAmount, int userId)
+        {
+            dbConnection.TryOpen();
+            await dbConnection.ExecuteAsync($"UPDATE users SET cash = @cash WHERE userID = @userId", new { userId, cash = newAmount });
+        }
     }
 
     public interface IUserRepository : IRepository
@@ -83,5 +89,6 @@ namespace CritterServer.DataAccess
         Task<User> RetrieveUserByEmail(string email);
         Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
+        Task UpdateUserCash(int newAmount, int userId);
     }
 }

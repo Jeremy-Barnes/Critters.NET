@@ -1,8 +1,14 @@
-﻿using CritterServer.Models;
+﻿using CritterServer.Domains;
+using CritterServer.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,27 +16,68 @@ namespace CritterServer
 {
     public class Game
     {
-        User host;
+        public User Host { get; internal set; }
         public int loops;
-        public Game(User host)
+        public string Id { get; internal set; }
+        protected float TicksPerSecond { get; set; }
+        protected IServiceProvider Services;
+        public Game(User host, IServiceProvider services)
         {
-            this.host = host;
+            this.Host = host;
             this.loops = 0;
+            this.Id = Guid.NewGuid().ToString().Substring(0, 6);
+            this.TicksPerSecond = 60f;
+            this.Services = services;
         }
 
         public void Run()
         {
-            Stopwatch timer = new Stopwatch();
+            try { 
+                Stopwatch timer = new Stopwatch();
 
-            while (loops < Int32.MaxValue)
+                TimeSpan timeSinceLastDbSync = TimeSpan.Zero;
+                TimeSpan totalLastTickTimeMs = TimeSpan.Zero;
+                while (loops < Int32.MaxValue)
+                {
+                    timer.Restart();
+                    loops++;
+                    timeSinceLastDbSync += totalLastTickTimeMs;
+                    if (TimeSpan.FromSeconds(10) - timeSinceLastDbSync <= TimeSpan.Zero)
+                    {
+                        SyncToDb();
+                        timeSinceLastDbSync = TimeSpan.Zero;
+                    }
+                    Thread.Sleep(Math.Max(0, (int)((TimeSpan.FromSeconds(1.0) - (timer.Elapsed * TicksPerSecond)) / TicksPerSecond).TotalMilliseconds));
+                    totalLastTickTimeMs = timer.Elapsed;
+                }
+            } 
+            catch(Exception ex)
             {
-                timer.Start();
-
-                loops++;
-                timer.Stop();
-                Thread.Sleep((TimeSpan.FromSeconds(1) - (timer.Elapsed*60))/60);
-
+                Log.Error(ex, "Game error");
             }
+        }
+
+        public void AcceptUserInput(string command, User user)
+        {
+            UsersToDbSync.Push(user);
+        }
+
+        private ConcurrentStack<User> UsersToDbSync = new ConcurrentStack<User>();
+
+        private void SyncToDb()
+        {
+            Task.Run(async () =>
+            {
+                using (var scope = Services.CreateScope())
+                {
+                    var userDomain =
+                        scope.ServiceProvider
+                            .GetRequiredService<UserDomain>();
+                   
+                    if (UsersToDbSync.TryPop(out User user))
+                        await userDomain.ChangeUserCash(-5, user);
+                }
+            });
         }
 
     }

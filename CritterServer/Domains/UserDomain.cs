@@ -91,6 +91,20 @@ namespace CritterServer.Domains
         {
             return await userRepo.RetrieveUserByEmail(email);
         }
+
+
+        public async Task<User> ChangeUserCash(int byAmount, User user)
+        {
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                user = (await userRepo.RetrieveUsersByIds(user.UserId)).First();
+                await userRepo.UpdateUserCash(user.Cash + byAmount, user.UserId);
+                user.Cash += byAmount;
+                trans.Complete();
+            }
+            return user;
+
+        }
     }
 
 }
