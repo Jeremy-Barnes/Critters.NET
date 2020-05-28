@@ -14,18 +14,18 @@ using System.Threading.Tasks;
 
 namespace CritterServer
 {
-    public class Game
+    public abstract class Game<T> where T: GameCommand
     {
         public User Host { get; internal set; }
-        public int loops;
+        public int ticks;
         public string Id { get; internal set; }
         protected float TicksPerSecond { get; set; }
         protected IServiceProvider Services;
-        public Game(User host, IServiceProvider services)
+        public Game(User host, IServiceProvider services, string gameName = null)
         {
             this.Host = host;
-            this.loops = 0;
-            this.Id = Guid.NewGuid().ToString().Substring(0, 6);
+            this.ticks = 0;
+            this.Id = gameName ?? Guid.NewGuid().ToString().Substring(0, 6);
             this.TicksPerSecond = 60f;
             this.Services = services;
         }
@@ -35,18 +35,12 @@ namespace CritterServer
             try { 
                 Stopwatch timer = new Stopwatch();
 
-                TimeSpan timeSinceLastDbSync = TimeSpan.Zero;
                 TimeSpan totalLastTickTimeMs = TimeSpan.Zero;
-                while (loops < Int32.MaxValue)
+                while (ticks < Int32.MaxValue)
                 {
                     timer.Restart();
-                    loops++;
-                    timeSinceLastDbSync += totalLastTickTimeMs;
-                    if (TimeSpan.FromSeconds(10) - timeSinceLastDbSync <= TimeSpan.Zero)
-                    {
-                        SyncToDb();
-                        timeSinceLastDbSync = TimeSpan.Zero;
-                    }
+                    ticks++;
+                    this.Tick(totalLastTickTimeMs);            
                     Thread.Sleep(Math.Max(0, (int)((TimeSpan.FromSeconds(1.0) - (timer.Elapsed * TicksPerSecond)) / TicksPerSecond).TotalMilliseconds));
                     totalLastTickTimeMs = timer.Elapsed;
                 }
@@ -57,10 +51,8 @@ namespace CritterServer
             }
         }
 
-        public void AcceptUserInput(string command, User user)
-        {
-            UsersToDbSync.Push(user);
-        }
+        public abstract void Tick(TimeSpan deltaT);
+        public abstract void AcceptUserInput(T command, User user);
 
         private ConcurrentStack<User> UsersToDbSync = new ConcurrentStack<User>();
 
@@ -81,4 +73,7 @@ namespace CritterServer
         }
 
     }
+
+    public abstract class GameCommand { }
+
 }
