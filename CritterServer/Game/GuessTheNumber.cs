@@ -14,13 +14,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CritterServer
+namespace CritterServer.Game
 {
     public class GuessTheNumber : Game
     {
         private DateTime StartTime;
         private ConcurrentDictionary<int, List<Bet>> UserIdToBets = new ConcurrentDictionary<int, List<Bet>>();
-        private ConcurrentDictionary<int, User> LocalUserCacheByUserId = new ConcurrentDictionary<int, User>();
         private bool BettingIsClosed = false;
         public override GameType GameType => GameType.NumberGuesser;
 
@@ -74,7 +73,7 @@ namespace CritterServer
                     var hubContext =
                         scope.ServiceProvider
                             .GetRequiredService<IHubContext<GameHub, IGameClient>>();
-                    GameAlert alert = new GameAlert(message, GameType);
+                    GameAlert alert = new GameAlert(message, this.GameType);
 
                     if(userNames != null && userNames.Any() && !string.IsNullOrEmpty(message))
                         await hubContext.Clients.Users(userNames).ReceiveNotification(alert);
@@ -82,7 +81,7 @@ namespace CritterServer
                     {
                         foreach (var userNameToMessage in userNameAndMessages)
                         {
-                            await hubContext.Clients.User(userNameToMessage.Item1).ReceiveNotification(new GameAlert(userNameToMessage.Item2, GameType));
+                            await hubContext.Clients.User(userNameToMessage.Item1).ReceiveNotification(new GameAlert(userNameToMessage.Item2, this.GameType));
                         }
                     }
                     if((userNames == null || !userNames.Any()) && !string.IsNullOrEmpty(message))
@@ -99,9 +98,9 @@ namespace CritterServer
             {
                 SendSystemMessage($"The winning number is {theWinningNumber}!");
                 var winners = UserIdToBets.Select(kvp => Tuple.Create<int, int?>(kvp.Key, kvp.Value.
-                    Where(bettingPair => bettingPair.NumberGuess == theWinningNumber).Select(bet => bet.Wager).FirstOrDefault())).Where(t => t.Item2.HasValue && t.Item2 > 0).AsList();
+                    Where(bettingPair => bettingPair.NumberGuessed == theWinningNumber).Select(bet => bet.CashWagered).FirstOrDefault())).Where(t => t.Item2.HasValue && t.Item2 > 0).AsList();
 
-                await PayWinners(winners, calculateTotalPot(), theWinningNumber);
+                await PayWinners(winners, CalculateTotalPot(), theWinningNumber);
             });
         }
 
@@ -114,7 +113,7 @@ namespace CritterServer
             {
                 int winnings = (int)(((1.0 * winnerAndBet.Item2.Value) / (1.0 * winningAmount)) * totalPotSize);
                 winnerAndTheirWinnings.Add(Tuple.Create(winnerAndBet.Item1, winnings));
-                userNameToWinMessage.Add(Tuple.Create(LocalUserCacheByUserId[winnerAndBet.Item1].UserName, $"Your bet for {winnerAndBet.Item2.Value} on {winningNumber} won! You receive {winnings}"));
+                userNameToWinMessage.Add(Tuple.Create(Players[winnerAndBet.Item1].User.UserName, $"Your bet for {winnerAndBet.Item2.Value} on {winningNumber} won! You receive {winnings}"));
             }
             SendAlert(null, null, userNameToWinMessage);
             using (var scope = Services.CreateScope())
@@ -130,12 +129,6 @@ namespace CritterServer
             }
         }
 
-        private int calculateTotalPot()
-        {
-            int totalPotSize = UserIdToBets.SelectMany(user => user.Value).Sum(bet => bet.Wager);
-            return totalPotSize;
-        }
-
         public override async Task AcceptUserInput(string userCommand, User user)
         {
 
@@ -143,7 +136,7 @@ namespace CritterServer
             {
                 throw new CritterException("Sorry, no longer accepting guesses!", null, System.Net.HttpStatusCode.Gone);
             }
-            NumberGuess command = JsonConvert.DeserializeObject<NumberGuess>(userCommand);
+            Bet command = JsonConvert.DeserializeObject<Bet>(userCommand);
             using (var scope = Services.CreateScope())
             {
                 var userDomain =
@@ -162,7 +155,7 @@ namespace CritterServer
 
                 if (UserIdToBets.TryGetValue(user.UserId, out var value))
                 {
-                    if (value.Where(bet => bet.NumberGuess == command.NumberGuessed).Any())
+                    if (value.Where(bet => bet.NumberGuessed == command.NumberGuessed).Any())
                     {
                         throw new CritterException("You can't guess the same number twice!", null, System.Net.HttpStatusCode.BadRequest);
                     }
@@ -175,28 +168,27 @@ namespace CritterServer
                 {
                     UserIdToBets.TryAdd(user.UserId, new List<Bet> { new Bet(command.NumberGuessed, command.CashWagered) });
                 }
-                LocalUserCacheByUserId.TryAdd(user.UserId, user);
 
-                SendSystemMessage($"{user.UserName} bets {command.CashWagered} on {command.NumberGuessed}, bringing to total pot up to {calculateTotalPot()}");
+                SendSystemMessage($"{user.UserName} bets {command.CashWagered} on {command.NumberGuessed}, bringing to total pot up to {CalculateTotalPot()}");
                 await userDomain.ChangeUserCash(-1 * command.CashWagered, user);
             }
+        }
+
+        private int CalculateTotalPot()
+        {
+            int totalPotSize = UserIdToBets.SelectMany(user => user.Value).Sum(bet => bet.CashWagered);
+            return totalPotSize;
         }
     }
 
     public class Bet
     {
-        public int NumberGuess;
-        public int Wager;
-
-        public Bet(int numberGuess, int wager)
+        public Bet() { }
+        public Bet(int guess, int cash)
         {
-            this.NumberGuess = numberGuess;
-            this.Wager = wager; 
+            CashWagered = cash;
+            NumberGuessed = guess;
         }
-    }
-
-    public class NumberGuess
-    {
         [Range(1, Int32.MaxValue)]
         public int CashWagered { get; set; }
 

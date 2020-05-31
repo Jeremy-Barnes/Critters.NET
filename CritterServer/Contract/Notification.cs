@@ -41,7 +41,7 @@ namespace CritterServer.Contract
     {
         public int GameType{ get; set; }
 
-        public GameAlert(string message, GameType game)
+        public GameAlert(string message, Game.GameType game)
         {
             GameType = (int)game;
             this.AlertText = message;

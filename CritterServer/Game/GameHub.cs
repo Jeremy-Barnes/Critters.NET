@@ -1,32 +1,26 @@
 ﻿using CritterServer.Contract;
+using CritterServer.Domains;
 using CritterServer.Models;
-using CritterServer.Pipeline.Middleware;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Serilog;
-using Serilog.Core;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace CritterServer.Domains
+namespace CritterServer.Game
 {
     [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
     public class GameHub : Hub<IGameClient>
     {
-        private readonly MessageDomain messageDomain;
-        private readonly UserDomain userDomain;
+        private readonly UserDomain UserDomain;
         private readonly GameManagerService GameManager;
 
 
         public GameHub(GameManagerService gameManager, UserDomain userDomain)
         {
             this.GameManager = gameManager;
-            this.userDomain = userDomain;
+            this.UserDomain = userDomain;
         }
-
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
@@ -38,9 +32,9 @@ namespace CritterServer.Domains
         public void Connect(string gameId)
         {
             var username = this.Context.GetHttpContext().User.Identity.Name;
-            User activeUser = userDomain.RetrieveUserByUserName(username).Result;
+            User activeUser = UserDomain.RetrieveUserByUserName(username).Result;
             this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId)).Wait();
-           
+            GameManager.JoinGame(gameId, activeUser, this.Context.ConnectionId);
         }
 
         public async void SendChatMessage(string message, string gameId)
@@ -53,11 +47,6 @@ namespace CritterServer.Domains
         {
             return $"GameChannel{gameId}";
         }
-
-        //protected override void Dispose(bool disposing)
-        //{
-        //    Dispose();
-        //}
     }
 
     public interface IGameClient
