@@ -39,7 +39,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> FindGames(GameType? gameType, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-                return Ok(GameManager.GetGames(gameType));
+            return Ok(GameManager.GetGames(gameType));
         }
 
         [HttpPatch("command/{gameId}")]
@@ -54,10 +54,11 @@ namespace CritterServer.Controllers
         [HttpPut("join/{gameId}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> JoinGame(string gameId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            GameManager.JoinGame(gameId, activeUser, null);
-            return Ok();
+            if (GameManager.JoinGame(gameId, activeUser, null)) return Ok();
+            else return NotFound();
         }
     }
 

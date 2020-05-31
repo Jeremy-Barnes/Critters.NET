@@ -52,6 +52,7 @@ namespace CritterServer.Game
         {
             try
             {
+                if (GetGame(gameId) != null) throw new CritterException("A game already exists with that name!", null, HttpStatusCode.Conflict);
                 Game game = null;
                 switch (gameType)
                 {
@@ -71,9 +72,11 @@ namespace CritterServer.Game
         }
 
 
-        public void JoinGame(string gameId, User player, string signalRConnectionId)
+        public bool JoinGame(string gameId, User player, string signalRConnectionId)
         {
-            GetGame(gameId)?.JoinGame(player, signalRConnectionId);
+            var game = GetGame(gameId);
+            game?.JoinGame(player, signalRConnectionId);
+            return game != null;
         }
 
 

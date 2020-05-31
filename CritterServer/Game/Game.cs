@@ -1,4 +1,5 @@
-﻿using CritterServer.Domains;
+﻿using CritterServer.Contract;
+using CritterServer.Domains;
 using CritterServer.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,6 +81,49 @@ namespace CritterServer.Game
                 var player = new Player(user, signalRConnectonId);
                 Players.Add(user.UserId, player);
             }
+        }
+
+        protected void SendSystemMessage(string message)
+        {
+            Task.Run(async () =>
+            {
+                using (var scope = Services.CreateScope())
+                {
+                    var hubContext =
+                        scope.ServiceProvider
+                            .GetRequiredService<IHubContext<GameHub, IGameClient>>();
+
+                    await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveSystemMessage(message);
+                }
+            });
+        }
+
+        protected void SendAlert(string message, List<string> userNames = null, List<Tuple<string, string>> userNameAndMessages = null)
+        {
+            Task.Run(async () =>
+            {
+                using (var scope = Services.CreateScope())
+                {
+                    var hubContext =
+                        scope.ServiceProvider
+                            .GetRequiredService<IHubContext<GameHub, IGameClient>>();
+                    GameAlert alert = new GameAlert(message, this.GameType);
+
+                    if (userNames != null && userNames.Any() && !string.IsNullOrEmpty(message))
+                        await hubContext.Clients.Users(userNames).ReceiveNotification(alert);
+                    if (userNameAndMessages != null && userNameAndMessages.Any())
+                    {
+                        foreach (var userNameToMessage in userNameAndMessages)
+                        {
+                            await hubContext.Clients.User(userNameToMessage.Item1).ReceiveNotification(new GameAlert(userNameToMessage.Item2, this.GameType));
+                        }
+                    }
+                    if ((userNames == null || !userNames.Any()) && !string.IsNullOrEmpty(message))
+                    {
+                        await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveNotification(alert);
+                    }
+                }
+            });
         }
 
         public async virtual void TerminateGame()
