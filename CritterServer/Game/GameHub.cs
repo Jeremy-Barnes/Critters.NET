@@ -13,23 +13,18 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Domains
 {
-    [ApiController]
+    [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
     public class GameHub : Hub<IGameClient>
     {
         private readonly MessageDomain messageDomain;
         private readonly UserDomain userDomain;
-        public GameHub(MessageDomain messageDomain, UserDomain userDomain)
+        private readonly GameManagerService GameManager;
+
+
+        public GameHub(GameManagerService gameManager, UserDomain userDomain)
         {
-            this.messageDomain = messageDomain;
+            this.GameManager = gameManager;
             this.userDomain = userDomain;
-        }
-
-        public override Task OnConnectedAsync()
-        {
-            notifyNewConnectionState(this.Context.User.Identity.Name, this.Context.ConnectionId, true);
-
-
-            return base.OnConnectedAsync();
         }
 
 
@@ -37,41 +32,40 @@ namespace CritterServer.Domains
         {
             if (exception != null)
                 Log.Error("A SignalR error happened", exception);
-            notifyNewConnectionState(this.Context.User.Identity.Name, this.Context.ConnectionId, false);
             return base.OnDisconnectedAsync(exception);
         }
 
-        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
-        public void Connect()
+        public void Connect(string gameId)
         {
             var username = this.Context.GetHttpContext().User.Identity.Name;
             User activeUser = userDomain.RetrieveUserByUserName(username).Result;
-            var channels = messageDomain.GetChannels(null, activeUser).Result;
-            foreach (var channel in channels)
-            {
-                this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(channel.Channel.ChannelId)).Wait();
-            }
+            this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId)).Wait();
+           
         }
 
-        private void notifyNewConnectionState(string username, string currentConnectionId, bool isConnecting)
+        public async void SendChatMessage(string message, string gameId)
         {
-            this.Clients.AllExcept(currentConnectionId).ReceiveNotification(new Notification($"{username} has {(isConnecting ? "come online!" : "left.")}"));
+            //todo some kind of content filtering for the love of god
+            await this.Clients.OthersInGroup(GetChannelGroupIdentifier(gameId)).ReceiveChat(this.Context.User.Identity.Name, message);
         }
 
-        public static string GetChannelGroupIdentifier(int channelId)
+        public static string GetChannelGroupIdentifier(string gameId)
         {
-            return $"ChatChannel{channelId}";
+            return $"GameChannel{gameId}";
         }
 
-        protected override void Dispose(bool disposing)
-        {
-            //this.Dispose();
-        }
+        //protected override void Dispose(bool disposing)
+        //{
+        //    Dispose();
+        //}
     }
 
     public interface IGameClient
     {
-        Task ReceiveNotification(Notification serverNotification);
+        Task ReceiveNotification(GameAlert serverNotification);
+        Task ReceiveChat(string sender, string message);
+        Task ReceiveSystemMessage(string message);
+
     }
 
 }

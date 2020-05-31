@@ -7,10 +7,44 @@
     <link rel="stylesheet" href="app.css" type="text/css" />
 </head>
 <body>
-    <h1>TypeScript HTML App</h1>
+    <h1>Number Guess Test UI</h1>
 
-    <div id="content"></div>
+    <div id="content">
+        <div id="authzone">
+            <div>
+                <h3>Sign Up!</h3>
+                Username: <input type="text" id="sign_username" value="Enter Username Here!"> <br />
+                Email: <input type="text" id="sign_email" value="Enter Email Here!"> <br />
+                Password: <input type="password" id="sign_password" value=""> <br />
+                <button id="createbutt">Create Account</button>
+
+            </div>
+            <br /><br />
+            <div>
+                <h3>Log In!</h3>
+                Username: <input type="text" id="username" value="Enter Username Here!"> <br />
+                Password: <input type="password" id="password" value="Enter Username Here!"> <br />
+                Game ID: <input type="text" id="gameid" value="GameId"> <br />
+
+                <button id="loginbutt">Login</button>
+            </div>
+            <br /><br />
+        </div>
+              <div id="NumberZone">
+                  <h1>???</h1>
+
+                  <span id="CashOnHand"></span> <br/>
+                  Enter Your Bet Here! How much would you like to wager? <input id="betamt" type="number" /> <br />
+                  What Number Do You Want To Bet on? 1-10 <input id="beton" type="number" /> <br />
+                  <button id="betbutt">Submit Bet</button><br /><br />
+
+              </div>
+
+        <div id="chatZone"></div>
+        <input type="text" id="chatbox" value="send message"><button id="chatbutt">Send Message</button>
+
+    </div>
     
-    <script src="./dist/app.bundle.js"></script>
+    <script type="text/javascript" language="javascript" src="./dist/app.bundle.js"></script>
 </body>
 </html>

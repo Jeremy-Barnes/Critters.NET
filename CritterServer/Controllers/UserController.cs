@@ -36,8 +36,8 @@ namespace CritterServer.Controllers
         {
             UserAuthResponse response = new UserAuthResponse();
             response.authToken = await domain.CreateAccount(user);
-            response.user = user;
-            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            response.user = await domain.RetrieveUserByUserName(user.UserName);
+            addLoginCookie(this.HttpContext, response.user.UserName, response.user.EmailAddress);
             return Ok(response);
         }
 
@@ -49,6 +49,10 @@ namespace CritterServer.Controllers
         {
             UserAuthResponse response = new UserAuthResponse();
             response.authToken = await domain.Login(user);
+            if (!string.IsNullOrEmpty(user.EmailAddress))
+                user = await domain.RetrieveUserByEmail(user.EmailAddress);
+            else
+                user = await domain.RetrieveUserByUserName(user.UserName);
             response.user = user;
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(response);

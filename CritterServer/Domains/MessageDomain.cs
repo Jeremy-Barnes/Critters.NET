@@ -67,7 +67,7 @@ namespace CritterServer.Domains
             }
 
             hubContext?.Clients?.GroupExcept(NotificationHub.GetChannelGroupIdentifier(message.ChannelId), activeUser.UserName)
-                ?.ReceiveNotification(new MessageAlert(new MessageDetails() { Message = message, SenderUsername = activeUser.UserName }));
+                ?.ReceiveNotification(new NewMessageAlert(new MessageDetails() { Message = message, SenderUsername = activeUser.UserName }));
             
             return message.MessageId;
         }

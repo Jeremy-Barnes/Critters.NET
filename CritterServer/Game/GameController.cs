@@ -37,10 +37,10 @@ namespace CritterServer.Controllers
             return Ok(gms.StartGame(activeUser));
         }
 
-        [HttpPut("command/{gameId}/{command}")]
+        [HttpPut("command/{gameId}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> GameCommand(string gameId, string command, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> GameCommand(string gameId, [FromBody]string command, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
             //var channelsAndMessages = await domain.GetMessages(true, lastMessageId, activeUser);
             //return Ok(new { ChannelDetails = channelsAndMessages });

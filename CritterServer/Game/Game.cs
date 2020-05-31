@@ -14,20 +14,25 @@ using System.Threading.Tasks;
 
 namespace CritterServer
 {
-    public abstract class Game<T> where T: GameCommand
+    public abstract class Game
     {
         public User Host { get; internal set; }
         public int ticks;
         public string Id { get; internal set; }
+        public bool GameOver { get; internal set; }
         protected float TicksPerSecond { get; set; }
         protected IServiceProvider Services;
-        public Game(User host, IServiceProvider services, string gameName = null)
+        private Action<string> GameEndCallBack;
+        public abstract GameType GameType { get;}
+        public Game(User host, IServiceProvider services, Action<string> gameEndCallBack, string gameName = null)
         {
             this.Host = host;
             this.ticks = 0;
             this.Id = gameName ?? Guid.NewGuid().ToString().Substring(0, 6);
             this.TicksPerSecond = 60f;
             this.Services = services;
+            this.GameEndCallBack = gameEndCallBack;
+            this.GameOver = false;
         }
 
         public void Run()
@@ -36,7 +41,7 @@ namespace CritterServer
                 Stopwatch timer = new Stopwatch();
 
                 TimeSpan totalLastTickTimeMs = TimeSpan.Zero;
-                while (ticks < Int32.MaxValue)
+                while (!GameOver && ticks < Int32.MaxValue)
                 {
                     timer.Restart();
                     ticks++;
@@ -44,6 +49,7 @@ namespace CritterServer
                     Thread.Sleep(Math.Max(0, (int)((TimeSpan.FromSeconds(1.0) - (timer.Elapsed * TicksPerSecond)) / TicksPerSecond).TotalMilliseconds));
                     totalLastTickTimeMs = timer.Elapsed;
                 }
+                GameEndCallBack.Invoke(this.Id);
             } 
             catch(Exception ex)
             {
@@ -52,28 +58,15 @@ namespace CritterServer
         }
 
         public abstract void Tick(TimeSpan deltaT);
-        public abstract void AcceptUserInput(T command, User user);
-
-        private ConcurrentStack<User> UsersToDbSync = new ConcurrentStack<User>();
-
-        private void SyncToDb()
-        {
-            Task.Run(async () =>
-            {
-                using (var scope = Services.CreateScope())
-                {
-                    var userDomain =
-                        scope.ServiceProvider
-                            .GetRequiredService<UserDomain>();
-                   
-                    if (UsersToDbSync.TryPop(out User user))
-                        await userDomain.ChangeUserCash(-5, user);
-                }
-            });
-        }
+        public abstract Task AcceptUserInput(string userCommand, User user);
 
     }
 
-    public abstract class GameCommand { }
-
+    public enum GameType
+    {
+        NumberGuesser,
+        Snake,
+        TicTacToe
+            //3 games! Pretty ambitious.
+    }
 }

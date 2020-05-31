@@ -52,7 +52,7 @@ namespace CritterServer
                 options.AddPolicy(name: PermittedOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202")
+                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202")
                                       .AllowAnyMethod()
                                       .AllowAnyHeader()
                                       .AllowCredentials();
@@ -111,16 +111,18 @@ namespace CritterServer
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseCors(PermittedOrigins);
             app.UseRouting();
             app.UseAuthorization();
             app.UseAuthentication();
-            app.UseCors(PermittedOrigins);
 
             app.UseMiddleware<ErrorMiddleware>();
             
            app.UseEndpoints(endpoints => {
                endpoints.MapControllers();
                endpoints.MapHub<NotificationHub>("/notificationhub");
+               endpoints.MapHub<GameHub>("/gamehub");
+
            });//last thing
         }
 

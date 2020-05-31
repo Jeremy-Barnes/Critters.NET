@@ -84,7 +84,6 @@ namespace CritterServer.Domains
         public async Task<IEnumerable<User>> RetrieveUsersByUserName(IEnumerable<string> userNames)
         {
             return await userRepo.RetrieveUsersByUserName(userNames.ToArray());
-
         }
 
         public async Task<User> RetrieveUserByEmail(string email)
@@ -97,13 +96,21 @@ namespace CritterServer.Domains
         {
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                user = (await userRepo.RetrieveUsersByIds(user.UserId)).First();
-                await userRepo.UpdateUserCash(user.Cash + byAmount, user.UserId);
+                await userRepo.UpdateUserCash(byAmount, user.UserId);
                 user.Cash += byAmount;
                 trans.Complete();
             }
             return user;
 
+        }
+
+        public async Task ChangeUsersCash(List<Tuple<int, int>> userIdAndCashDeltas)
+        {
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                await userRepo.UpdateUsersCash(userIdAndCashDeltas.ToArray());
+                trans.Complete();
+            }
         }
     }
 

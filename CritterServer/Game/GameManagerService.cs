@@ -30,7 +30,7 @@ namespace CritterServer
         {
             try 
             { 
-                var game = new Game(host, Services);
+                var game = new GuessTheNumber(host, Services, EndGame);
                 games.Add(game.Id, game);
                 runningGames.Add(Task.Run(game.Run));
                 return game.Id;
@@ -65,6 +65,11 @@ namespace CritterServer
         public Task StopAsync(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
+        }
+
+        private void EndGame(string gameId)
+        {
+            this.games.Remove(gameId);
         }
     }
 }
