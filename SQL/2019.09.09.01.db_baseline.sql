@@ -57,3 +57,37 @@ CREATE TABLE IF NOT EXISTS readReceipts(
     read BOOLEAN NOT NULL DEFAULT 'f',
     PRIMARY KEY (messageID, recipientID)
 );
+
+CREATE TABLE IF NOT EXISTS readReceipts(
+    messageID INT NOT NULL REFERENCES messages(messageID),
+    recipientID INT NOT NULL REFERENCES users(userID),
+    read BOOLEAN NOT NULL DEFAULT 'f',
+    PRIMARY KEY (messageID, recipientID)
+);
+
+CREATE TABLE IF NOT EXISTS petSpeciesConfigs(
+    petSpeciesConfigID SERIAL NOT NULL PRIMARY KEY,
+    speciesName VARCHAR(24) NOT NULL,
+    maxHitPoints int NOT NULL,
+    description VARCHAR(2000) NOT NULL,
+    imageBasePath  VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS petColorConfigs(
+    petColorConfigID SERIAL NOT NULL PRIMARY KEY,
+    colorName VARCHAR(24) NOT NULL,
+    imagePatternPath varchar(200)
+);
+
+CREATE TABLE IF NOT EXISTS pets(
+    petID SERIAL NOT NULL PRIMARY KEY,
+    petName VARCHAR(24) NOT NULL,
+    level int NOT NULL default 0,
+    currentHitPoints int NOT NULL, 
+    gender VARCHAR(8) NOT NULL,
+    colorID INT NOT NULL REFERENCES petColorConfigs(petColorConfigID),
+    ownerID INT NULL REFERENCES users(userID),
+    speciesID INT NOT NULL REFERENCES petSpeciesConfigs(petSpeciesConfigID),
+    isAbandoned boolean not null default 'f',
+    CHECK (gender IN ('male','female','other'))
+);
