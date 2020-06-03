@@ -48,14 +48,14 @@ namespace CritterServer.DataAccess
         public async Task<IEnumerable<PetSpeciesConfig>> RetrieveSpeciesByIds(params int[] species)
         {
             dbConnection.TryOpen();
-            return await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM pets WHERE petSpeciesConfigID = ANY(@species)",
+            return await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM petSpeciesConfigs WHERE petSpeciesConfigID = ANY(@species)",
                 new { species = species.Distinct().AsList() });
         }
 
         public async Task<IEnumerable<PetColorConfig>> RetrieveColorsByIds(params int[] colors)
         {
             dbConnection.TryOpen();
-            return await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM pets WHERE petColorConfigID = ANY(@colors)",
+            return await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfig WHERE petColorConfigID = ANY(@colors)",
                 new { colors = colors.Distinct().AsList() });
         }
     }

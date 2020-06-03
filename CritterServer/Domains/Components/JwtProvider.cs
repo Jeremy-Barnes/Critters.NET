@@ -46,16 +46,21 @@ namespace CritterServer.Domains.Components
             return GenerateToken(user.UserName, user.EmailAddress);
         }
 
-        public string GenerateToken(string userName, string email)
+        public string GenerateToken(string userName, string email, string roletype = RoleTypes.User)
+        {
+            return GenerateToken(new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, userName),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, roletype)
+            });
+        }
+
+        public string GenerateToken(IEnumerable<Claim> claims)
         {
             SecurityTokenDescriptor std = new SecurityTokenDescriptor()
             {
-                Subject = new ClaimsIdentity(new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, userName),
-                    new Claim(ClaimTypes.Email, email)
-
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(14), //todo configurable, same value as the cookie
                 SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.HmacSha384Signature),
                 IssuedAt = DateTime.UtcNow,
@@ -103,7 +108,8 @@ namespace CritterServer.Domains.Components
     {
         string GenerateToken(User user);
 
-        string GenerateToken(string userName, string email);
+        string GenerateToken(string userName, string email, string roleTypes = RoleTypes.User);
+        string GenerateToken(IEnumerable<Claim> claims);
 
         bool ValidateToken(string jwtString);
         ClaimsPrincipal CrackJwt(string jwtString);
@@ -122,7 +128,7 @@ namespace CritterServer.Domains.Components
         {
             string secretKey = config.GetValue<string>("JwtSigningKey");
             var jwtProvider = new JwtProvider(secretKey, getTokenValidationParameters(secretKey));
-            //services.AddSingleton<JwtBearerOptions>(new JwtBearerOptions()
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(jbo => {
                 jbo.TokenValidationParameters = getTokenValidationParameters(secretKey);
                 jbo.Events = new JwtBearerEvents

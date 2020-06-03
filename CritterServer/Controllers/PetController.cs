@@ -28,39 +28,38 @@ namespace CritterServer.Controllers
         }
 
         [HttpPost("create")]
-        [UserValidate("user", UserValidate.ValidationType.All)]
-        [Consumes("application/json")]
-        [Produces("application/json")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> CreatePet([FromBody] User user)
-        {
-            UserAuthResponse response = new UserAuthResponse();
-            response.authToken = await domain.CreatePet(user);
-            response.user = user;
-            return Ok(response);
-        }
-
-        [HttpPost("login")]
-        [Consumes("application/json")]
-        [Produces("application/json")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> Login([FromBody] User user)
-        {
-            UserAuthResponse response = new UserAuthResponse();
-            response.authToken = await domain.Login(user);
-            response.user = user;
-            return Ok(response);
-        }
-
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [Consumes("application/json")]
         [Produces("application/json")]
-
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> GetUser()
+        public async Task<ActionResult> CreatePet([FromBody] Pet pet, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            User user = await domain.RetrieveUserByUserName(HttpContext.User.Identity.Name);
-            return Ok(user);
+            PetDetails response;
+            var dbPet = await domain.CreatePet(pet, activeUser);
+            response = (await domain.RetrieveFullPetInformation(dbPet.PetID)).FirstOrDefault();
+            return Ok(response);
+        }
+
+        [HttpGet]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetPets([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            var response = await domain.RetrieveFullPetInformationByOwner(activeUser.UserId);
+            return Ok(new { Pets = response });
+        }
+
+        [HttpGet]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetPets([FromQuery(Name = "ids")] int[] ids)
+        {
+            var response = await domain.RetrieveFullPetInformation(ids);
+            return Ok(new { Pets = response });
         }
     }
 

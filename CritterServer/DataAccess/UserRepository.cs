@@ -74,6 +74,54 @@ namespace CritterServer.DataAccess
             var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
             return searchResult.FirstOrDefault();
         }
+
+        /// <summary>
+        /// You really shouldn't be calling this.
+        /// </summary>
+        /// <param name="developer"></param>
+        /// <returns></returns>
+        public int CreateDeveloper(User developer)
+        {
+            dbConnection.TryOpen();
+            int output = dbConnection.Query<int>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
+                "isActive, salt, isDev)" +
+                "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
+                "@isActive, @salt, @isDev) RETURNING userID",
+                new
+                {
+                    userName = developer.UserName,
+                    firstName = developer.FirstName,
+                    lastName = developer.LastName,
+                    emailAddress = developer.EmailAddress,
+                    password = developer.Password,
+                    gender = developer.Gender.ToLower(),
+                    birthdate = Convert.ToDateTime(developer.Birthdate),
+                    cash = developer.Cash,
+                    city = developer.City,
+                    state = developer.State,
+                    country = developer.Country,
+                    postcode = developer.Postcode,
+                    isActive = developer.IsActive,
+                    salt = developer.Salt,
+                    isDev = true//AAAAAAAAAAAAAAAAAAH
+                }).First();
+            return output;
+        }
+
+        public async Task<User> RetrieveDevByEmail(string email)
+        {
+            dbConnection.TryOpen();
+            return (await dbConnection.QueryAsync<User>("SELECT * from users WHERE emailAddress = @emailAddress AND isActive = true and isDev = true", new { emailAddress = email })).FirstOrDefault();
+        }
+
+        public async Task<User> RetrieveDevByUserName(string userName)
+        {
+            dbConnection.TryOpen();
+            var users = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = @userName AND isActive = true AND isDev = true", new { userName });
+
+            return users.FirstOrDefault();
+        }
+
     }
 
     public interface IUserRepository : IRepository
@@ -83,5 +131,8 @@ namespace CritterServer.DataAccess
         Task<User> RetrieveUserByEmail(string email);
         Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
+        int CreateDeveloper(User developer);
+        Task<User> RetrieveDevByEmail(string email);
+        Task<User> RetrieveDevByUserName(string userNames);
     }
 }

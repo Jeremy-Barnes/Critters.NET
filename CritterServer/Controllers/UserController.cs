@@ -34,11 +34,9 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> CreateAccount([FromBody] User user)
         {
-            UserAuthResponse response = new UserAuthResponse();
-            response.authToken = await domain.CreateAccount(user);
-            response.user = user;
+            var authToken = await domain.CreateAccount(user);
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
-            return Ok(response);
+            return Ok(new { AuthToken = authToken, User = user});
         }
 
         [HttpPost("login")]
@@ -47,11 +45,9 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Login([FromBody] User user)
         {
-            UserAuthResponse response = new UserAuthResponse();
-            response.authToken = await domain.Login(user);
-            response.user = user;
+            var authToken = await domain.Login(user);
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
-            return Ok(response);
+            return Ok(new { AuthToken = authToken, User = user });
         }
 
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]

@@ -75,13 +75,13 @@ namespace CritterServer.DataAccess
         public async Task UpdatePet(string petName, string gender, int petId)
         {
             dbConnection.TryOpen();
-            await dbConnection.ExecuteAsync($"UPDATE pet SET petName = @petName, gender = @gender WHERE petID = @petId", new { petId, petName, gender });
+            await dbConnection.ExecuteAsync($"UPDATE pets SET petName = @petName, gender = @gender WHERE petID = @petId", new { petId, petName, gender });
         }
 
         public async Task AbandonPet(int petId)
         {
             dbConnection.TryOpen();
-            await dbConnection.ExecuteAsync($"UPDATE pet SET isAbandoned = true, ownerId = NULL WHERE petID = @petId", new { petId });
+            await dbConnection.ExecuteAsync($"UPDATE pets SET isAbandoned = true, ownerId = NULL WHERE petID = @petId", new { petId });
         }
     }
 

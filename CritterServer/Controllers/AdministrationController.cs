@@ -3,60 +3,67 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CritterServer.Domains;
+using CritterServer.Domains.Components;
+using CritterServer.Models;
+using CritterServer.Pipeline.Middleware;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CritterServer.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/admin")]
     [ApiController]
     public class AdministrationController : ControllerBase
     {
-        UserDomain domain;
+        AdminDomain domain;
 
-        public AdministrationController(UserDomain domain)
+        public AdministrationController(AdminDomain domain)
         {
             this.domain = domain;
         }
 
-        // GET api/administration requires a JWT
-        [HttpGet]
-        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
-        public ActionResult<IEnumerable<string>> Get()
+        [HttpPost("login")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> LoginDev([FromBody] User dev)
         {
-            return new string[] { "Hello World" };
+            var authToken = await domain.LoginDev(dev);
+            return Ok(new { AuthToken = authToken });
         }
 
-        // GET api/administration
-        [HttpGet("test")]
-        public ActionResult<IEnumerable<string>> Gett()
+        [HttpPost("createDev")]
+        [UserValidate("user", UserValidate.ValidationType.All)]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer", Roles = RoleTypes.Dev)]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> CreateAccount([FromBody] User user, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            return new string[] { "Hello World!" };
+            await domain.CreateDev(user, activeUser);
+            return Ok();
         }
 
-        // GET api/administration/5
-        [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        [HttpPost("createSpecies")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer", Roles = RoleTypes.Dev)]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> CreateSpecies([FromBody] PetSpeciesConfig species, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            return "Hello World!" + id;
+            return Ok(await domain.CreatePetSpecies(species, activeUser));
         }
 
-        // POST api/administration
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("createColor")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer", Roles = RoleTypes.Dev)]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> CreateColor([FromBody] PetColorConfig color, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
+            return Ok(await domain.CreatePetColor(color, activeUser));
         }
-
-        // PUT api/administration/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/administration/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        //todo delete species and color
     }
 }

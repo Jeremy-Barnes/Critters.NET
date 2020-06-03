@@ -38,17 +38,27 @@ namespace CritterServer.Domains
             return pet;
         }
 
-        public async Task<IEnumerable<Pet>> RetrievePets(int userId)
+        public async Task<IEnumerable<Pet>> RetrievePetsByOwner(int userId)
         {
             return await PetRepo.RetrievePetsByOwnerId(userId);
         }
 
+        public async Task<IEnumerable<Pet>> RetrievePets(params int[] petIds)
+        {
+            return await PetRepo.RetrievePetsByIds(petIds);
+        }
+
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetInformation(IEnumerable<int> petIds)
+        {
+            return await RetrieveFullPetInformation(petIds.ToArray());
+        }
+
+        public async Task<IEnumerable<PetDetails>> RetrieveFullPetInformation(params int[] petIds)
         {
             return await PetRepo.RetrieveFullPetsByIds(petIds.ToArray());
         }
 
-        public async Task<IEnumerable<PetDetails>> RetrieveFullPetInformation(int ownerId)
+        public async Task<IEnumerable<PetDetails>> RetrieveFullPetInformationByOwner(int ownerId)
         {
             return await PetRepo.RetrieveFullPetsByOwnerId(ownerId);
         }

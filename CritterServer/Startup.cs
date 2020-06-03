@@ -87,12 +87,15 @@ namespace CritterServer
             //domains
             services.AddTransient<UserDomain>();
             services.AddTransient<MessageDomain>();
-
+            services.AddTransient<AdminDomain>();
+            services.AddTransient<PetDomain>();
             services.AddTransient<ErrorMiddleware>();
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IMessageRepository, MessageRepository>();
+            services.AddTransient<IPetRepository, PetRepository>();
+            services.AddTransient<IConfigRepository, ConfigRepository>();
 
             //components
             services.AddHttpContextAccessor();

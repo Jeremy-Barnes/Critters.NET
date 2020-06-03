@@ -30,7 +30,7 @@ namespace CritterServer.Models
         public string SpeciesName { get; set; }
         public int MaxHitPoints { get; set; }
         public string Description { get; set; }
-        public int ImageBasePath { get; set; }
+        public string ImageBasePath { get; set; }
     }
 
     public class PetColorConfig
