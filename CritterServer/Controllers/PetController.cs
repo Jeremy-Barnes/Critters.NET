@@ -40,7 +40,7 @@ namespace CritterServer.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
+        [HttpGet("all")]
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [Consumes("application/json")]
         [Produces("application/json")]
@@ -56,7 +56,7 @@ namespace CritterServer.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> GetPets([FromQuery(Name = "ids")] int[] ids)
+        public async Task<ActionResult> GetPets([FromQuery(Name = "id")] int[] ids)
         {
             var response = await domain.RetrieveFullPetInformation(ids);
             return Ok(new { Pets = response });

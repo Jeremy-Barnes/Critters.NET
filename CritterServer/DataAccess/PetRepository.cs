@@ -1,6 +1,7 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Models;
 using Dapper;
+using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -21,8 +22,8 @@ namespace CritterServer.DataAccess
         public async Task<int> CreatePet(Pet pet, int ownerUserId)
         {
             dbConnection.TryOpen();
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO pets(petName, gender, colorID, ownerID, speciesID, isAbandoned)" +
-                "VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @isAbandoned) RETURNING petID",
+            int output = (await dbConnection.QueryAsync<int>("INSERT INTO pets(petName, gender, colorID, ownerID, speciesID, currentHitPoints, isAbandoned)" +
+                "VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @currentHitPoints, false) RETURNING petID",
                 new
                 {
                     petName = pet.PetName,
@@ -30,7 +31,7 @@ namespace CritterServer.DataAccess
                     colorId = pet.ColorId,
                     ownerUserId = ownerUserId,
                     speciesId = pet.SpeciesId,
-                    isAbandoned = pet.IsAbandoned
+                    currentHitPoints = pet.CurrentHitPoints
                 })).First();
             return output;
         }
@@ -58,11 +59,11 @@ namespace CritterServer.DataAccess
         {
             dbConnection.TryOpen();
             return await dbConnection.QueryAsync<Pet, PetSpeciesConfig, PetColorConfig, PetDetails>(@"
-                SELECT * FROM pets p
-                INNER JOIN petColorConfigs pcc ON p.ownerID = ownerUserId AND p.colorID = pcc.petColorConfigID 
+                SELECT p.*, psc.*, pcc.* FROM pets p
+                INNER JOIN petColorConfigs pcc ON p.ownerID = @ownerUserId AND p.colorID = pcc.petColorConfigID 
                 INNER JOIN petSpeciesConfigs psc ON p.speciesID = psc.petSpeciesConfigID",
                 param: new { ownerUserId },
-                splitOn: "petColorConfigId,petSpeciesConfigID",
+                splitOn: "petspeciesconfigid,petcolorconfigid",
                 map: (p, psc, pcc) => new PetDetails(p, psc, pcc));
         }
 

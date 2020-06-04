@@ -29,7 +29,7 @@ namespace CritterServer.Domains
                 pet.CurrentHitPoints = 0;
                 pet.Level = 0;
                 pet.OwnerID = user.UserId;
-
+                pet.CurrentHitPoints = 50; //todo health...onomics
                 pet.PetID = await PetRepo.CreatePet(pet, pet.OwnerID);
                 //todo verify configs
                 trans.Complete();

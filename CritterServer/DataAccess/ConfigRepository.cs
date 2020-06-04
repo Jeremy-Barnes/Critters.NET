@@ -55,7 +55,7 @@ namespace CritterServer.DataAccess
         public async Task<IEnumerable<PetColorConfig>> RetrieveColorsByIds(params int[] colors)
         {
             dbConnection.TryOpen();
-            return await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfig WHERE petColorConfigID = ANY(@colors)",
+            return await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs WHERE petColorConfigID = ANY(@colors)",
                 new { colors = colors.Distinct().AsList() });
         }
     }
