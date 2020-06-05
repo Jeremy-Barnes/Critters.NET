@@ -60,8 +60,7 @@ namespace CritterServer.Pipeline
 
             if (EnforceCasing != true)
             {
-                AcceptedValue = AcceptedValue.Select(a => a.ToLower()).ToArray();
-                return AcceptedValue.Contains(val.ToLower());
+                return AcceptedValue.Any(av => av.Equals(val, StringComparison.OrdinalIgnoreCase));
             }
             return AcceptedValue.Contains(val);
         }

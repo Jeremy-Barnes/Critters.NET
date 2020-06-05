@@ -23,7 +23,7 @@ namespace CritterServer.Controllers
             this.domain = domain;
         }
 
-        [HttpPost("login")]
+        [HttpPost("loginDev")]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
