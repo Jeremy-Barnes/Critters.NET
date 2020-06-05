@@ -41,8 +41,6 @@ namespace CritterServer.Domains.Components
 
         public string GenerateToken(User user)
         {
-            UserFilter.UserNameIsValidForm(user);
-            UserFilter.EmailIsValidForm(user);
             return GenerateToken(user.UserName, user.EmailAddress);
         }
 

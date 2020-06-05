@@ -46,13 +46,13 @@ namespace CritterServer.DataAccess
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByIds(params int[] petIds)
         {
             dbConnection.TryOpen();
-            return await dbConnection.QueryAsync<Pet,PetSpeciesConfig,PetColorConfig, PetDetails>(@"
+            return await dbConnection.QueryAsync<Pet,PetColorConfig, PetSpeciesConfig, PetDetails>(@"
                 SELECT * FROM pets p
                 INNER JOIN petColorConfigs pcc ON p.PetID = ANY(@petIds) AND p.colorID = pcc.petColorConfigID 
                 INNER JOIN petSpeciesConfigs psc ON p.speciesID = psc.petSpeciesConfigID",
                 param: new { petIds = petIds.Distinct().AsList() },
                 splitOn: "petColorConfigId,petSpeciesConfigID",
-                map: (p, psc, pcc) => new PetDetails(p, psc, pcc));
+                map: (p, pcc, psc) => new PetDetails(p, psc, pcc));
         }
 
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByNames(params string[] names)
