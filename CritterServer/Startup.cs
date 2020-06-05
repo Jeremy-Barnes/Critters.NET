@@ -41,9 +41,8 @@ namespace CritterServer
             //request pipeline
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
-                .AddDataContractResolver().AddMvcOptions((options) => //get your Filters here! Request Pipeline Filters, right here!  
+                .AddDataContractResolver().AddMvcOptions((options) =>
                 {
-                    options.Filters.Add<UserFilter>();
                     options.EnableEndpointRouting = true;
                 });
 
@@ -100,7 +99,6 @@ namespace CritterServer
             //components
             services.AddHttpContextAccessor();
             services.AddScoped<CookieEventHandler>();
-            services.AddTransient<UserFilter>();
 
 
         }

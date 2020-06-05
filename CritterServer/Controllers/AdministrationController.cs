@@ -34,7 +34,6 @@ namespace CritterServer.Controllers
         }
 
         [HttpPost("createDev")]
-        [UserValidate("user", UserValidate.ValidationType.All)]
         [Authorize(AuthenticationSchemes = "Cookie,Bearer", Roles = RoleTypes.Dev)]
         [Consumes("application/json")]
         [Produces("application/json")]

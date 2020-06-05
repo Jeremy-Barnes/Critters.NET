@@ -28,7 +28,6 @@ namespace CritterServer.Controllers
         }
 
         [HttpPost("create")]
-        [UserValidate("user", UserValidate.ValidationType.All)]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]

@@ -36,7 +36,7 @@ namespace CritterServer.Controllers
         {
             PetDetails response;
             var dbPet = await domain.CreatePet(pet, activeUser);
-            response = (await domain.RetrieveFullPetInformation(dbPet.PetID)).FirstOrDefault();
+            response = (await domain.RetrieveFullPetInformation(dbPet.PetId)).FirstOrDefault();
             return Ok(response);
         }
 
@@ -59,7 +59,30 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> GetPets([FromQuery(Name = "id")] int[] ids)
         {
             var response = await domain.RetrieveFullPetInformation(ids);
+            if (response == null || response.Count() == 0) return NotFound();
             return Ok(new { Pets = response });
+        }
+
+        [HttpGet("colors")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetColors([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            var response = await domain.RetrieveAvailableColors(activeUser);
+            return Ok(new { Colors = response });
+        }
+
+        [HttpGet("species")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetSpecies([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            var response = await domain.RetrieveAvailableSpecies(activeUser);
+            return Ok(new { Species = response });
         }
     }
 

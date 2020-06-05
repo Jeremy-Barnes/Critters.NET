@@ -58,6 +58,18 @@ namespace CritterServer.DataAccess
             return await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs WHERE petColorConfigID = ANY(@colors)",
                 new { colors = colors.Distinct().AsList() });
         }
+
+        public async Task<IEnumerable<PetSpeciesConfig>> RetrieveSpecies()
+        {
+            dbConnection.TryOpen();
+            return await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM petSpeciesConfigs");
+        }
+
+        public async Task<IEnumerable<PetColorConfig>> RetrieveColors()
+        {
+            dbConnection.TryOpen();
+            return await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs");
+        }
     }
 
     public interface IConfigRepository : IRepository
@@ -66,5 +78,7 @@ namespace CritterServer.DataAccess
         Task<int> CreatePetColor(PetColorConfig color);
         Task<IEnumerable<PetSpeciesConfig>> RetrieveSpeciesByIds(params int[] species);
         Task<IEnumerable<PetColorConfig>> RetrieveColorsByIds(params int[] colors);
+        Task<IEnumerable<PetSpeciesConfig>> RetrieveSpecies();
+        Task<IEnumerable<PetColorConfig>> RetrieveColors();
     }
 }

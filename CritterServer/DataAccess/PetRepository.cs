@@ -55,6 +55,28 @@ namespace CritterServer.DataAccess
                 map: (p, psc, pcc) => new PetDetails(p, psc, pcc));
         }
 
+        public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByNames(params string[] names)
+        {
+            dbConnection.TryOpen();
+            return await dbConnection.QueryAsync<Pet, PetSpeciesConfig, PetColorConfig, PetDetails>(@"
+                SELECT * FROM pets p
+                INNER JOIN petColorConfigs pcc ON p.petName = ANY(@names) AND p.colorID = pcc.petColorConfigID 
+                INNER JOIN petSpeciesConfigs psc ON p.speciesID = psc.petSpeciesConfigID",
+                param: new { names = names.Distinct().AsList() },
+                splitOn: "petColorConfigId,petSpeciesConfigID",
+                map: (p, psc, pcc) => new PetDetails(p, psc, pcc));
+        }
+
+
+        public async Task<IEnumerable<Pet>> RetrievePetsByNames(params string[] names)
+        {
+            dbConnection.TryOpen();
+            return await dbConnection.QueryAsync<Pet>(@"
+                SELECT * FROM pets
+                WHERE petName = ANY(@names)",
+                param: new { names = names.Distinct().AsList() });
+        }
+
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByOwnerId(int ownerUserId)
         {
             dbConnection.TryOpen();
@@ -95,5 +117,6 @@ namespace CritterServer.DataAccess
         Task<IEnumerable<PetDetails>> RetrieveFullPetsByIds(params int[] petIds);
         Task UpdatePet(string petName, string gender, int petId);
         Task AbandonPet(int petId);
+        Task<IEnumerable<Pet>> RetrievePetsByNames(params string[] names);
     }
 }
