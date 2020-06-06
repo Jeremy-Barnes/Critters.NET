@@ -24,7 +24,7 @@ namespace CritterServer.Models
         public int ColorId { get; set; }
         [InternalOnly]
         [BindNever]
-        public int OwnerID { get; set; }
+        public int OwnerId { get; set; }
         public bool IsAbandoned { get; set; }
     }
 

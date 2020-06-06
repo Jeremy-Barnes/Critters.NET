@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Security.Authentication;
 using System.Threading.Tasks;
 using System.Transactions;
 using CritterServer.Contract;
 using CritterServer.DataAccess;
-using CritterServer.Domains.Components;
 using CritterServer.Models;
-using Dapper;
 using Microsoft.Extensions.Logging;
 namespace CritterServer.Domains
 {
@@ -28,13 +24,13 @@ namespace CritterServer.Domains
 
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                ValidatePet(pet, user);
+                await ValidatePet(pet, user);
                 pet.Level = 0;
-                pet.OwnerID = user.UserId;
+                pet.OwnerId = user.UserId;
                 pet.CurrentHitPoints = 50; //todo health...onomics and pet stats STR DEX WIS CHAR INT CON luck????
                 try
                 {
-                    pet.PetId = await PetRepo.CreatePet(pet, pet.OwnerID);
+                    pet.PetId = await PetRepo.CreatePet(pet, pet.OwnerId);
                 } 
                 catch(Exception ex)
                 {
@@ -83,10 +79,10 @@ namespace CritterServer.Domains
         }
 
         #region Validation
-        private async void ValidatePet(Pet pet, User owner)
+        private async Task ValidatePet(Pet pet, User owner)
         {
             var dbPet = (await PetRepo.RetrievePetsByNames(pet.PetName)).FirstOrDefault();
-            if (dbPet?.PetId != pet.PetId)
+            if (dbPet != null && dbPet.PetId != pet.PetId)
             {
                 throw new CritterException("Sorry that name is already taken!", null, System.Net.HttpStatusCode.Conflict);
             }
