@@ -16,13 +16,12 @@ namespace Tests.IntegrationTests
     /// Creaated once, reused for all tests in UserTests
     /// Used to hold expensive resources that can be reused (like a DB connection!)
     /// </summary>
-    public class UserTestsContext
+    public class UserTestsContext : TestUtilities
     {
         private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
+        public UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
+        public IUserRepository userRepo => new UserRepository(GetNewDbConnection());
 
-        public IDbConnection dbConnection;
-        public UserDomain userAccountDomain;
-        public IUserRepository userRepo;
         public JwtProvider jwtProvider = new JwtProvider(
             jwtSecretKey,
             new TokenValidationParameters
@@ -36,38 +35,10 @@ namespace Tests.IntegrationTests
                 RequireExpirationTime = true
             });
 
-        public List<User> extantUsers = new List<User>();
-
         public UserTestsContext()
         {
-            DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-            dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
-            userRepo = new UserRepository(dbConnection);
-            userAccountDomain = new UserDomain(userRepo, jwtProvider);
         }
 
-        public User RandomUser()
-        {
-            User randomUser = new User()
-            {
-                Birthdate = DateTime.UtcNow,
-                City = "Chicago",
-                Country = "USA",
-                EmailAddress = $"{Guid.NewGuid().ToString().Substring(0, 6)}@{Guid.NewGuid().ToString().Substring(0, 6)}.com",
-                FirstName = Guid.NewGuid().ToString().Substring(0, 6),
-                LastName = Guid.NewGuid().ToString().Substring(0, 6),
-                Gender = "male",
-                IsActive = true,
-                Password = Guid.NewGuid().ToString().Substring(0, 6),
-                Postcode = "60654",
-                Salt = "GARBAGEVALUE",
-                State = "Illinois",
-                UserName = Guid.NewGuid().ToString().Substring(0, 6)
-            };
-            this.extantUsers.Add(randomUser);
-            return randomUser;
-        }
     }
 
     public class UserTests : IClassFixture<UserTestsContext>
@@ -82,7 +53,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void UserAccountCreateAndRetrieveWorks()
         {
-            User randomUser = context.RandomUser();
+            User randomUser = context.RandomUserNotPersisted();
             string jwt = context.userAccountDomain.CreateAccount(randomUser).Result;
 
             var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress).Result;
@@ -94,7 +65,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void UserLoginWorksAndCreatesValidJwt()
         {
-            User randomUser = context.RandomUser();
+            User randomUser = context.RandomUserNotPersisted();
             string password = randomUser.Password;
 
             context.userAccountDomain.CreateAccount(randomUser).Wait();
@@ -109,7 +80,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void DuplicateCreateFails()
         {
-            User randomUser = context.RandomUser();
+            User randomUser = context.RandomUserNotPersisted();
             string password = randomUser.Password;
 
             context.userAccountDomain.CreateAccount(randomUser).Wait();

@@ -93,5 +93,55 @@ namespace Tests.IntegrationTests
             Assert.False(createPet.IsAbandoned);
             Assert.False(retrievedPet.IsAbandoned);
         }
+
+        [Fact]
+        public async void CreateAndRetrievePetByOwner()
+        {
+            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
+            var createPet = await context.petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
+            var retrievedPets = (await context.petDomain.RetrievePetsByOwner(context.OwnerUser1.UserId)).AsList();
+
+            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
+            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
+            Assert.Contains(retrievedPets, rp => nonPersistedPet.PetName == rp.PetName && 
+            rp.PetId == createPet.PetId && 
+            rp.SpeciesId == nonPersistedPet.SpeciesId && 
+            rp.ColorId == nonPersistedPet.ColorId);
+        }
+
+        [Fact]
+        public async void CreateAndRetrieveFullPetByOwner()
+        {
+            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
+            var createPet = await context.petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
+            var retrievedPets = (await context.petDomain.RetrieveFullPetInformationByOwner(context.OwnerUser1.UserId)).AsList();
+
+            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
+            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
+            Assert.Contains(retrievedPets, rp => nonPersistedPet.PetName == rp.Pet.PetName && 
+            rp.Pet.PetId == createPet.PetId && 
+            rp.Pet.SpeciesId == nonPersistedPet.SpeciesId && 
+            rp.Pet.ColorId == nonPersistedPet.ColorId &&
+            rp.Color.PetColorConfigID == nonPersistedPet.ColorId &&
+            rp.Species.PetSpeciesConfigID == nonPersistedPet.SpeciesId);
+        }
+
+        [Fact]
+        public async void CreateAndRetrieveFullPetById()
+        {
+            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
+            var createPet = await context.petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
+            var retrievedPet = (await context.petDomain.RetrieveFullPetInformation(createPet.PetId)).First();
+
+            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
+            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
+            Assert.Equal(nonPersistedPet.PetName, retrievedPet.Pet.PetName);
+            Assert.Equal(retrievedPet.Pet.PetId, createPet.PetId);
+            Assert.Equal(retrievedPet.Pet.SpeciesId, nonPersistedPet.SpeciesId);
+            Assert.Equal(retrievedPet.Pet.ColorId, nonPersistedPet.ColorId);
+            Assert.Equal(retrievedPet.Color.PetColorConfigID, nonPersistedPet.ColorId);
+            Assert.Equal(retrievedPet.Species.PetSpeciesConfigID, nonPersistedPet.SpeciesId);
+        }
+
     }
 }

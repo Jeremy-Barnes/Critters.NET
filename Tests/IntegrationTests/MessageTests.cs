@@ -18,15 +18,14 @@ namespace Tests.IntegrationTests
     /// Creaated once, reused for all tests in UserTests
     /// Used to hold expensive resources that can be reused (like a DB connection!)
     /// </summary>
-    public class MessageTestsContext
+    public class MessageTestsContext : TestUtilities
     {
         private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
 
-        public IDbConnection dbConnection;
-        public UserDomain userAccountDomain;
-        public MessageDomain messageDomain;
-        public IUserRepository userRepo;
-        public IMessageRepository messageRepo;
+        public UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
+        public IUserRepository userRepo => new UserRepository(GetNewDbConnection());
+        public MessageDomain messageDomain => new MessageDomain(messageRepo, userAccountDomain, null);
+        public IMessageRepository messageRepo => new MessageRepository(GetNewDbConnection());
 
         public User AUser1;
         public User AUser2;
@@ -52,17 +51,11 @@ namespace Tests.IntegrationTests
         public MessageTestsContext()
         {
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-            dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
-            userRepo = new UserRepository(dbConnection);
-            userAccountDomain = new UserDomain(userRepo, jwtProvider);
-            messageRepo = new MessageRepository(dbConnection);
-            messageDomain = new MessageDomain(messageRepo, userAccountDomain, null);
-
-            AUser1 = RandomUser();
-            AUser2 = RandomUser();
-            BUser1 = RandomUser();
-            BUser2 = RandomUser();
+           
+            AUser1 = RandomUserNotPersisted();
+            AUser2 = RandomUserNotPersisted();
+            BUser1 = RandomUserNotPersisted();
+            BUser2 = RandomUserNotPersisted();
             userAccountDomain.CreateAccount(AUser1).Wait();
             userAccountDomain.CreateAccount(AUser2).Wait();
 
@@ -70,27 +63,6 @@ namespace Tests.IntegrationTests
             userAccountDomain.CreateAccount(BUser2).Wait();
         }
 
-        public User RandomUser()
-        {
-            User randomUser = new User()
-            {
-                Birthdate = DateTime.UtcNow,
-                City = "Chicago",
-                Country = "USA",
-                EmailAddress = $"{TestUtils.GetRandomString(6)}@{TestUtils.GetRandomString(6)}.com",
-                FirstName = TestUtils.GetRandomString(6),
-                LastName = TestUtils.GetRandomString(6),
-                Gender = "male",
-                IsActive = true,
-                Password = TestUtils.GetRandomString(6),
-                Postcode = "60654",
-                Salt = "GARBAGEVALUE",
-                State = "Illinois",
-                UserName = TestUtils.GetRandomString(6)
-            };
-            this.extantUsers.Add(randomUser);
-            return randomUser;
-        }
 
         public List<int> SendMessage(User sender, User receiver, int times, int channel, int? parentId = null)
         {
@@ -121,7 +93,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void CreateChannelAddsCreator()
         {
-            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser1, $"{TestUtils.GetRandomString(30)}Component", null).Result;
+            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", null).Result;
             Assert.IsType<int>(generatedChannelId);
             var channels = context.messageDomain.FindChannelWithUsers(null, context.AUser1).Result;
             Assert.Contains(channels, c => c.ChannelId == generatedChannelId);
@@ -130,7 +102,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void SendMessageGetsIntDbId()
         {
-            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser1, $"{TestUtils.GetRandomString(30)}Component", new List<string> { context.AUser2.UserName }).Result;
+            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", new List<string> { context.AUser2.UserName }).Result;
             var messageIdGenerated = context.messageDomain.SendMessage(new Message { 
                 MessageSubject = $"This message created at {DateTime.UtcNow}", 
                 MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
@@ -144,7 +116,7 @@ namespace Tests.IntegrationTests
         [Fact]
         public void SendMessageToNonMemberChannelFails()
         {
-            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser2, $"{TestUtils.GetRandomString(30)}Component", null).Result;
+            var generatedChannelId = context.messageDomain.CreateChannel(context.AUser2, $"{context.GetRandomString(30)}Component", null).Result;
 
             Assert.Throws<AggregateException>(() => context.messageDomain.SendMessage(new Message
             {
@@ -160,7 +132,7 @@ namespace Tests.IntegrationTests
             Assert.Throws<AggregateException>(() => context.messageDomain.SendMessage(new Message
             {
                 MessageSubject = $"This message created at {DateTime.UtcNow}",
-                MessageText = $"{TestUtils.GetRandomString(6)} My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
+                MessageText = $"{context.GetRandomString(6)} My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
                 ChannelId = -1
             },
                 context.AUser1).Wait());
@@ -169,12 +141,12 @@ namespace Tests.IntegrationTests
         [Fact]
         public void RetrieveMessagesWorks()
         {
-            var receiver = context.RandomUser();
-            var sender = context.RandomUser();
+            var receiver = context.RandomUserNotPersisted();
+            var sender = context.RandomUserNotPersisted();
             context.userAccountDomain.CreateAccount(receiver).Wait();
             context.userAccountDomain.CreateAccount(sender).Wait();
 
-            var channelId = context.messageDomain.CreateChannel(sender, $"{TestUtils.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            var channelId = context.messageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
             var messageIDs = context.SendMessage(sender, receiver, 30, channelId);
 
             var conversationChannels = context.messageDomain.GetMessages(false, null, receiver).Result;
@@ -187,12 +159,12 @@ namespace Tests.IntegrationTests
         [Fact]
         public void RetrieveThreadRetrievesAll()
         {
-            var receiver = context.RandomUser();
-            var sender = context.RandomUser();
+            var receiver = context.RandomUserNotPersisted();
+            var sender = context.RandomUserNotPersisted();
             context.userAccountDomain.CreateAccount(receiver).Wait();
             context.userAccountDomain.CreateAccount(sender).Wait();
 
-            var channelId = context.messageDomain.CreateChannel(sender, $"{TestUtils.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            var channelId = context.messageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
             var messageIDs = context.SendMessage(sender, receiver, 5, channelId);
             messageIDs = messageIDs.Concat(context.SendMessage(receiver, sender, 5, channelId)).ToList();
             messageIDs = messageIDs.Concat(context.SendMessage(sender, receiver, 5, channelId)).ToList();
@@ -219,12 +191,12 @@ namespace Tests.IntegrationTests
         [Fact]
         public void GetChannelsGetsAllChannelsForUser()
         {
-            var channelOwner = context.RandomUser();
+            var channelOwner = context.RandomUserNotPersisted();
             context.userAccountDomain.CreateAccount(channelOwner).Wait();
 
             var channelIds = new List<int>(); 
             for(int i = 0; i < 10; i++)
-            channelIds.Add(context.messageDomain.CreateChannel(channelOwner, $"{TestUtils.GetRandomString(6)} Component Test Channel", new List<string>() { channelOwner.UserName }).Result);
+            channelIds.Add(context.messageDomain.CreateChannel(channelOwner, $"{context.GetRandomString(6)} Component Test Channel", new List<string>() { channelOwner.UserName }).Result);
 
             var channels = context.messageDomain.GetChannels(channelIds, channelOwner);
             Assert.Equal(channels.Result.Select(c => c.Channel.ChannelId).ToList(), channelIds);
@@ -238,12 +210,12 @@ namespace Tests.IntegrationTests
         [InlineData(false, true)]
         public void MessagesStatusChangesMessagesRetrieved(bool delete, bool read)
         {
-            var receiver = context.RandomUser();
-            var sender = context.RandomUser();
+            var receiver = context.RandomUserNotPersisted();
+            var sender = context.RandomUserNotPersisted();
             context.userAccountDomain.CreateAccount(receiver).Wait();
             context.userAccountDomain.CreateAccount(sender).Wait();
 
-            var channelId = context.messageDomain.CreateChannel(sender, $"{TestUtils.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            var channelId = context.messageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
             var originalMessageIds = context.SendMessage(sender, receiver, 30, channelId);
 
             var messagesAcrossAllChannels = context.messageDomain.GetMessages(false, null, receiver).Result;
@@ -282,8 +254,8 @@ namespace Tests.IntegrationTests
         [InlineData(false)]
         public void RetrievePagingGetsAllMessages(bool unreadOnly)
         {
-            var receiver = context.RandomUser();
-            var sender = context.RandomUser();
+            var receiver = context.RandomUserNotPersisted();
+            var sender = context.RandomUserNotPersisted();
             context.userAccountDomain.CreateAccount(receiver).Wait();
             context.userAccountDomain.CreateAccount(sender).Wait();
             var channelId = context.messageDomain.CreateChannel(sender, "Component Test Friends", new List<string>() { receiver.UserName }).Result;

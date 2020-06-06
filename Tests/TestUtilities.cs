@@ -5,7 +5,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 
-namespace Tests.IntegrationTests
+namespace Tests
 {
     public class TestUtilities
     {
@@ -21,16 +21,16 @@ namespace Tests.IntegrationTests
                 Birthdate = DateTime.UtcNow,
                 City = "Chicago",
                 Country = "USA",
-                EmailAddress = $"{Guid.NewGuid().ToString().Substring(0, 6)}@{Guid.NewGuid().ToString().Substring(0, 6)}.com",
-                FirstName = Guid.NewGuid().ToString().Substring(0, 6),
-                LastName = Guid.NewGuid().ToString().Substring(0, 6),
+                EmailAddress = $"{GetRandomString(6)}@{GetRandomString(6)}.com",
+                FirstName = GetRandomString(6),
+                LastName = GetRandomString(6),
                 Gender = "male",
                 IsActive = true,
-                Password = Guid.NewGuid().ToString().Substring(0, 6),
+                Password = GetRandomString(6),
                 Postcode = "60654",
                 Salt = "GARBAGEVALUE",
                 State = "Illinois",
-                UserName = Guid.NewGuid().ToString().Substring(0, 6)
+                UserName = GetRandomString(6)
             };
             return randomUser;
         }
@@ -51,11 +51,31 @@ namespace Tests.IntegrationTests
             };
         }
 
+
+        IDbConnection dbConnection;
         public IDbConnection GetNewDbConnection()
         {
-            var dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-            dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
+            if (dbConnection == null)
+            {
+                dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
+                dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
+            }
             return dbConnection;
+        }
+
+        public string GetRandomString(int length)
+        {
+            if(length < 25)
+                return Guid.NewGuid().ToString().Substring(0, length);
+            else
+            {
+                string builtUp = "";
+                while(builtUp.Length < length)
+                {
+                    builtUp += Guid.NewGuid().ToString();
+                }
+                return builtUp.Substring(0, length);
+            }
         }
 
     }
