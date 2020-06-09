@@ -29,15 +29,15 @@ namespace CritterServer.Game
             return base.OnDisconnectedAsync(exception);
         }
 
-        public void Connect(string gameId)
+        public async Task Connect(string gameId)
         {
             var username = this.Context.GetHttpContext().User.Identity.Name;
             User activeUser = UserDomain.RetrieveUserByUserName(username).Result;
-            this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId)).Wait();
+            await this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId));
             GameManager.JoinGame(gameId, activeUser, this.Context.ConnectionId);
         }
 
-        public async void SendChatMessage(string message, string gameId)
+        public async Task SendChatMessage(string message, string gameId)
         {
             //todo some kind of content filtering for the love of god
             await this.Clients.OthersInGroup(GetChannelGroupIdentifier(gameId)).ReceiveChat(this.Context.User.Identity.Name, message);

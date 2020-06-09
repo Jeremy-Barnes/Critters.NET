@@ -75,7 +75,7 @@ namespace CritterServer.DataAccess
             return searchResult.FirstOrDefault();
         }
 
-        public async Task UpdateUserCash(int deltaCash, int userId)
+        public async Task UpdateUserCash(int userId, int deltaCash)
         {
             dbConnection.TryOpen();
             await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", new { userId, cash = deltaCash });
@@ -95,7 +95,7 @@ namespace CritterServer.DataAccess
         Task<User> RetrieveUserByEmail(string email);
         Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
-        Task UpdateUserCash(int deltaCash, int userId);
+        Task UpdateUserCash(int userId, int deltaCash);
         Task UpdateUsersCash(IEnumerable<Tuple<int, int>> userIdAndDeltaCashAmounts);
     }
 }

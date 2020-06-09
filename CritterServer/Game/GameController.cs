@@ -37,7 +37,7 @@ namespace CritterServer.Controllers
         [HttpGet("list/{gameType:int?}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> FindGames(GameType? gameType, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> FindGames(GameType? gameType)
         {
             return Ok(GameManager.GetGames(gameType));
         }

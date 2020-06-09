@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -15,8 +16,8 @@ namespace CritterServer.Game
 {
     public class GameManagerService : IHostedService
     {
-        Dictionary<string, Game> RunningGames = new Dictionary<string, Game>();
-        List<Task> runningGames = new List<Task>();
+        ConcurrentDictionary<string, Game> RunningGames = new ConcurrentDictionary<string, Game>();
+        ConcurrentBag<Task> RunningTasks = new ConcurrentBag<Task>();
         IServiceProvider Services;
         public GameManagerService(IServiceProvider services)
         {
@@ -59,8 +60,8 @@ namespace CritterServer.Game
                     case GameType.NumberGuesser: game = new GuessTheNumber(host, Services, EndGame, gameId); break;
                 }
                 if (game == null) return null;
-                RunningGames.Add(game.Id, game);
-                runningGames.Add(Task.Run(game.Run));
+                RunningGames.TryAdd(game.Id, game);
+                RunningTasks.Add(Task.Run(game.Run));
                 return game.Id;
             }
             catch (Exception ex)
@@ -110,8 +111,10 @@ namespace CritterServer.Game
         {
             try
             {
-                this.RunningGames[gameId].TerminateGame();
-                this.RunningGames.Remove(gameId);
+                if(this.RunningGames.TryRemove(gameId, out var value))
+                {
+                    value.TerminateGame();
+                }
             } 
             catch(Exception ex)
             {

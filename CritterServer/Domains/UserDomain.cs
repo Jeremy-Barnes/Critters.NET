@@ -96,7 +96,7 @@ namespace CritterServer.Domains
         {
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
-                await userRepo.UpdateUserCash(byAmount, user.UserId);
+                await userRepo.UpdateUserCash(user.UserId, byAmount);
                 user.Cash += byAmount;
                 trans.Complete();
             }
