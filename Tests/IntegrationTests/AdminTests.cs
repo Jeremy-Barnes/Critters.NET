@@ -13,7 +13,7 @@ using Xunit;
 namespace Tests.IntegrationTests
 {
     /// <summary>
-    /// Creaated once, reused for all tests in UserTests
+    /// Creaated once, reused for all tests in AdminTests
     /// Used to hold expensive resources that can be reused (like a DB connection!)
     /// </summary>
     public class AdminTestsContext

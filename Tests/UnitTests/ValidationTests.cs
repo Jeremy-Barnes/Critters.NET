@@ -1,7 +1,11 @@
-﻿using CritterServer.Domains.Components;
+﻿using CritterServer.Contract;
+using CritterServer.Domains.Components;
+using CritterServer.Models;
+using CritterServer.Pipeline;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using Xunit;
 
@@ -9,56 +13,42 @@ namespace Tests.UnitTests
 {
     public class ValidationTests
     {
-        private static string jwtSecretKey1 = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
-        private static string jwtSecretKey2 = "z25lIEV5Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
-
-        private TokenValidationParameters tokenParams1 = new TokenValidationParameters
-        {
-            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey1)),
-            ValidIssuer = "critters!",
-            ValidateAudience = false,
-            ValidateActor = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            RequireExpirationTime = true
-        };
-
-        private TokenValidationParameters tokenParams2 = new TokenValidationParameters
-        {
-            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey2)),
-            ValidIssuer = "critters!",
-            ValidateAudience = false,
-            ValidateActor = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            RequireExpirationTime = true
-        };
-
+        public TestUtilities utils = new TestUtilities();
 
         [Fact]
-        public void JwtValidates()
+        public void AcceptedValuesEnforceCasing()
         {
-            JwtProvider jwtProvider = new JwtProvider(jwtSecretKey1, tokenParams1);
-
-            string jwt = jwtProvider.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME", EmailAddress = "a@a.com" });
-            Assert.True(jwtProvider.ValidateToken(jwt));
+            var attribute = new AcceptedValuesAttribute(true, false, "a", "B", "c");
+            Assert.Throws<ValidationException>(() => attribute.Validate("A", new ValidationContext(new Pet())));
+            attribute.Validate("a", new ValidationContext(new Pet()));
+            attribute.Validate("c", new ValidationContext(new Pet()));
+            Assert.Throws<ValidationException>(() => attribute.Validate("d", new ValidationContext(new Pet())));
         }
 
+        [Fact]
+        public void AcceptedValuesEnforceNullability()
+        {
+            var attribute = new AcceptedValuesAttribute(true, false, "a", "B", "c");
+            Assert.Throws<ValidationException>(() => attribute.Validate(null, new ValidationContext(new Pet())));
+            attribute.Validate("a", new ValidationContext(new Pet()));
+            attribute.Validate("c", new ValidationContext(new Pet()));
+            Assert.Throws<ValidationException>(() => attribute.Validate("d", new ValidationContext(new Pet())));
+
+            attribute = new AcceptedValuesAttribute(true, true, "a", "B", "c");
+            Assert.Throws<ValidationException>(() => attribute.Validate("A", new ValidationContext(new Pet())));
+            attribute.Validate(null, new ValidationContext(new Pet()));
+            attribute.Validate("c", new ValidationContext(new Pet()));
+            Assert.Throws<ValidationException>(() => attribute.Validate("d", new ValidationContext(new Pet())));
+        }
 
         [Fact]
-        public void JwtRejectsBadKey()
+        public void AcceptedValuesPermitsCasing()
         {
-            //providers with different secret keys
-            JwtProvider jwtProvider1 = new JwtProvider(jwtSecretKey1, tokenParams1);
-            JwtProvider jwtProvider2 = new JwtProvider(jwtSecretKey2, tokenParams2);
-
-            string jwt1 = jwtProvider1.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME", EmailAddress = "a@a.com" });
-            string jwt2 = jwtProvider2.GenerateToken(new CritterServer.Models.User() { UserName = "A.TEST.USERNAME", EmailAddress = "a@a.com" });
-
-            Assert.False(jwtProvider2.ValidateToken(jwt1));
-            Assert.True(jwtProvider1.ValidateToken(jwt1));
-            Assert.False(jwtProvider1.ValidateToken(jwt2));
-            Assert.True(jwtProvider2.ValidateToken(jwt2));
+            var attribute = new AcceptedValuesAttribute(false, false, "a", "B", "c");
+            Assert.Throws<ValidationException>(() => attribute.Validate("d", new ValidationContext(new Pet())));
+            attribute.Validate("A", new ValidationContext(new Pet()));
+            attribute.Validate("b", new ValidationContext(new Pet()));
+            attribute.Validate("c", new ValidationContext(new Pet()));
         }
     }
 }

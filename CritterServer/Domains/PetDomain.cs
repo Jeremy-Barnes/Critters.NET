@@ -70,12 +70,12 @@ namespace CritterServer.Domains
 
         public async Task<IEnumerable<PetColorConfig>> RetrieveAvailableColors(User user)
         {
-            return await CfgRepo.RetrieveColorsByIds(); //todo jab unlockables!
+            return await CfgRepo.RetrieveColors(); //todo jab unlockables!
         }
 
         public async Task<IEnumerable<PetSpeciesConfig>> RetrieveAvailableSpecies(User user)
         {
-            return await CfgRepo.RetrieveSpeciesByIds();//todo jab unlockables
+            return await CfgRepo.RetrieveSpecies();//todo jab unlockables
         }
 
         #region Validation
@@ -87,19 +87,19 @@ namespace CritterServer.Domains
                 throw new CritterException("Sorry that name is already taken!", null, System.Net.HttpStatusCode.Conflict);
             }
             var color = (await CfgRepo.RetrieveColorsByIds(pet.ColorId)).FirstOrDefault();
-            ValidateUserAccessToColor(owner, color);
+            await ValidateUserAccessToColor(owner, color);
             var species = (await CfgRepo.RetrieveSpeciesByIds(pet.SpeciesId)).FirstOrDefault();
-            ValidateUserAccessToSpecies(owner, species);
+            await ValidateUserAccessToSpecies(owner, species);
         }
 
-        private async void ValidateUserAccessToColor(User petOwner, PetColorConfig color)
+        private async Task ValidateUserAccessToColor(User petOwner, PetColorConfig color)
         {
             if (color == null)
                 throw new CritterException("Invalid color selection!", null, System.Net.HttpStatusCode.NotFound);
             //todo JAB unlockables
         }
 
-        private async void ValidateUserAccessToSpecies(User petOwner, PetSpeciesConfig species)
+        private async Task ValidateUserAccessToSpecies(User petOwner, PetSpeciesConfig species)
         {
             if (species == null)
                 throw new CritterException("Invalid species selection!", null, System.Net.HttpStatusCode.NotFound);

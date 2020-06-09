@@ -18,7 +18,6 @@ namespace Tests.IntegrationTests
     /// </summary>
     public class UserTestsContext : TestUtilities
     {
-        private static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
         public UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
         public IUserRepository userRepo => new UserRepository(GetNewDbConnection());
 

@@ -14,6 +14,9 @@ namespace Tests
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
         }
 
+        protected static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
+
+
         public User RandomUserNotPersisted()
         {
             User randomUser = new User()
@@ -55,7 +58,7 @@ namespace Tests
         IDbConnection dbConnection;
         public IDbConnection GetNewDbConnection()
         {
-            if (dbConnection == null)
+           // if (dbConnection == null)
             {
                 dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
