@@ -1,5 +1,6 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Domains;
+using CritterServer.Game;
 using CritterServer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -7,7 +8,7 @@ using Serilog;
 using System;
 using System.Threading.Tasks;
 
-namespace CritterServer.Game
+namespace CritterServer.Hubs
 {
     [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
     public class GameHub : Hub<IGameClient>

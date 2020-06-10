@@ -1,5 +1,6 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Domains;
+using CritterServer.Hubs;
 using CritterServer.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
