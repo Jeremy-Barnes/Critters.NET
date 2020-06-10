@@ -84,12 +84,33 @@ namespace CritterServer.Domains
         public async Task<IEnumerable<User>> RetrieveUsersByUserName(IEnumerable<string> userNames)
         {
             return await userRepo.RetrieveUsersByUserName(userNames.ToArray());
-
         }
 
         public async Task<User> RetrieveUserByEmail(string email)
         {
             return await userRepo.RetrieveUserByEmail(email);
+        }
+
+
+        public async Task<User> ChangeUserCash(int byAmount, User user)
+        {
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                await userRepo.UpdateUserCash(user.UserId, byAmount);
+                user.Cash += byAmount;
+                trans.Complete();
+            }
+            return user;
+
+        }
+
+        public async Task ChangeUsersCash(List<Tuple<int, int>> userIdAndCashDeltas)
+        {
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                await userRepo.UpdateUsersCash(userIdAndCashDeltas.ToArray());
+                trans.Complete();
+            }
         }
     }
 

@@ -48,6 +48,7 @@ namespace CritterServer.Domains.Components
         {
             return GenerateToken(new List<Claim>
             {
+				new Claim(ClaimTypes.NameIdentifier, userName),
                 new Claim(ClaimTypes.Name, userName),
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.Role, roletype)
@@ -138,7 +139,7 @@ namespace CritterServer.Domains.Components
                         // If the request is for our SignalR hubs
                         var path = context.HttpContext.Request.Path;
                         if (!string.IsNullOrEmpty(accessToken) &&
-                            (path.StartsWithSegments("/notificationhub")))
+                            (path.StartsWithSegments("/notificationhub") || path.StartsWithSegments("/gamehub")))
                         {
                             // Read the token out of the query string
                             context.Token = accessToken;

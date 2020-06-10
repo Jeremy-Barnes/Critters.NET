@@ -34,6 +34,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> CreateAccount([FromBody] User user)
         {
             var authToken = await domain.CreateAccount(user);
+            user = await domain.RetrieveUserByUserName(user.UserName);
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(new { AuthToken = authToken, User = user});
         }
@@ -45,6 +46,11 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> Login([FromBody] User user)
         {
             var authToken = await domain.Login(user);
+            if (!string.IsNullOrEmpty(user.EmailAddress))
+                user = await domain.RetrieveUserByEmail(user.EmailAddress);
+            else
+                user = await domain.RetrieveUserByUserName(user.UserName);
+ 
             addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(new { AuthToken = authToken, User = user });
         }
@@ -57,7 +63,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> GetUser()
         {
             User user = await domain.RetrieveUserByUserName(HttpContext.User.Identity.Name);
-            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(user);
         }
 
@@ -70,7 +76,7 @@ namespace CritterServer.Controllers
             return Ok();
         }
 
-        private async void addLoginCookie(HttpContext context, string userName, string email)
+        private async Task addLoginCookie(HttpContext context, string userName, string email)
         {
             var claims = new ClaimsPrincipal(
                     new ClaimsIdentity(
