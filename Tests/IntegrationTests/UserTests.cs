@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 using Xunit;
+using CritterServer.Contract;
 
 namespace Tests.IntegrationTests
 {
@@ -90,7 +91,7 @@ namespace Tests.IntegrationTests
             Assert.NotEmpty(jwt);
             Assert.True(context.jwtProvider.ValidateToken(jwt));
 
-            Assert.ThrowsAny<Exception>(() => context.userAccountDomain.CreateAccount(randomUser).Result);
+            Assert.ThrowsAsync<CritterException>(() => context.userAccountDomain.CreateAccount(randomUser));
         }
     }
 }

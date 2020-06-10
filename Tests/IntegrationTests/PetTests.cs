@@ -53,8 +53,8 @@ namespace Tests.IntegrationTests
             PetColor2 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
             PetSpecies1 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
             PetSpecies2 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com" }).Result;
-            var uid1 = userRepo.CreateUser(RandomUserNotPersisted());
-            var uid2 = userRepo.CreateUser(RandomUserNotPersisted());
+            var uid1 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
+            var uid2 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
             var users = userRepo.RetrieveUsersByIds(uid1, uid2).Result;
             OwnerUser1 = users.AsList()[0];
             OwnerUser2 = users.AsList()[1];

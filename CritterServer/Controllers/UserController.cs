@@ -35,7 +35,7 @@ namespace CritterServer.Controllers
         {
             var authToken = await domain.CreateAccount(user);
             user = await domain.RetrieveUserByUserName(user.UserName);
-            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(new { AuthToken = authToken, User = user});
         }
 
@@ -51,7 +51,7 @@ namespace CritterServer.Controllers
             else
                 user = await domain.RetrieveUserByUserName(user.UserName);
  
-            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
             return Ok(new { AuthToken = authToken, User = user });
         }
 

@@ -26,14 +26,19 @@ namespace CritterServer.Domains
 
         public async Task<string> CreateAccount(User user)
         {
+            bool conflictFound = await userRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress);
+            if (conflictFound)
+                throw new CritterException($"Sorry, someone already exists with that name or email!", $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}", System.Net.HttpStatusCode.Conflict);
+
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
+                
                 user.Cash = 500; //TODO economics
                 user.IsActive = true;
                 user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
                 user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password, user.Salt);
 
-                user.UserId = userRepo.CreateUser(user);
+                user.UserId = await userRepo.CreateUser(user) ?? throw new CritterException("Could not create account, try again!", null, System.Net.HttpStatusCode.Conflict);
 
                 trans.Complete();
             }

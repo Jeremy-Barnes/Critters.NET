@@ -17,10 +17,10 @@ namespace CritterServer.DataAccess
             this.dbConnection = dbConnection;
         }
 
-        public int CreateUser(User user)
+        public async Task<int?> CreateUser(User user)
         {
             dbConnection.TryOpen();
-            int output = dbConnection.Query<int>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
+            int? output = (await dbConnection.QueryAsync<int?>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
                 "isActive, salt)" +
                 "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
                 "@isActive, @salt) RETURNING userID",
@@ -40,7 +40,7 @@ namespace CritterServer.DataAccess
                     postcode = user.Postcode,
                     isActive = user.IsActive,
                     salt = user.Salt
-                }).First();
+                })).FirstOrDefault();
             return output;
         }
 
@@ -138,7 +138,7 @@ namespace CritterServer.DataAccess
 
     public interface IUserRepository : IRepository
     {
-        int CreateUser(User user);
+        Task<int?> CreateUser(User user);
         Task<IEnumerable<User>> RetrieveUsersByIds(params int[] userIds);
         Task<User> RetrieveUserByEmail(string email);
         Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames);
