@@ -28,17 +28,15 @@ namespace CritterServer.Controllers
         }
 
         [HttpPost("create")]
-        [UserValidate("user", UserValidate.ValidationType.All)]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> CreateAccount([FromBody] User user)
         {
-            UserAuthResponse response = new UserAuthResponse();
-            response.authToken = await domain.CreateAccount(user);
-            response.user = await domain.RetrieveUserByUserName(user.UserName);
-            await addLoginCookie(this.HttpContext, response.user.UserName, response.user.EmailAddress);
-            return Ok(response);
+            var authToken = await domain.CreateAccount(user);
+            user = await domain.RetrieveUserByUserName(user.UserName);
+            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            return Ok(new { AuthToken = authToken, User = user});
         }
 
         [HttpPost("login")]
@@ -47,15 +45,14 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> Login([FromBody] User user)
         {
-            UserAuthResponse response = new UserAuthResponse();
-            response.authToken = await domain.Login(user);
+            var authToken = await domain.Login(user);
             if (!string.IsNullOrEmpty(user.EmailAddress))
                 user = await domain.RetrieveUserByEmail(user.EmailAddress);
             else
                 user = await domain.RetrieveUserByUserName(user.UserName);
-            response.user = user;
-            await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
-            return Ok(response);
+ 
+            addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            return Ok(new { AuthToken = authToken, User = user });
         }
 
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]

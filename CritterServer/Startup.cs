@@ -42,9 +42,8 @@ namespace CritterServer
             //request pipeline
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
-                .AddDataContractResolver().AddMvcOptions((options) => //get your Filters here! Request Pipeline Filters, right here!  
+                .AddDataContractResolver().AddMvcOptions((options) =>
                 {
-                    options.Filters.Add<UserFilter>();
                     options.EnableEndpointRouting = true;
                 });
 
@@ -88,6 +87,8 @@ namespace CritterServer
             //domains
             services.AddTransient<UserDomain>();
             services.AddTransient<MessageDomain>();
+            services.AddTransient<AdminDomain>();
+            services.AddTransient<PetDomain>();
             services.AddTransient<ErrorMiddleware>();
 
             services.AddSingleton<GameManagerService>();
@@ -96,11 +97,12 @@ namespace CritterServer
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IMessageRepository, MessageRepository>();
+            services.AddTransient<IPetRepository, PetRepository>();
+            services.AddTransient<IConfigRepository, ConfigRepository>();
 
             //components
             services.AddHttpContextAccessor();
             services.AddScoped<CookieEventHandler>();
-            services.AddTransient<UserFilter>();
 
 
         }
