@@ -4,6 +4,15 @@ CREATE COLLATION case_insensitive_collat (
   deterministic = false
 );
 
+drop table if exists pets;
+drop table if exists petSpeciesConfigs;
+drop table if exists petColorConfigs;
+drop table if exists readReceipts;
+drop table if exists messages;
+drop table if exists channelUsers;
+drop table if exists channels;
+drop table if exists users;
+
 CREATE TABLE IF NOT EXISTS users(
     userID SERIAL NOT NULL PRIMARY KEY,
     userName VARCHAR(24) NOT NULL COLLATE public.case_insensitive_collat,
@@ -19,8 +28,9 @@ CREATE TABLE IF NOT EXISTS users(
     country VARCHAR(50),
     postcode VARCHAR(20),
     cash INT NOT NULL,
-    isActive boolean not null DEFAULT 't',
+    isActive BOOLEAN NOT NULL DEFAULT 't',
 	dateJoined TIMESTAMP not null DEFAULT NOW(),
+    isDev BOOLEAN NOT NULL DEFAULT 'f',
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
     CHECK (gender IN ('male','female','other'))
@@ -57,3 +67,34 @@ CREATE TABLE IF NOT EXISTS readReceipts(
     read BOOLEAN NOT NULL DEFAULT 'f',
     PRIMARY KEY (messageID, recipientID)
 );
+
+CREATE TABLE IF NOT EXISTS petSpeciesConfigs(
+    petSpeciesConfigID SERIAL NOT NULL PRIMARY KEY,
+    speciesName VARCHAR(24) NOT NULL,
+    maxHitPoints int NOT NULL,
+    description VARCHAR(2000) NOT NULL,
+    imageBasePath  VARCHAR(200) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS petColorConfigs(
+    petColorConfigID SERIAL NOT NULL PRIMARY KEY,
+    colorName VARCHAR(24) NOT NULL,
+    imagePatternPath varchar(200)
+);
+
+CREATE TABLE IF NOT EXISTS pets(
+    petID SERIAL NOT NULL PRIMARY KEY,
+    petName VARCHAR(24) NOT NULL,
+    level int NOT NULL default 0,
+    currentHitPoints int NOT NULL, 
+    gender VARCHAR(8) NOT NULL,
+    colorID INT NOT NULL REFERENCES petColorConfigs(petColorConfigID),
+    ownerID INT NULL REFERENCES users(userID),
+    speciesID INT NOT NULL REFERENCES petSpeciesConfigs(petSpeciesConfigID),
+    isAbandoned boolean not null default 'f',
+    CHECK (gender IN ('male','female','other'))
+);
+
+INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
+('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 
+'$2a$11$6wlm9qA4W4DsGZVuncdDou', 'Chicago', 'IL', 'USA', '60613', 1000000000, true, '2020-06-02 20:53:18.636841', true)

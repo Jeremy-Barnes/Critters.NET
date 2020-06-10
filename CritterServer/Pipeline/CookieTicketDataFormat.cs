@@ -14,11 +14,11 @@ namespace CritterServer.Pipeline
 {
     public class CookieTicketDataFormat : ISecureDataFormat<AuthenticationTicket>
     {
-        IJwtProvider jwt;
+        IJwtProvider JWT;
 
         public CookieTicketDataFormat(IJwtProvider jwt)
         {
-            this.jwt = jwt;
+            this.JWT = jwt;
         }
 
         public string Protect(AuthenticationTicket data)
@@ -28,7 +28,7 @@ namespace CritterServer.Pipeline
 
         public string Protect(AuthenticationTicket data, string purpose)
         {
-            return jwt.GenerateToken(data.Principal.Identity.Name, data.Principal.FindFirst(ClaimTypes.Email)?.Value);
+            return JWT.GenerateToken(data.Principal.Identity.Name, data.Principal.FindFirst(ClaimTypes.Email)?.Value);
         }
 
         public AuthenticationTicket Unprotect(string protectedText)
@@ -38,7 +38,7 @@ namespace CritterServer.Pipeline
 
         public AuthenticationTicket Unprotect(string protectedText, string purpose)
         {
-            var authenticatedUser = jwt.CrackJwt(protectedText);
+            var authenticatedUser = JWT.CrackJwt(protectedText);
             if (authenticatedUser == null) {
                 return null;
             }

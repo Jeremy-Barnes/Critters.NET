@@ -1,10 +1,9 @@
-﻿using CritterServer.Utilities.Serialization;
+﻿using CritterServer.Pipeline;
+using CritterServer.Utilities.Serialization;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace CritterServer.Models
 {
@@ -13,14 +12,20 @@ namespace CritterServer.Models
         [InternalOnly]
         [BindNever]
         public int UserId { get; set; }
+        [Required]
+        [MaxLength(24)]
         public string UserName { get; set; }
+        [MaxLength(24)]
         public string FirstName { get; set; }
+        [MaxLength(24)]
         public string LastName { get; set; }
+        [EmailAddress]
+        [MaxLength(100)]
         public string EmailAddress { get; set; }
 
         [BindNever]
         public int Cash { get; set; }
-
+        [AcceptedValues(false, true, "male","female","other")]
         public string Gender { get; set; }
         public DateTime Birthdate { get; set; }
         public string City { get; set; }

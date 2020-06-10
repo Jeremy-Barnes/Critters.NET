@@ -15,6 +15,7 @@ namespace CritterServer.Models
         public int SenderUserId { get; set; }
         public DateTime DateSent { get; set; }
         public string MessageText { get; set; }
+        [MaxLength(140)]
         public string MessageSubject { get; set; }
         public int? ParentMessageId{ get; set; }
         public int ChannelId { get; set; }
