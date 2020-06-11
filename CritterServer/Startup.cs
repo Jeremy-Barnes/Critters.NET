@@ -62,7 +62,7 @@ namespace CritterServer
 
             //db
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            services.AddTransient<IDbConnection>((sp) =>
+            services.AddScoped<IDbConnection>((sp) =>
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");

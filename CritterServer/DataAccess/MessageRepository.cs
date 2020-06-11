@@ -1,4 +1,5 @@
-﻿using CritterServer.Models;
+﻿using CritterServer.Contract;
+using CritterServer.Models;
 using Dapper;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,6 @@ namespace CritterServer.DataAccess
                    parentMessageId = message.ParentMessageId,
                    channelId = message.ChannelId
                })).First();
-
             await dbConnection.ExecuteAsync("INSERT INTO readReceipts(messageID, recipientID) VALUES(@messageId, @recipientId)",
                recipientUserIds.Select(uid => 
                new 
