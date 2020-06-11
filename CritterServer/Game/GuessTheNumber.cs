@@ -88,7 +88,6 @@ namespace CritterServer.Game
 
         public override async Task AcceptUserInput(string userCommand, User user)
         {
-
             if (BettingIsClosed)
             {
                 throw new CritterException("Sorry, no longer accepting guesses!", null, System.Net.HttpStatusCode.Gone);
