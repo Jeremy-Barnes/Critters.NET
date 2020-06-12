@@ -29,7 +29,8 @@ namespace CritterServer.Game
         private (Pet, User) CurrentTurnTeam;
         private FightMove Team1Move = null;
         private FightMove Team2Move = null;
-
+        private Stack<FightMove> Team1Combo = new Stack<FightMove>();
+        private Stack<FightMove> Team2Combo = new Stack<FightMove>();
         /*** Final Game State ***/
         private (Pet, User) WinningTeam;
 
@@ -50,11 +51,70 @@ namespace CritterServer.Game
             if(Team1Move != null && Team2Move != null) //resolve turn
             {
 
+                var team1Bonuses = CalculateAtkDefBonuses(Team1Move, Team1Combo);
+                var team2Bonuses = CalculateAtkDefBonuses(Team2Move, Team2Combo);
+
+                int team1DamageTaken = (int)(team2Bonuses.Item1 / ((double)team1Bonuses.Item2));
+                int team2DamageTaken = (int)(team1Bonuses.Item1 / ((double)team2Bonuses.Item2));
+
+                Team1.Item1.CurrentHitPoints -= team1DamageTaken;
+                Team2.Item1.CurrentHitPoints -= team2DamageTaken;
+
+                if(Team1.Item1.CurrentHitPoints <= 0 && Team2.Item1.CurrentHitPoints > 0) //no damage from an unconscious pet
+                {
+                    Team2.Item1.CurrentHitPoints += team2DamageTaken;
+                }
+                else if (Team2.Item1.CurrentHitPoints <= 0 && Team1.Item1.CurrentHitPoints > 0)
+                {
+                    Team1.Item1.CurrentHitPoints += team1DamageTaken;
+                }
+
+                //syncDB and send messages
+
                 //at the very end, null out moves and begin next turn
                 Team1Move = null;
                 Team2Move = null;
                 CurrentTurnTeam = Team1;
             }
+        }
+
+        private (int, int) CalculateAtkDefBonuses(FightMove teamMove, Stack<FightMove> combo)
+        {
+            int attackBonus = 0;
+            int defenceBonus = 0;
+            Random random = new Random();
+
+            int combonus = DetectComboDepth(teamMove, combo);
+            Team1Combo.Push(teamMove);
+            switch (teamMove.Action)
+            {
+                case FightMove.AttackAction.Dodge:
+                    defenceBonus += 30 + 10*combonus + random.Next(0, 10);
+                    break;
+                case FightMove.AttackAction.QuickAttack:
+                    attackBonus += 10 + 10*combonus + random.Next(0, 15);
+                    break;
+                case FightMove.AttackAction.HeavyAttack:
+                    attackBonus += (20 - 5*combonus) + random.Next(0, 25);
+                    break;
+            }
+            return (attackBonus, defenceBonus);
+        }
+
+        private int DetectComboDepth(FightMove thisTurn, Stack<FightMove> currentCombo)
+        {
+            int comboDepth = 0;
+
+            if (currentCombo.Count > 2 && currentCombo.Peek().Action == thisTurn.Action)
+            {
+                while (currentCombo.Count > 0 && currentCombo.Peek().Action == thisTurn.Action) //todo other combo definitions (dodge, dodge, quick)
+                {
+                    comboDepth++;
+                }
+            }
+            if(currentCombo.Count > 0)
+                currentCombo.Clear();
+            return comboDepth;
         }
 
         public override async Task AcceptUserInput(string userCommand, User user)
