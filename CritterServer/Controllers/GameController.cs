@@ -57,7 +57,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> JoinGame(string gameId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            if (GameManager.JoinGameChat(gameId, activeUser, null)) return Ok();
+            if (await GameManager.JoinGameChat(gameId, activeUser, null)) return Ok();
             else return NotFound();
         }
     }

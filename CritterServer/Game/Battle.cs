@@ -1,5 +1,6 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Domains;
+using CritterServer.Hubs;
 using CritterServer.Models;
 using Dapper;
 using Microsoft.AspNetCore.SignalR;
@@ -259,5 +260,19 @@ namespace CritterServer.Game
         public FightMove() { }
         public AttackAction Action { get; set; }
         public bool Surrender { get; set; }
+    }
+
+    [HubPath("battlehub")]
+    public class BattleHub : BaseGameHub<IBattleClient>
+    {
+        public BattleHub(GameManagerService gameManager, UserDomain userDomain, PetDomain petDomain): base(gameManager, userDomain)
+        {
+
+        }
+    }
+
+    public interface IBattleClient : IGameClient
+    {
+        Task ReceiveGamestate();
     }
 }

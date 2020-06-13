@@ -10,14 +10,22 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Hubs
 {
+    [HubPath("gamehub")]
+    public class GameHub : BaseGameHub<IGameClient> 
+    {
+        public GameHub(GameManagerService gameManager, UserDomain userDomain) : base(gameManager, userDomain)
+        {
+        }
+    }
+
     [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
-    public class GameHub : Hub<IGameClient>
+    public class BaseGameHub<T> : Hub<T> where T : class, IGameClient
     {
         private readonly UserDomain UserDomain;
         private readonly GameManagerService GameManager;
 
 
-        public GameHub(GameManagerService gameManager, UserDomain userDomain)
+        public BaseGameHub(GameManagerService gameManager, UserDomain userDomain)
         {
             this.GameManager = gameManager;
             this.UserDomain = userDomain;
@@ -30,7 +38,7 @@ namespace CritterServer.Hubs
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task Connect(string gameId)
+        public async virtual Task Connect(string gameId)
         {
             var username = this.Context.GetHttpContext().User.Identity.Name;
             User activeUser = UserDomain.RetrieveUserByUserName(username).Result;
@@ -38,7 +46,7 @@ namespace CritterServer.Hubs
             await GameManager.JoinGameChat(gameId, activeUser, this.Context.ConnectionId);
         }
 
-        public async Task SendChatMessage(string message, string gameId)
+        public async virtual Task SendChatMessage(string message, string gameId)
         {
             //todo some kind of content filtering for the love of god
             await this.Clients.OthersInGroup(GetChannelGroupIdentifier(gameId)).ReceiveChat(this.Context.User.Identity.Name, message);

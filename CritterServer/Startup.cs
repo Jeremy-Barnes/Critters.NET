@@ -22,6 +22,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Authentication;
 using CritterServer.Game;
 using CritterServer.Hubs;
+using System.Reflection;
 
 namespace CritterServer
 {
@@ -125,8 +126,8 @@ namespace CritterServer
            app.UseEndpoints(endpoints => {
                endpoints.MapControllers();
                endpoints.MapHub<NotificationHub>("/notificationhub");
-               endpoints.MapHub<GameHub>("/gamehub");
-
+               endpoints.MapHub<GameHub>(typeof(GameHub).GetCustomAttribute<HubPathAttribute>().HubPath);
+               endpoints.MapHub<BattleHub>(typeof(BattleHub).GetCustomAttribute<HubPathAttribute>().HubPath);
            });//last thing
         }
 

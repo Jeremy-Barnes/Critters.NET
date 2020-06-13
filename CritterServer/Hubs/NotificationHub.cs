@@ -13,8 +13,6 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Domains
 {
-    [Route("api/notifications")]
-    [ApiController]
     public class NotificationHub : Hub<IUserClient>
     {
         private readonly MessageDomain messageDomain;
