@@ -35,7 +35,7 @@ namespace CritterServer.Hubs
             var username = this.Context.GetHttpContext().User.Identity.Name;
             User activeUser = UserDomain.RetrieveUserByUserName(username).Result;
             await this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId));
-            GameManager.JoinGame(gameId, activeUser, this.Context.ConnectionId);
+            await GameManager.JoinGameChat(gameId, activeUser, this.Context.ConnectionId);
         }
 
         public async Task SendChatMessage(string message, string gameId)
@@ -55,7 +55,6 @@ namespace CritterServer.Hubs
         Task ReceiveNotification(GameAlert serverNotification);
         Task ReceiveChat(string sender, string message);
         Task ReceiveSystemMessage(string message);
-
     }
 
 }

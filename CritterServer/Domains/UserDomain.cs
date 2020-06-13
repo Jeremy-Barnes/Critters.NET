@@ -109,7 +109,7 @@ namespace CritterServer.Domains
 
         }
 
-        public async Task ChangeUsersCash(List<Tuple<int, int>> userIdAndCashDeltas)
+        public async Task ChangeUsersCash(List<(int UserId, int CashDelta)> userIdAndCashDeltas)
         {
             using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {

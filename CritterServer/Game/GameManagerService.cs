@@ -58,8 +58,10 @@ namespace CritterServer.Game
                 switch (gameType)
                 {
                     case GameType.NumberGuesser: game = new GuessTheNumber(host, Services, EndGame, gameId); break;
+                    case GameType.Battle: game = new Battle(host, Services, EndGame, gameId); break;
                 }
                 if (game == null) return null;
+
                 RunningGames.TryAdd(game.Id, game);
                 RunningTasks.Add(Task.Run(game.Run));
                 return game.Id;
@@ -72,14 +74,17 @@ namespace CritterServer.Game
             }
         }
 
-
-        public bool JoinGame(string gameId, User player, string signalRConnectionId)
+        public async Task<bool> JoinGame(string gameId, User user, string joinGameData)
         {
             var game = GetGame(gameId);
-            game?.JoinGame(player, signalRConnectionId);
-            return game != null;
+            return await game?.JoinGame(user, joinGameData);
         }
 
+        public async Task<bool> JoinGameChat(string gameId, User player, string signalRConnectionId)
+        {
+            var game = GetGame(gameId);
+            return (await game?.JoinGameChat(player, signalRConnectionId));
+        }
 
         public void Dispatch(string command, string gameId, User user)
         {

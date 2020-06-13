@@ -81,10 +81,10 @@ namespace CritterServer.DataAccess
             await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", new { userId, cash = deltaCash });
         }
 
-        public async Task UpdateUsersCash(IEnumerable<Tuple<int, int>> userIdAndDeltaCashAmounts)
+        public async Task UpdateUsersCash(IEnumerable<(int UserId, int CashDelta)> userIdAndDeltaCashAmounts)
         {
             dbConnection.TryOpen();
-            await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", userIdAndDeltaCashAmounts.Select(u => new { userId = u.Item1, cash = u.Item2 }));
+            await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", userIdAndDeltaCashAmounts.Select(u => new { userId = u.UserId, cash = u.CashDelta}));
         }
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace CritterServer.DataAccess
         Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames);
         Task<bool> UserExistsByUserNameOrEmail(string userName, string email);
         Task UpdateUserCash(int userId, int deltaCash);
-        Task UpdateUsersCash(IEnumerable<Tuple<int, int>> userIdAndDeltaCashAmounts);
+        Task UpdateUsersCash(IEnumerable<(int UserId, int CashDelta)> userIdAndDeltaCash);
         int CreateDeveloper(User developer);
         Task<User> RetrieveDevByEmail(string email);
         Task<User> RetrieveDevByUserName(string userNames);

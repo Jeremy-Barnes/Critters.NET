@@ -69,7 +69,29 @@ namespace CritterServer.Game
         public abstract void Tick(TimeSpan deltaT);
         public abstract Task AcceptUserInput(string userCommand, User user);
 
-        public void JoinGame(User user, string signalRConnectonId)
+        /// <summary>
+        /// Async and overrideable so that games can allow hosts to permit/reject each player
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="joinGameData"></param>
+        /// <returns></returns>
+        public virtual async Task<bool> JoinGame(User user, string joinGameData)
+        {
+            if (!Players.ContainsKey(user.UserId))
+            {
+                var player = new Player(user, null);
+                Players.Add(user.UserId, player);
+            }
+            return true;
+        }
+        
+        /// <summary>
+        /// Async and overrideable so that games can allow hosts to permit/reject each player
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="signalRConnectonId"></param>
+        /// <returns></returns>
+        public virtual async Task<bool> JoinGameChat(User user, string signalRConnectonId)
         {
             if (Players.ContainsKey(user.UserId))
             {
@@ -82,6 +104,7 @@ namespace CritterServer.Game
                 var player = new Player(user, signalRConnectonId);
                 Players.Add(user.UserId, player);
             }
+            return true;
         }
 
         protected void SendSystemMessage(string message)
