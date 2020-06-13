@@ -36,6 +36,12 @@ namespace CritterServer.DataAccess
             return output;
         }
 
+        public async Task UpdatePetHealth(IEnumerable<(int PetId, int HealthDelta)> petIdAndDeltaHp)
+        {
+            dbConnection.TryOpen();
+            await dbConnection.ExecuteAsync($"UPDATE pets SET currentHitPoints = currentHitPoints + @hp WHERE petID = @petId", petIdAndDeltaHp.Select(p => new { petId = p.PetId, cash = p.HealthDelta }));
+        }
+
         public async Task<IEnumerable<Pet>> RetrievePetsByIds(params int[] petIds)
         {
             dbConnection.TryOpen();
@@ -111,6 +117,7 @@ namespace CritterServer.DataAccess
     public interface IPetRepository : IRepository
     {
         Task<int> CreatePet(Pet pet, int ownerUserId);
+        Task UpdatePetHealth(IEnumerable<(int PetId, int HealthDelta)> petIdAndDeltaHp);
         Task<IEnumerable<Pet>> RetrievePetsByIds(params int[] petIds);
         Task<IEnumerable<Pet>> RetrievePetsByOwnerId(int ownerUserId);
         Task<IEnumerable<PetDetails>> RetrieveFullPetsByOwnerId(int ownerUserId);

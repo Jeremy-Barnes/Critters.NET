@@ -42,7 +42,14 @@ namespace CritterServer.Domains
             pet = (await RetrievePets(pet.PetId)).FirstOrDefault();
             return pet;
         }
-
+        public async Task ChangePetHealth(List<(int PetId, int HealthDelta)> petToHpDelta)
+        {
+            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                await PetRepo.UpdatePetHealth(petToHpDelta.ToArray());
+                trans.Complete();
+            }
+        }
         public async Task<IEnumerable<Pet>> RetrievePetsByOwner(int userId)
         {
             return await PetRepo.RetrievePetsByOwnerId(userId);
