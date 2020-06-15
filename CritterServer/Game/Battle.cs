@@ -2,17 +2,11 @@
 using CritterServer.Domains;
 using CritterServer.Hubs;
 using CritterServer.Models;
-using Dapper;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Serilog;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace CritterServer.Game
@@ -27,10 +21,10 @@ namespace CritterServer.Game
 
         /*** Turn State ***/
         private bool FightWon = false;
-        private FightMove Team1Move = null;
-        private FightMove Team2Move = null;
-        private Stack<FightMove> Team1Combo = new Stack<FightMove>();
-        private Stack<FightMove> Team2Combo = new Stack<FightMove>();
+        private BattleMove Team1Move = null;
+        private BattleMove Team2Move = null;
+        private Stack<BattleMove> Team1Combo = new Stack<BattleMove>();
+        private Stack<BattleMove> Team2Combo = new Stack<BattleMove>();
         /*** Final Game State ***/
         private (Pet Pet, User Owner)? WinningTeam;
 
@@ -52,10 +46,8 @@ namespace CritterServer.Game
                 {
                     SendSystemMessage($"This fight ends in a draw.");
                 }
-                return;
-            }
-
-            if(Team1Move != null && Team2Move != null) //resolve turn
+            } 
+            else if(Team1Move != null && Team2Move != null) //resolve turn
             {
                 var team1Bonuses = CalculateAtkDefBonuses(Team1Move, Team1Combo);
                 var team2Bonuses = CalculateAtkDefBonuses(Team2Move, Team2Combo);
@@ -106,15 +98,16 @@ namespace CritterServer.Game
                 Team1Move = null;
                 Team2Move = null;
             }
+            SendGameState();
         }
 
         public override async Task AcceptUserInput(string userCommand, User user)
         {
-            FightMove command = JsonConvert.DeserializeObject<FightMove>(userCommand);
+            BattleMove command = JsonConvert.DeserializeObject<BattleMove>(userCommand);
             await AcceptUserInput(command, user.UserName);
         }
 
-        public async Task AcceptUserInput(FightMove command, string userName)
+        public async Task AcceptUserInput(BattleMove command, string userName)
         {
             if (FightWon || GameOver)
             {
@@ -131,6 +124,10 @@ namespace CritterServer.Game
                 else if (Team1.Owner.UserId == user.UserId)
                 {
                     WinningTeam = Team1;
+                } 
+                else
+                {
+                    return;
                 }
 
                 SendSystemMessage($"{user.UserName} runs away!");
@@ -166,13 +163,39 @@ namespace CritterServer.Game
             return true;
         }
 
-        private string ConstructVerb(FightMove fightMove, int damageIssued, Pet enemy)
+
+        protected void SendGameState()
+        {
+            Task.Run(async () =>
+            {
+                var gameState = new BattleState() {
+                    Team1MoveSubmitted = Team1Move != null,
+                    Team2MoveSubmitted = Team2Move != null,
+                    Team1Pet = Team1.Pet,
+                    Team2Pet = Team2.Pet,
+                    Team1Player = Team1.Owner,
+                    Team2Player = Team2.Owner,
+                    Timestamp = DateTime.UtcNow
+                };
+                using (var scope = Services.CreateScope())
+                {
+                    var hubContext =
+                        scope.ServiceProvider
+                            .GetRequiredService<IHubContext<BattleHub, IBattleClient>>();
+
+                    await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveGamestate(gameState);
+                }
+            });
+        }
+
+
+        private string ConstructVerb(BattleMove fightMove, int damageIssued, Pet enemy)
         {
             switch (fightMove.Action)
             {
-                case FightMove.AttackAction.Dodge: return $"dodges {enemy.PetName}";
-                case FightMove.AttackAction.QuickAttack: return $"jabs {enemy.PetName} for {damageIssued}";
-                case FightMove.AttackAction.HeavyAttack: return $"slams {enemy.PetName} for {damageIssued}";//and welcome to the jam
+                case BattleMove.AttackAction.Dodge: return $"dodges {enemy.PetName}";
+                case BattleMove.AttackAction.QuickAttack: return $"jabs {enemy.PetName} for {damageIssued}";
+                case BattleMove.AttackAction.HeavyAttack: return $"slams {enemy.PetName} for {damageIssued}";//and welcome to the jam
                 default: return "does nothing at all";
             }
         }
@@ -195,7 +218,7 @@ namespace CritterServer.Game
             });
         }
 
-        private (int Attack, int Defense) CalculateAtkDefBonuses(FightMove teamMove, Stack<FightMove> combo)
+        private (int Attack, int Defense) CalculateAtkDefBonuses(BattleMove teamMove, Stack<BattleMove> combo)
         {
             int attackBonus = 0;
             int defenseBonus = 0;
@@ -205,20 +228,20 @@ namespace CritterServer.Game
             Team1Combo.Push(teamMove);
             switch (teamMove.Action)
             {
-                case FightMove.AttackAction.Dodge:
+                case BattleMove.AttackAction.Dodge:
                     defenseBonus += 30 + 10*combonus + random.Next(0, 10);
                     break;
-                case FightMove.AttackAction.QuickAttack:
+                case BattleMove.AttackAction.QuickAttack:
                     attackBonus += 10 + 10*combonus + random.Next(0, 15);
                     break;
-                case FightMove.AttackAction.HeavyAttack:
+                case BattleMove.AttackAction.HeavyAttack:
                     attackBonus += (20 - 5*combonus) + random.Next(0, 25);
                     break;
             }
             return (attackBonus, defenseBonus);
         }
 
-        private int DetectComboDepth(FightMove thisTurn, Stack<FightMove> currentCombo)
+        private int DetectComboDepth(BattleMove thisTurn, Stack<BattleMove> currentCombo)
         {
             int comboDepth = 0;
 
@@ -235,7 +258,7 @@ namespace CritterServer.Game
         }
     }
 
-    public class FightMove
+    public class BattleMove
     {
         public enum AttackAction
         {
@@ -244,84 +267,19 @@ namespace CritterServer.Game
             Dodge
         }
 
-        public FightMove() { }
+        public BattleMove() { }
         public AttackAction Action { get; set; }
         public bool Surrender { get; set; }
     }
 
-    [HubPath("battlehub")]
-    public class BattleHub : BaseGameHub<IBattleClient>
+    public struct BattleState
     {
-        PetDomain PetDomain;
-        public BattleHub(GameManagerService gameManager, UserDomain userDomain, PetDomain petDomain): base(gameManager, userDomain)
-        {
-            this.PetDomain = petDomain;
-        }
-
-        //Correct flow
-        //GameController PUT CreateGame
-        //SignalR battlehub/gamehub Connect
-        //SignalR ConfigureMatch
-        // IF ConfigureMatch didn't set up the Hosts pet, JoinGame
-        public async Task ConfigureMatch(string gameId, int hostPetId, string? allowedUserName, int? petId)
-        {
-            Battle game = this.GameManager.GetGame(gameId) as Battle;
-            var username = this.Context.GetHttpContext().User.Identity.Name;
-            User activeUser;
-            Pet pet = null;
-            if (petId.HasValue) {
-                var ownerAndPet = await GetUserAndPetForUsername(username, petId.Value);
-                activeUser = ownerAndPet.Owner;
-                pet = ownerAndPet.Pet;
-            } else
-            {
-                activeUser = await this.UserDomain.RetrieveUserByUserName(username);
-            }
-            if (game.Host.UserId != activeUser.UserId)
-            {
-                throw new CritterException("Sorry, you're not the host!", $"Some chump {activeUser.UserId} tried to configure a match {gameId} they didn't own", System.Net.HttpStatusCode.Forbidden);
-            }
-            if (pet != null) {
-                await game.JoinGame(activeUser, pet);
-            }
-        }
-
-        //Correct flow 
-        //GameController PUT JoinGame
-        //SignalR battlehub/gamehub Connect
-        //SignalR AcceptChallenge
-        //SignalR SendMove
-        public async Task AcceptChallenge(string gameId, int petId)
-        {
-            var username = this.Context.GetHttpContext().User.Identity.Name;
-            var game = this.GameManager.GetGame(gameId) as Battle;
-            var ownerAndPet = await GetUserAndPetForUsername(username, petId);
-            await game.JoinGame(ownerAndPet.Owner, ownerAndPet.Pet);
-        }
-
-        public async Task SendMove(string gameId, FightMove move)
-        {
-            var username = this.Context.GetHttpContext().User.Identity.Name;
-            var game = this.GameManager.GetGame(gameId) as Battle;
-            await game.AcceptUserInput(move, username);
-        }
-
-        private async Task<(User Owner,Pet Pet)> GetUserAndPetForUsername(string ownerUsername, int petId)
-        {
-            User activeUser = await this.UserDomain.RetrieveUserByUserName(ownerUsername);
-            Pet pet = (await this.PetDomain.RetrievePets(petId)).FirstOrDefault();
-
-            if (pet.OwnerId != activeUser.UserId)
-            {
-                throw new CritterException("That's not your pet!", $"Some creep {activeUser.UserId} tried to enter a battle with a pet {petId} that wasn't theirs", System.Net.HttpStatusCode.Forbidden);
-            }
-
-            return (activeUser, pet);
-        }
-    }
-
-    public interface IBattleClient : IGameClient
-    {
-        Task ReceiveGamestate();
+        public Pet Team1Pet { get; set; }
+        public User Team1Player { get; set; }
+        public Pet Team2Pet { get; set; }
+        public User Team2Player { get; set; }
+        public bool Team1MoveSubmitted { get; set; }
+        public bool Team2MoveSubmitted { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }
