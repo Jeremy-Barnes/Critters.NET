@@ -70,7 +70,7 @@ namespace CritterServer.Game
             {
                 int winnings = (int)(((1.0 * winnerAndBet.BetAmount) / (1.0 * winningAmount)) * totalPotSize);
                 winnerAndTheirWinnings.Add((winnerAndBet.Item1, winnings));
-                userNameToWinMessage.Add(Tuple.Create(Players[winnerAndBet.UserId].User.UserName, $"Your bet for {winnerAndBet.BetAmount} on {winningNumber} won! You receive {winnings}"));
+                userNameToWinMessage.Add(Tuple.Create(Players.GetPlayer(winnerAndBet.UserId).User.UserName, $"Your bet for {winnerAndBet.BetAmount} on {winningNumber} won! You receive {winnings}"));
             }
             SendAlert(null, null, userNameToWinMessage);
             using (var scope = Services.CreateScope())

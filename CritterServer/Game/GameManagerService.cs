@@ -77,7 +77,7 @@ namespace CritterServer.Game
         public async Task<bool> RequestJoinGame(string gameId, User user, string joinGameData)
         {
             var game = GetGame(gameId);
-            return await game?.JoinGame(user, joinGameData);
+            return await game?.JoinGameWithoutChat(user, joinGameData);
         }
 
         public void Dispatch(string command, string gameId, User user)

@@ -150,11 +150,13 @@ namespace CritterServer.Game
         {
             if(user.UserId == Host.UserId)
             {
+                Team1.Owner = user;
                 Team1.Pet = pet;
             }
-            else if(Team2.Owner.UserId == user.UserId)
+            else if(Team2.Owner == null || Team2.Owner.UserId == user.UserId)
             {
-                Team2.Pet = pet;
+                if(pet.PetId == Team2.Pet.PetId)
+                    Team2.Pet = pet;
             } 
             else
             {
@@ -163,8 +165,12 @@ namespace CritterServer.Game
             return true;
         }
 
+        public void ChallengeTeamToBattle(User user, Pet pet)
+        {
+            Team2 = (pet, user);
+        }
 
-        protected void SendGameState()
+        private void SendGameState()
         {
             Task.Run(async () =>
             {
@@ -187,7 +193,6 @@ namespace CritterServer.Game
                 }
             });
         }
-
 
         private string ConstructVerb(BattleMove fightMove, int damageIssued, Pet enemy)
         {

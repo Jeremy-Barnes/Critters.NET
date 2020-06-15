@@ -23,31 +23,26 @@ namespace CritterServer.Hubs
         //GameController PUT CreateGame
         //SignalR battlehub/gamehub Connect
         //SignalR ConfigureMatch
-        // IF ConfigureMatch didn't set up the Hosts pet, JoinGame
         public async Task ConfigureMatch(string gameId, int hostPetId, string? allowedUserName, int? petId)
         {
             Battle game = this.GameManager.GetGame(gameId) as Battle;
             var username = this.Context.GetHttpContext().User.Identity.Name;
-            User activeUser;
-            Pet pet = null;
-            if (petId.HasValue)
+
+            var hostAndPet = await GetUserAndPetForUsername(username, hostPetId);
+
+            if (game.Host.UserId != hostAndPet.Owner.UserId)
             {
-                var ownerAndPet = await GetUserAndPetForUsername(username, petId.Value);
-                activeUser = ownerAndPet.Owner;
-                pet = ownerAndPet.Pet;
+                throw new CritterException("Sorry, you're not the host!", $"Some chump {hostAndPet.Owner.UserId} tried to configure a match {gameId} they didn't own", System.Net.HttpStatusCode.Forbidden);
             }
-            else
+
+            if (!string.IsNullOrEmpty(allowedUserName) && petId.HasValue)
             {
-                activeUser = await this.UserDomain.RetrieveUserByUserName(username);
+                var team2 = await GetUserAndPetForUsername(username, petId.Value);
+                game.ChallengeTeamToBattle(team2.Owner, team2.Pet);
             }
-            if (game.Host.UserId != activeUser.UserId)
-            {
-                throw new CritterException("Sorry, you're not the host!", $"Some chump {activeUser.UserId} tried to configure a match {gameId} they didn't own", System.Net.HttpStatusCode.Forbidden);
-            }
-            if (pet != null)
-            {
-                await game.JoinGame(activeUser, pet);
-            }
+
+            await game.JoinGame(hostAndPet.Owner, hostAndPet.Pet);
+
         }
 
         //Correct flow 

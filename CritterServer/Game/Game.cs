@@ -73,7 +73,7 @@ namespace CritterServer.Game
         /// <param name="user"></param>
         /// <param name="joinGameData"></param>
         /// <returns></returns>
-        public virtual async Task<bool> JoinGame(User user, string joinGameData)
+        public virtual async Task<bool> JoinGameWithoutChat(User user, string joinGameData)
         {
             var player = new Player(user, null);
             Players.AddPlayer(player);
