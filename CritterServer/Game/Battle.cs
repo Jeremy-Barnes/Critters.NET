@@ -27,7 +27,6 @@ namespace CritterServer.Game
 
         /*** Turn State ***/
         private bool FightWon = false;
-        private (Pet Pet, User Owner) CurrentTurnTeam;
         private FightMove Team1Move = null;
         private FightMove Team2Move = null;
         private Stack<FightMove> Team1Combo = new Stack<FightMove>();
@@ -106,22 +105,22 @@ namespace CritterServer.Game
                 //at the very end, null out moves and begin next turn
                 Team1Move = null;
                 Team2Move = null;
-                CurrentTurnTeam = Team1;
             }
         }
 
         public override async Task AcceptUserInput(string userCommand, User user)
         {
+            FightMove command = JsonConvert.DeserializeObject<FightMove>(userCommand);
+            await AcceptUserInput(command, user.UserName);
+        }
+
+        public async Task AcceptUserInput(FightMove command, string userName)
+        {
             if (FightWon || GameOver)
             {
                 throw new CritterException("Sorry, this fight is over!", null, System.Net.HttpStatusCode.Gone);
             }
-
-            if (user.UserId != CurrentTurnTeam.Owner.UserId)
-                throw new CritterException("It's not your turn!",
-                    $"User {user.UserId} tried to make a move in a fight that when it wasn't their turn.", System.Net.HttpStatusCode.Forbidden);
-
-            FightMove command = JsonConvert.DeserializeObject<FightMove>(userCommand);
+            User user = this.Players.GetPlayer(userName).User;
 
             if (command.Surrender)
             {
@@ -139,35 +138,19 @@ namespace CritterServer.Game
                 return;
             }
 
-            if (CurrentTurnTeam == Team1)
+
+            if (user.UserId == Team1.Owner.UserId && Team1Move == null)
             {
-                if (Team1Move == null)
-                {
-                    Team1Move = command;
-                    CurrentTurnTeam = Team2;
-                }
+                Team1Move = command;
             }
-            else if (CurrentTurnTeam == Team2)
+            else if (user.UserId == Team2.Owner.UserId && Team2Move == null)
             {
-                if (Team2Move == null)
-                {
-                    Team2Move = command;
-                    CurrentTurnTeam = Team1;
-                }
-            }
-            else //better never happen
-            {
-                GameOver = true;
-                throw new CritterException("Invalid fight state reached! Game over, man!",
-                    $"An invalid user {user.UserId} was permitted to make a fight move, the team state is corrupted, this fight is abandoned. " +
-                    $"Users {Team1.Item2.UserId} and {Team1.Item2.UserId} were robbed!",
-                    System.Net.HttpStatusCode.InternalServerError);
+                Team2Move = command;
             }
         }
 
-        public override async Task<bool> JoinGame(User user, string joinGameData)
+        public async Task<bool> JoinGame(User user, Pet pet)
         {
-            Pet pet = JsonConvert.DeserializeObject<Pet>(joinGameData);
             if(user.UserId == Host.UserId)
             {
                 Team1.Pet = pet;
@@ -175,8 +158,12 @@ namespace CritterServer.Game
             else if(Team2.Owner.UserId == user.UserId)
             {
                 Team2.Pet = pet;
+            } 
+            else
+            {
+                return false;
             }
-            return false;
+            return true;
         }
 
         private string ConstructVerb(FightMove fightMove, int damageIssued, Pet enemy)
@@ -265,9 +252,71 @@ namespace CritterServer.Game
     [HubPath("battlehub")]
     public class BattleHub : BaseGameHub<IBattleClient>
     {
+        PetDomain PetDomain;
         public BattleHub(GameManagerService gameManager, UserDomain userDomain, PetDomain petDomain): base(gameManager, userDomain)
         {
+            this.PetDomain = petDomain;
+        }
 
+        //Correct flow
+        //GameController PUT CreateGame
+        //SignalR battlehub/gamehub Connect
+        //SignalR ConfigureMatch
+        // IF ConfigureMatch didn't set up the Hosts pet, JoinGame
+        public async Task ConfigureMatch(string gameId, int hostPetId, string? allowedUserName, int? petId)
+        {
+            Battle game = this.GameManager.GetGame(gameId) as Battle;
+            var username = this.Context.GetHttpContext().User.Identity.Name;
+            User activeUser;
+            Pet pet = null;
+            if (petId.HasValue) {
+                var ownerAndPet = await GetUserAndPetForUsername(username, petId.Value);
+                activeUser = ownerAndPet.Owner;
+                pet = ownerAndPet.Pet;
+            } else
+            {
+                activeUser = await this.UserDomain.RetrieveUserByUserName(username);
+            }
+            if (game.Host.UserId != activeUser.UserId)
+            {
+                throw new CritterException("Sorry, you're not the host!", $"Some chump {activeUser.UserId} tried to configure a match {gameId} they didn't own", System.Net.HttpStatusCode.Forbidden);
+            }
+            if (pet != null) {
+                await game.JoinGame(activeUser, pet);
+            }
+        }
+
+        //Correct flow 
+        //GameController PUT JoinGame
+        //SignalR battlehub/gamehub Connect
+        //SignalR AcceptChallenge
+        //SignalR SendMove
+        public async Task AcceptChallenge(string gameId, int petId)
+        {
+            var username = this.Context.GetHttpContext().User.Identity.Name;
+            var game = this.GameManager.GetGame(gameId) as Battle;
+            var ownerAndPet = await GetUserAndPetForUsername(username, petId);
+            await game.JoinGame(ownerAndPet.Owner, ownerAndPet.Pet);
+        }
+
+        public async Task SendMove(string gameId, FightMove move)
+        {
+            var username = this.Context.GetHttpContext().User.Identity.Name;
+            var game = this.GameManager.GetGame(gameId) as Battle;
+            await game.AcceptUserInput(move, username);
+        }
+
+        private async Task<(User Owner,Pet Pet)> GetUserAndPetForUsername(string ownerUsername, int petId)
+        {
+            User activeUser = await this.UserDomain.RetrieveUserByUserName(ownerUsername);
+            Pet pet = (await this.PetDomain.RetrievePets(petId)).FirstOrDefault();
+
+            if (pet.OwnerId != activeUser.UserId)
+            {
+                throw new CritterException("That's not your pet!", $"Some creep {activeUser.UserId} tried to enter a battle with a pet {petId} that wasn't theirs", System.Net.HttpStatusCode.Forbidden);
+            }
+
+            return (activeUser, pet);
         }
     }
 

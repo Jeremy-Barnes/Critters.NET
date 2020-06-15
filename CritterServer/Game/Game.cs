@@ -1,17 +1,14 @@
 ﻿using CritterServer.Contract;
-using CritterServer.Domains;
 using CritterServer.Hubs;
 using CritterServer.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,7 +20,7 @@ namespace CritterServer.Game
         public string Id { get; protected set; }
         public abstract GameType GameType { get; }
         public bool GameOver { get; protected set; }
-        public Dictionary<int, Player> Players { get; protected set; }
+        public PlayerCache Players { get; protected set; }
         protected float TicksPerSecond { get; set; }
         protected int Ticks { get; set; }
 
@@ -40,9 +37,9 @@ namespace CritterServer.Game
             this.Services = services;
             this.GameEndCallBack = gameEndCallBack;
             this.GameOver = false;
-            this.Players = new Dictionary<int, Player>();
+            this.Players = new PlayerCache();
             if(host != null)
-                Players.Add(host.UserId, new Player(host));
+                Players.AddPlayer(new Player(host));
         }
 
         public void Run()
@@ -70,6 +67,7 @@ namespace CritterServer.Game
         public abstract Task AcceptUserInput(string userCommand, User user);
 
         /// <summary>
+        /// Adds user to the list of players, without signalR connection ID (added in JoinGameChat method)
         /// Async and overrideable so that games can allow hosts to permit/reject each player
         /// </summary>
         /// <param name="user"></param>
@@ -77,11 +75,8 @@ namespace CritterServer.Game
         /// <returns></returns>
         public virtual async Task<bool> JoinGame(User user, string joinGameData)
         {
-            if (!Players.ContainsKey(user.UserId))
-            {
-                var player = new Player(user, null);
-                Players.Add(user.UserId, player);
-            }
+            var player = new Player(user, null);
+            Players.AddPlayer(player);
             return true;
         }
         
@@ -93,17 +88,7 @@ namespace CritterServer.Game
         /// <returns></returns>
         public virtual async Task<bool> JoinGameChat(User user, string signalRConnectonId)
         {
-            if (Players.ContainsKey(user.UserId))
-            {
-                var player = Players[user.UserId];
-                player.SignalRConnectionId = signalRConnectonId;
-                player.User = user;
-            }
-            else 
-            {
-                var player = new Player(user, signalRConnectonId);
-                Players.Add(user.UserId, player);
-            }
+            Players.AddPlayer(new Player(user, signalRConnectonId));
             return true;
         }
 
@@ -178,5 +163,75 @@ namespace CritterServer.Game
         Battle,
         Wheel,
             //5 games! Pretty ambitious.
+    }
+
+    public class PlayerCache
+    {
+        private ConcurrentDictionary<int, Player> PlayersById { get; set; }
+        private ConcurrentDictionary<string, Player> PlayersByUsername { get; set; }
+
+        public IEnumerable<Player> Values { get => PlayersById.Values; }
+        public IEnumerable<string> PlayerNames { get => PlayersByUsername.Keys; }
+
+        public PlayerCache()
+        {
+            PlayersById = new ConcurrentDictionary<int, Player>();
+            PlayersByUsername = new ConcurrentDictionary<string, Player>();
+        }
+
+        public bool Contains(string userName)
+        {
+            return PlayersByUsername.ContainsKey(userName);
+        }
+
+        public bool Contains(int userId)
+        {
+            return PlayersById.ContainsKey(userId);
+
+        }
+
+        public Player GetPlayer(string username)
+        {
+            if(PlayersByUsername.TryGetValue(username, out Player player))
+            {
+                return player;
+            } 
+            else
+            {
+                if(!PlayersByUsername.ContainsKey(username))
+                {
+                    return null;
+                }
+            }
+            return PlayersByUsername[username]; //no more TryGet stuff, just GET IT
+        }
+
+        public Player GetPlayer(int userId)
+        {
+            if (PlayersById.TryGetValue(userId, out Player player))
+            {
+                return player;
+            }
+            else
+            {
+                if (!PlayersById.ContainsKey(userId))
+                {
+                    return null;
+                }
+            }
+            return PlayersById[userId]; //no more TryGet stuff, just GET IT
+        }
+
+        public void AddPlayer(Player player)
+        {
+            if(!PlayersById.TryAdd(player.User.UserId, player))
+            {
+                PlayersById[player.User.UserId] = player;
+            }
+            if (!PlayersByUsername.TryAdd(player.User.UserName, player))
+            {
+                PlayersByUsername[player.User.UserName] = player;
+            }
+        }
     }
 }

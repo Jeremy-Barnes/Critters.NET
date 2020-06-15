@@ -21,8 +21,8 @@ namespace CritterServer.Hubs
     [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
     public class BaseGameHub<T> : Hub<T> where T : class, IGameClient
     {
-        private readonly UserDomain UserDomain;
-        private readonly GameManagerService GameManager;
+        protected readonly UserDomain UserDomain;
+        protected readonly GameManagerService GameManager;
 
 
         public BaseGameHub(GameManagerService gameManager, UserDomain userDomain)
@@ -40,10 +40,13 @@ namespace CritterServer.Hubs
 
         public async virtual Task Connect(string gameId)
         {
+            var game = GameManager.GetGame(gameId);
+            if (game == null) return;
+
             var username = this.Context.GetHttpContext().User.Identity.Name;
-            User activeUser = UserDomain.RetrieveUserByUserName(username).Result;
-            await this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId));
-            await GameManager.JoinGameChat(gameId, activeUser, this.Context.ConnectionId);
+            User activeUser = await UserDomain.RetrieveUserByUserName(username);
+            if(await game.JoinGameChat(activeUser, this.Context.ConnectionId))
+                await this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId));
         }
 
         public async virtual Task SendChatMessage(string message, string gameId)

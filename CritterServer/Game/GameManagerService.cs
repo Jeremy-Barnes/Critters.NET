@@ -74,16 +74,10 @@ namespace CritterServer.Game
             }
         }
 
-        public async Task<bool> JoinGame(string gameId, User user, string joinGameData)
+        public async Task<bool> RequestJoinGame(string gameId, User user, string joinGameData)
         {
             var game = GetGame(gameId);
             return await game?.JoinGame(user, joinGameData);
-        }
-
-        public async Task<bool> JoinGameChat(string gameId, User player, string signalRConnectionId)
-        {
-            var game = GetGame(gameId);
-            return (await game?.JoinGameChat(player, signalRConnectionId));
         }
 
         public void Dispatch(string command, string gameId, User user)
