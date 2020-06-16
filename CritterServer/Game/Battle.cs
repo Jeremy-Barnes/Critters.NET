@@ -153,10 +153,9 @@ namespace CritterServer.Game
                 Team1.Owner = user;
                 Team1.Pet = pet;
             }
-            else if(Team2.Owner == null || Team2.Owner.UserId == user.UserId)
+            else if((Team2.Owner == null || Team2.Owner.UserId == user.UserId) && pet.PetId == Team2.Pet.PetId)
             {
-                if(pet.PetId == Team2.Pet.PetId)
-                    Team2.Pet = pet;
+                Team2.Pet = pet;
             } 
             else
             {

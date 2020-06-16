@@ -16,7 +16,7 @@ namespace CritterServer.Game
 {
     public class GameManagerService : IHostedService
     {
-        ConcurrentDictionary<string, Game> RunningGames = new ConcurrentDictionary<string, Game>();
+        ConcurrentDictionary<string, IGame> RunningGames = new ConcurrentDictionary<string, IGame>();
         ConcurrentBag<Task> RunningTasks = new ConcurrentBag<Task>();
         IServiceProvider Services;
         public GameManagerService(IServiceProvider services)
@@ -37,7 +37,7 @@ namespace CritterServer.Game
                 return RunningGames.Keys.AsList();
         }
 
-        public Game GetGame(string gameId)
+        public IGame GetGame(string gameId)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace CritterServer.Game
             try
             {
                 if (GetGame(gameId) != null) throw new CritterException("A game already exists with that name!", null, HttpStatusCode.Conflict);
-                Game game = null;
+                IGame game = null;
                 switch (gameType)
                 {
                     case GameType.NumberGuesser: game = new GuessTheNumber(host, Services, EndGame, gameId); break;

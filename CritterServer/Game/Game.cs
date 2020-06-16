@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public abstract class Game<T,H> where T : class, IGameClient where H : BaseGameHub<T>
+    public abstract class Game<T,H> : IGame where T : class, IGameClient where H : BaseGameHub<T>
     {
         public User Host { get; protected set; }
         public string Id { get; protected set; }
@@ -129,7 +129,7 @@ namespace CritterServer.Game
                     }
                     if ((userNames == null || !userNames.Any()) && !string.IsNullOrEmpty(message))
                     {
-                        await hubContext.Clients.Group(H.GetChannelGroupIdentifier(this.Id)).ReceiveNotification(alert);
+                        await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveNotification(alert);
                     }
                 }
             });
@@ -153,6 +153,30 @@ namespace CritterServer.Game
             GameOver = true;
             TerminateGame();
         }
+    }
+
+    public interface IGame
+    {
+        abstract GameType GameType { get; }
+        void Run();
+        void Tick(TimeSpan deltaT);
+        Task AcceptUserInput(string userCommand, User user);
+        /// <summary>
+        /// Adds user to the list of players, without signalR connection ID (added in JoinGameChat method)
+        /// Async and overrideable so that games can allow hosts to permit/reject each player
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="joinGameData"></param>
+        /// <returns></returns>
+        Task<bool> JoinGameWithoutChat(User user, string joinGameData);
+        /// <summary>
+        /// Async and overrideable so that games can allow hosts to permit/reject each player
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="signalRConnectonId"></param>
+        /// <returns></returns>
+        Task<bool> JoinGameChat(User user, string signalRConnectonId);
+        void TerminateGame();
     }
 
     public enum GameType
