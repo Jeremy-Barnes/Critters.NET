@@ -1,12 +1,11 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Domains;
+using CritterServer.Hubs;
 using CritterServer.Models;
 using Dapper;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public class GuessTheNumber : Game
+    public class GuessTheNumber : Game<IGameClient, GameHub>
     {
         private DateTime StartTime;
         private ConcurrentDictionary<int, List<Bet>> UserIdToBets = new ConcurrentDictionary<int, List<Bet>>();

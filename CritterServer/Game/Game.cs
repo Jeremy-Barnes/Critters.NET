@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public abstract class Game
+    public abstract class Game<T,H> where T : class, IGameClient where H : BaseGameHub<T>
     {
         public User Host { get; protected set; }
         public string Id { get; protected set; }
@@ -100,7 +100,7 @@ namespace CritterServer.Game
                 {
                     var hubContext =
                         scope.ServiceProvider
-                            .GetRequiredService<IHubContext<GameHub, IGameClient>>();
+                            .GetRequiredService<IHubContext<H, T>>();
 
                     await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveSystemMessage(message);
                 }
@@ -115,7 +115,7 @@ namespace CritterServer.Game
                 {
                     var hubContext =
                         scope.ServiceProvider
-                            .GetRequiredService<IHubContext<GameHub, IGameClient>>();
+                            .GetRequiredService<IHubContext<H, T>>();
                     GameAlert alert = new GameAlert(message, this.GameType);
 
                     if (userNames != null && userNames.Any() && !string.IsNullOrEmpty(message))
@@ -129,7 +129,7 @@ namespace CritterServer.Game
                     }
                     if ((userNames == null || !userNames.Any()) && !string.IsNullOrEmpty(message))
                     {
-                        await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveNotification(alert);
+                        await hubContext.Clients.Group(H.GetChannelGroupIdentifier(this.Id)).ReceiveNotification(alert);
                     }
                 }
             });
@@ -141,7 +141,7 @@ namespace CritterServer.Game
             {
                 var hubContext =
                     scope.ServiceProvider
-                        .GetRequiredService<IHubContext<GameHub, IGameClient>>();
+                        .GetRequiredService<IHubContext<H, T>>();
                 await hubContext.Clients.Group(GameHub.GetChannelGroupIdentifier(this.Id)).ReceiveSystemMessage($"Game {this.Id} has ended.");
                 foreach(Player p in Players.Values)
                     await hubContext.Groups.RemoveFromGroupAsync(p.SignalRConnectionId, GameHub.GetChannelGroupIdentifier(this.Id));

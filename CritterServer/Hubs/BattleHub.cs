@@ -3,8 +3,6 @@ using CritterServer.Domains;
 using CritterServer.Game;
 using CritterServer.Models;
 using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -26,6 +24,8 @@ namespace CritterServer.Hubs
         public async Task ConfigureMatch(string gameId, int hostPetId, string? allowedUserName, int? petId)
         {
             Battle game = this.GameManager.GetGame(gameId) as Battle;
+            if (game == null) return;
+
             var username = this.Context.GetHttpContext().User.Identity.Name;
 
             var hostAndPet = await GetUserAndPetForUsername(username, hostPetId);
@@ -37,7 +37,7 @@ namespace CritterServer.Hubs
 
             if (!string.IsNullOrEmpty(allowedUserName) && petId.HasValue)
             {
-                var team2 = await GetUserAndPetForUsername(username, petId.Value);
+                var team2 = await GetUserAndPetForUsername(allowedUserName, petId.Value);
                 game.ChallengeTeamToBattle(team2.Owner, team2.Pet);
             }
 
@@ -52,10 +52,13 @@ namespace CritterServer.Hubs
         //SignalR SendMove
         public async Task AcceptChallenge(string gameId, int petId)
         {
-            var username = this.Context.GetHttpContext().User.Identity.Name;
             var game = this.GameManager.GetGame(gameId) as Battle;
-            var ownerAndPet = await GetUserAndPetForUsername(username, petId);
-            await game.JoinGame(ownerAndPet.Owner, ownerAndPet.Pet);
+            if (game != null)
+            {
+                var username = this.Context.GetHttpContext().User.Identity.Name;
+                var ownerAndPet = await GetUserAndPetForUsername(username, petId);
+                await game.JoinGame(ownerAndPet.Owner, ownerAndPet.Pet);
+            }
         }
 
         public async Task SendMove(string gameId, BattleMove move)

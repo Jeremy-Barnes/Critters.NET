@@ -39,7 +39,7 @@ namespace CritterServer.DataAccess
         public async Task UpdatePetHealth(IEnumerable<(int PetId, int HealthDelta)> petIdAndDeltaHp)
         {
             dbConnection.TryOpen();
-            await dbConnection.ExecuteAsync($"UPDATE pets SET currentHitPoints = currentHitPoints + @hp WHERE petID = @petId", petIdAndDeltaHp.Select(p => new { petId = p.PetId, cash = p.HealthDelta }));
+            await dbConnection.ExecuteAsync($"UPDATE pets SET currentHitPoints = currentHitPoints + @hp WHERE petID = @petId", petIdAndDeltaHp.Select(p => new { petId = p.PetId, hp = p.HealthDelta }));
         }
 
         public async Task<IEnumerable<Pet>> RetrievePetsByIds(params int[] petIds)

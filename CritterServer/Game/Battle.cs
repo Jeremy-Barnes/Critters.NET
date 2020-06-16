@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public class Battle : Game
+    public class Battle : Game<IBattleClient, BattleHub>
     {
         /*** Game Info***/
         public override GameType GameType => GameType.Battle;
@@ -52,8 +52,8 @@ namespace CritterServer.Game
                 var team1Bonuses = CalculateAtkDefBonuses(Team1Move, Team1Combo);
                 var team2Bonuses = CalculateAtkDefBonuses(Team2Move, Team2Combo);
 
-                int team2DamageIssued = (int)(team2Bonuses.Attack / ((double)team1Bonuses.Defense));
-                int team1DamageIssued = (int)(team1Bonuses.Attack / ((double)team2Bonuses.Defense));
+                int team2DamageIssued = (int)(team2Bonuses.Attack / ((double)Math.Max(1, team1Bonuses.Defense)));
+                int team1DamageIssued = (int)(team1Bonuses.Attack / ((double)Math.Max(1, team2Bonuses.Defense)));
 
                 if(Team1.Pet.CurrentHitPoints == 0 && Team2.Pet.CurrentHitPoints > 0) //no damage from an unconscious pet
                 {
@@ -64,8 +64,8 @@ namespace CritterServer.Game
                 }
                 else if (Team2.Pet.CurrentHitPoints == 0 && Team1.Pet.CurrentHitPoints > 0)
                 {
-                    Team1.Pet.CurrentHitPoints += team1DamageIssued;
-                    team1DamageIssued = 0;
+                    Team1.Pet.CurrentHitPoints += team2DamageIssued;
+                    team2DamageIssued = 0;
                     FightWon = true;
                     WinningTeam = Team1;
                 } 
