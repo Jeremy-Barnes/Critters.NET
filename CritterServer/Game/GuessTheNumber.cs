@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public class GuessTheNumber : Game<IGameClient, GameHub>
+    public class GuessTheNumber : CustomClientGame<IGameClient, GameHub>
     {
         private DateTime StartTime;
         private ConcurrentDictionary<int, List<Bet>> UserIdToBets = new ConcurrentDictionary<int, List<Bet>>();

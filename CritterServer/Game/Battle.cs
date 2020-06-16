@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public class Battle : Game<IBattleClient, BattleHub>
+    public class Battle : CustomClientGame<IBattleClient, BattleHub>
     {
         /*** Game Info***/
         public override GameType GameType => GameType.Battle;
