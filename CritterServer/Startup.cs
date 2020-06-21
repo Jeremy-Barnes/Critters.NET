@@ -54,7 +54,8 @@ namespace CritterServer
                 options.AddPolicy(name: PermittedOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202")
+                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202",
+                                          "localhost:8080/", "http://localhost:8080", "http://localhost:8080/", "localhost:8080")
                                       .AllowAnyMethod()
                                       .AllowAnyHeader()
                                       .AllowCredentials();

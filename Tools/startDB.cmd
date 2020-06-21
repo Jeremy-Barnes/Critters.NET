@@ -1,3 +1,3 @@
 @echo off
 echo Start Postgres
-start "" "C:\Program Files\PostgreSQL\12\bin\pg_ctl.exe"  -D "C:\Program Files\PostgreSQL\12\data" -w "start"
+start "" "D:\Program Files\PostgreSQL\11\bin\pg_ctl.exe"  -D "D:\Program Files\PostgreSQL\11\data" -w "start"
