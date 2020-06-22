@@ -16,11 +16,12 @@ namespace CritterServer.Controllers
     [ApiController]
     public class AdministrationController : ControllerBase
     {
-        AdminDomain domain;
-
-        public AdministrationController(AdminDomain domain)
+        AdminDomain AdminDomain;
+        EventDomain EventDomain;
+        public AdministrationController(AdminDomain adminDomain, EventDomain eventDomain)
         {
-            this.domain = domain;
+            this.AdminDomain = adminDomain;
+            this.EventDomain = eventDomain;
         }
 
         [HttpPost("loginDev")]
@@ -29,7 +30,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> LoginDev([FromBody] User dev)
         {
-            var authToken = await domain.LoginDev(dev);
+            var authToken = await AdminDomain.LoginDev(dev);
             return Ok(new { AuthToken = authToken });
         }
 
@@ -40,7 +41,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> CreateAccount([FromBody] User user, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            await domain.CreateDev(user, activeUser);
+            await AdminDomain.CreateDev(user, activeUser);
             return Ok();
         }
 
@@ -51,7 +52,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> CreateSpecies([FromBody] PetSpeciesConfig species, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            return Ok(await domain.CreatePetSpecies(species, activeUser));
+            return Ok(await AdminDomain.CreatePetSpecies(species, activeUser));
         }
 
         [HttpPost("createColor")]
@@ -59,9 +60,19 @@ namespace CritterServer.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> CreateColor([FromBody] PetColorConfig color, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> CreateColor([FromBody] PetColorConfig color, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeDev)
         {
-            return Ok(await domain.CreatePetColor(color, activeUser));
+            return Ok(await AdminDomain.CreatePetColor(color, activeDev));
+        }
+
+        [HttpPost("generateRandomEvent/{{userId:int?}}")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer", Roles = RoleTypes.Dev)]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> CreateColor(int? userId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeDev)
+        {
+            return Ok(await EventDomain.CreateRandomEvent(userId, activeDev));
         }
         //todo delete species and color
     }

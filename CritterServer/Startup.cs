@@ -89,6 +89,8 @@ namespace CritterServer
             services.AddTransient<MessageDomain>();
             services.AddTransient<AdminDomain>();
             services.AddTransient<PetDomain>();
+            services.AddTransient<EventDomain>();
+
             services.AddTransient<ErrorMiddleware>();
 
             services.AddSingleton<GameManagerService>();
