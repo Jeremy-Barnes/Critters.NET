@@ -73,7 +73,7 @@ namespace CritterServer.Hubs
             User activeUser = await this.UserDomain.RetrieveUserByUserName(ownerUsername);
             Pet pet = (await this.PetDomain.RetrievePets(petId)).FirstOrDefault();
 
-            if (pet.OwnerId != activeUser.UserId)
+            if (pet == null || pet.OwnerId != activeUser.UserId)
             {
                 throw new CritterException("That's not your pet!", $"Some creep {activeUser.UserId} tried to enter a battle with a pet {petId} that wasn't theirs", System.Net.HttpStatusCode.Forbidden);
             }

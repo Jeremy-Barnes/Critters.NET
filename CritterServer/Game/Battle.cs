@@ -37,17 +37,18 @@ namespace CritterServer.Game
 
         public override void Tick(TimeSpan deltaT)
         {
-            if(FightWon)
+            if (FightWon)
             {
-                if(WinningTeam != null)
+                if (WinningTeam != null)
                 {
                     SendSystemMessage($"{WinningTeam.Value.Pet.PetName} wins!");
-                } else
+                }
+                else
                 {
                     SendSystemMessage($"This fight ends in a draw.");
                 }
-            } 
-            else if(Team1Move != null && Team2Move != null) //resolve turn
+            }
+            else if (Team1Move != null && Team2Move != null) //resolve turn
             {
                 var team1Bonuses = CalculateAtkDefBonuses(Team1Move, Team1Combo);
                 var team2Bonuses = CalculateAtkDefBonuses(Team2Move, Team2Combo);
@@ -74,7 +75,7 @@ namespace CritterServer.Game
                     team2DamageIssued = 0;
                     FightWon = true;
                     WinningTeam = Team1;
-                } 
+                }
                 else if (Team1.Pet.CurrentHitPoints == 0 && Team2.Pet.CurrentHitPoints == 0)
                 {
                     FightWon = true;
@@ -82,11 +83,11 @@ namespace CritterServer.Game
                 }
 
                 //sync to DB and send messages
-                UpdatePetHealth(new List<(int PetId, int HpDelta)> { (Team1.Pet.PetId, team1DamageTaken), (Team2.Pet.PetId, team2DamageTaken)});
+                UpdatePetHealth(new List<(int PetId, int HpDelta)> { (Team1.Pet.PetId, team1DamageTaken), (Team2.Pet.PetId, team2DamageTaken) });
 
                 SendSystemMessage($"{Team1.Pet.PetName} {ConstructVerb(Team1Move, team1DamageIssued, Team2.Pet)}!");
                 SendSystemMessage($"{Team2.Pet.PetName} {ConstructVerb(Team2Move, team2DamageIssued, Team1.Pet)}!");
-                if(Team1.Pet.CurrentHitPoints == 0)
+                if (Team1.Pet.CurrentHitPoints == 0)
                 {
                     SendSystemMessage($"{Team1.Pet.PetName} is knocked out!");
                 }
@@ -155,6 +156,7 @@ namespace CritterServer.Game
             }
             else if((Team2.Owner == null || Team2.Owner.UserId == user.UserId) && pet.PetId == Team2.Pet.PetId)
             {
+                Team2.Owner = user;
                 Team2.Pet = pet;
             } 
             else
@@ -251,7 +253,7 @@ namespace CritterServer.Game
 
             if (currentCombo.Count > 2 && currentCombo.Peek().Action == thisTurn.Action)
             {
-                while (currentCombo.Count > 0 && currentCombo.Peek().Action == thisTurn.Action) //todo other combo definitions (dodge, dodge, quick)
+                while (currentCombo.Count > 0 && currentCombo.Pop().Action == thisTurn.Action) //todo other combo definitions (dodge, dodge, quick)
                 {
                     comboDepth++;
                 }
