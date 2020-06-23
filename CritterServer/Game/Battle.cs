@@ -55,7 +55,13 @@ namespace CritterServer.Game
                 int team2DamageIssued = (int)(team2Bonuses.Attack / ((double)Math.Max(1, team1Bonuses.Defense)));
                 int team1DamageIssued = (int)(team1Bonuses.Attack / ((double)Math.Max(1, team2Bonuses.Defense)));
 
-                if(Team1.Pet.CurrentHitPoints == 0 && Team2.Pet.CurrentHitPoints > 0) //no damage from an unconscious pet
+                int team1DamageTaken = Math.Min(team2DamageIssued, Team1.Pet.CurrentHitPoints);
+                int team2DamageTaken = Math.Min(team1DamageIssued, Team2.Pet.CurrentHitPoints);
+
+                Team1.Pet.CurrentHitPoints -= team1DamageTaken;
+                Team2.Pet.CurrentHitPoints -= team2DamageTaken;
+
+                if (Team1.Pet.CurrentHitPoints == 0 && Team2.Pet.CurrentHitPoints > 0) //no damage from an unconscious pet
                 {
                     Team2.Pet.CurrentHitPoints += team1DamageIssued;
                     team1DamageIssued = 0;
@@ -74,12 +80,6 @@ namespace CritterServer.Game
                     FightWon = true;
                     WinningTeam = null;
                 }
-
-                int team1DamageTaken = Math.Min(team2DamageIssued, Team1.Pet.CurrentHitPoints);
-                int team2DamageTaken = Math.Min(team1DamageIssued, Team2.Pet.CurrentHitPoints);
-
-                Team1.Pet.CurrentHitPoints -= team1DamageTaken;
-                Team2.Pet.CurrentHitPoints -= team2DamageTaken;
 
                 //sync to DB and send messages
                 UpdatePetHealth(new List<(int PetId, int HpDelta)> { (Team1.Pet.PetId, team1DamageTaken), (Team2.Pet.PetId, team2DamageTaken)});
