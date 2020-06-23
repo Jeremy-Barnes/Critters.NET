@@ -231,7 +231,7 @@ namespace CritterServer.Game
             Random random = new Random();
 
             int combonus = DetectComboDepth(teamMove, combo);
-            Team1Combo.Push(teamMove);
+            combo.Push(teamMove);
             switch (teamMove.Action)
             {
                 case BattleMove.AttackAction.Dodge:
