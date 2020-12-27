@@ -19,7 +19,6 @@ namespace CritterServer.DataAccess
 
         public async Task<int?> CreateUser(User user)
         {
-            dbConnection.TryOpen();
             int? output = (await dbConnection.QueryAsync<int?>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
                 "isActive, salt)" +
                 "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
@@ -46,20 +45,20 @@ namespace CritterServer.DataAccess
 
         public async Task<User> RetrieveUserByEmail(string email)
         {
-            dbConnection.TryOpen();
+
             return (await dbConnection.QueryAsync<User>("SELECT * from users WHERE emailAddress = @emailAddress AND isActive = true", new { emailAddress = email })).FirstOrDefault();
         }
 
         public async Task<IEnumerable<User>> RetrieveUsersByIds(params int[] userIds)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userID = ANY(@userIdList) AND isActive = true",
                 new { userIdList = userIds.Distinct().AsList() });
         }
 
         public async Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames)
         {
-            dbConnection.TryOpen();
+
             var users = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = ANY(@userNameList) AND isActive = true", new { userNameList = userNames.Distinct().AsList() });
 
             return users;
@@ -70,20 +69,20 @@ namespace CritterServer.DataAccess
             string whereClause =
                 (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
                 (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
-            dbConnection.TryOpen();
+
             var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
             return searchResult.FirstOrDefault();
         }
 
         public async Task UpdateUserCash(int userId, int deltaCash)
         {
-            dbConnection.TryOpen();
+
             await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", new { userId, cash = deltaCash });
         }
 
         public async Task UpdateUsersCash(IEnumerable<(int UserId, int CashDelta)> userIdAndDeltaCashAmounts)
         {
-            dbConnection.TryOpen();
+
             await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", userIdAndDeltaCashAmounts.Select(u => new { userId = u.UserId, cash = u.CashDelta}));
         }
 
@@ -94,7 +93,7 @@ namespace CritterServer.DataAccess
         /// <returns></returns>
         public int CreateDeveloper(User developer)
         {
-            dbConnection.TryOpen();
+
             int output = dbConnection.Query<int>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
                 "isActive, salt, isDev)" +
                 "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
@@ -122,13 +121,13 @@ namespace CritterServer.DataAccess
 
         public async Task<User> RetrieveDevByEmail(string email)
         {
-            dbConnection.TryOpen();
+
             return (await dbConnection.QueryAsync<User>("SELECT * from users WHERE emailAddress = @emailAddress AND isActive = true and isDev = true", new { emailAddress = email })).FirstOrDefault();
         }
 
         public async Task<User> RetrieveDevByUserName(string userName)
         {
-            dbConnection.TryOpen();
+
             var users = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = @userName AND isActive = true AND isDev = true", new { userName });
 
             return users.FirstOrDefault();

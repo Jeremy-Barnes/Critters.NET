@@ -11,15 +11,9 @@ using Serilog;
 using CritterServer.Domains.Components;
 using Serilog.Events;
 using CritterServer.Pipeline;
-using Microsoft.IdentityModel.Tokens;
-using System;
 using CritterServer.Utilities.Serialization;
-using Microsoft.AspNetCore.Http;
 using CritterServer.Pipeline.Middleware;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Authentication;
 using CritterServer.Game;
 using CritterServer.Hubs;
 using System.Reflection;
@@ -64,10 +58,11 @@ namespace CritterServer
 
             //db
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            services.AddScoped<IDbConnection>((sp) =>
+            services.AddScoped<IDbConnection>(sp =>
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");
+                conn.Open();
                 return conn;
             });
 
@@ -76,6 +71,7 @@ namespace CritterServer
             //auth
             services.AddJwt(Configuration);
 
+            //real time talk, for whatever
             services.AddSignalR()
                 .AddNewtonsoftJsonProtocol(options =>
             {
@@ -150,7 +146,7 @@ namespace CritterServer
 
             Log.Logger = new LoggerConfiguration()
                .Enrich.FromLogContext()
-               .WriteTo.EventLog("Critters.NET", "Critters.NET", "343GuiltySpark")
+               .WriteTo.EventLog("Critters.NET", "Critters.NET")
                .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
                fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
                rollOnFileSizeLimit: true)

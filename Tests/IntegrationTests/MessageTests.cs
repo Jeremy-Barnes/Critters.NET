@@ -16,15 +16,11 @@ namespace Tests.IntegrationTests
 {
     /// <summary>
     /// Creaated once, reused for all tests in MessageTests
-    /// Used to hold expensive resources that can be reused (like a DB connection!)
+    /// Used to hold durable resources that can be reused (like user info)
     /// </summary>
     public class MessageTestsContext : TestUtilities
     {
-        IDbConnection scopedDbConn;
-        UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
-        IUserRepository userRepo => new UserRepository(scopedDbConn);
-        MessageDomain messageDomain => new MessageDomain(messageRepo, userAccountDomain, null);
-        IMessageRepository messageRepo => new MessageRepository(scopedDbConn);
+       
 
         public User AUser1;
         public User AUser2;
@@ -47,96 +43,145 @@ namespace Tests.IntegrationTests
 
         public MessageTestsContext()
         {
-            scopedDbConn = GetNewDbConnection();           
             AUser1 = RandomUserNotPersisted();
             AUser2 = RandomUserNotPersisted();
             BUser1 = RandomUserNotPersisted();
             BUser2 = RandomUserNotPersisted();
-            userAccountDomain.CreateAccount(AUser1).Wait();
-            userAccountDomain.CreateAccount(AUser2).Wait();
+            using (var scope = GetScope())
+            {
+                scope.UserAccountDomain.CreateAccount(AUser1).Wait();
+                scope.UserAccountDomain.CreateAccount(AUser2).Wait();
+                scope.UserAccountDomain.CreateAccount(BUser1).Wait();
+                scope.UserAccountDomain.CreateAccount(BUser2).Wait();
+            }
+        }
 
-            userAccountDomain.CreateAccount(BUser1).Wait();
-            userAccountDomain.CreateAccount(BUser2).Wait();
+        public MessageTestScope GetScope()
+        {
+            return new MessageTestScope(GetNewDbConnection(), jwtProvider);
         }
 
 
         public List<int> SendMessage(User sender, User receiver, int times, int channel, int? parentId = null)
         {
             List<int> messageIds = new List<int>();
-            for (int i = 0; i < times; i++) {
-                messageIds.Add(messageDomain.SendMessage(new Message
+
+            using (var scope = GetScope())
+            {
+                for (int i = 0; i < times; i++)
                 {
-                    MessageSubject = $"This message created at {DateTime.UtcNow}",
-                    MessageText = $"My dearest {receiver.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{sender.FirstName}",
-                    ChannelId = channel,
-                    ParentMessageId = parentId
-                },
-                    sender).Result);
+                    messageIds.Add(scope.MessageDomain.SendMessage(new Message
+                    {
+                        MessageSubject = $"This message created at {DateTime.UtcNow}",
+                        MessageText = $"My dearest {receiver.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{sender.FirstName}",
+                        ChannelId = channel,
+                        ParentMessageId = parentId
+                    },
+                        sender).Result);
+                }
             }
             return messageIds;
+        }
+    }
+
+    public class MessageTestScope : IDisposable
+    {
+
+        IDbConnection ScopedDbConn;
+        JwtProvider jwtProvider;
+
+        public MessageTestScope(IDbConnection dbc, JwtProvider jwtProvider)
+        {
+            ScopedDbConn = dbc;
+            ScopedDbConn.Open();
+            this.jwtProvider = jwtProvider;
+            UserRepo = new UserRepository(ScopedDbConn);//, scopedDbTransaction);
+            UserAccountDomain = new UserDomain(UserRepo, jwtProvider);
+            MessageRepo = new MessageRepository(ScopedDbConn);//, scopedDbTransaction);
+
+            MessageDomain = new MessageDomain(MessageRepo, UserAccountDomain, null);
+        }
+
+        public UserDomain UserAccountDomain;
+        public IUserRepository UserRepo;
+        public MessageDomain MessageDomain;
+        public IMessageRepository MessageRepo;
+
+        public void Dispose()
+        {
+            ScopedDbConn.Close();
         }
     }
 
     public class MessageTests: IClassFixture<MessageTestsContext>
     {
         MessageTestsContext context;
-        IDbConnection scopedDbConn;
-        UserDomain userAccountDomain => new UserDomain(userRepo, context.jwtProvider);
-        IUserRepository userRepo => new UserRepository(scopedDbConn);
-        MessageDomain messageDomain => new MessageDomain(messageRepo, userAccountDomain, null);
-        IMessageRepository messageRepo => new MessageRepository(scopedDbConn);
+
         public MessageTests(MessageTestsContext context)
         {
             this.context = context;
-            scopedDbConn = context.GetNewDbConnection();
         }
 
         [Fact]
         public void CreateChannelAddsCreator()
         {
-            var generatedChannelId = messageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", null).Result;
-            Assert.IsType<int>(generatedChannelId);
-            var channels = messageDomain.FindChannelWithUsers(null, context.AUser1).Result;
-            Assert.Contains(channels, c => c.ChannelId == generatedChannelId);
+            using (var scope = context.GetScope())
+            {
+                var generatedChannelId = scope.MessageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", null).Result;
+                Assert.IsType<int>(generatedChannelId);
+
+                var channels = scope.MessageDomain.FindChannelWithUsers(null, context.AUser1).Result;
+                Assert.Contains(channels, c => c.ChannelId == generatedChannelId);
+            }
         }
 
         [Fact]
         public void SendMessageGetsIntDbId()
         {
-            var generatedChannelId = messageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", new List<string> { context.AUser2.UserName }).Result;
-            var messageIdGenerated = messageDomain.SendMessage(new Message { 
-                MessageSubject = $"This message created at {DateTime.UtcNow}", 
-                MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
-                ChannelId = generatedChannelId
-            },
-                context.AUser1).Result;
-            Assert.IsType<int>(messageIdGenerated);
+            using (var scope = context.GetScope())
+            {
+                var generatedChannelId = scope.MessageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", new List<string> { context.AUser2.UserName }).Result;
+                var messageIdGenerated = scope.MessageDomain.SendMessage(new Message
+                {
+                    MessageSubject = $"This message created at {DateTime.UtcNow}",
+                    MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
+                    ChannelId = generatedChannelId
+                },
+                    context.AUser1).Result;
+                Assert.IsType<int>(messageIdGenerated);
+            }
         }
 
 
         [Fact]
         public void SendMessageToNonMemberChannelFails()
         {
-            var generatedChannelId = messageDomain.CreateChannel(context.AUser2, $"{context.GetRandomString(30)}Component", null).Result;
-
-            Assert.Throws<AggregateException>(() => messageDomain.SendMessage(new Message
+            using (var scope = context.GetScope())
             {
-                MessageSubject = $"This message created at {DateTime.UtcNow}",
-                MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
-            },
-                context.AUser1).Wait());
+                var generatedChannelId = scope.MessageDomain.CreateChannel(context.AUser2, $"{context.GetRandomString(30)}Component", null).Result;
+
+                Assert.Throws<AggregateException>(() => scope.MessageDomain.SendMessage(new Message
+                {
+                    MessageSubject = $"This message created at {DateTime.UtcNow}",
+                    MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
+                },
+                    context.AUser1).Wait());
+            }
         }
 
         [Fact]
         public void SendMessageToNonExtantChannelFails()
         {
-            Assert.Throws<AggregateException>(() => messageDomain.SendMessage(new Message
+            using (var scope = context.GetScope())
             {
-                MessageSubject = $"This message created at {DateTime.UtcNow}",
-                MessageText = $"{context.GetRandomString(6)} My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
-                ChannelId = -1
-            },
+                Assert.Throws<AggregateException>(() => scope.MessageDomain.SendMessage(new Message
+                {
+                    MessageSubject = $"This message created at {DateTime.UtcNow}",
+                    MessageText = $"{context.GetRandomString(6)} My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
+                    ChannelId = -1
+                },
                 context.AUser1).Wait());
+            }
         }
 
         [Fact]
@@ -144,16 +189,24 @@ namespace Tests.IntegrationTests
         {
             var receiver = context.RandomUserNotPersisted();
             var sender = context.RandomUserNotPersisted();
-            userAccountDomain.CreateAccount(receiver).Wait();
-            userAccountDomain.CreateAccount(sender).Wait();
+            int channelId;
+            using (var scope = context.GetScope())
+            {
+                scope.UserAccountDomain.CreateAccount(receiver).Wait();
+                scope.UserAccountDomain.CreateAccount(sender).Wait();
 
-            var channelId = messageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+                channelId = scope.MessageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            }
             var messageIDs = context.SendMessage(sender, receiver, 30, channelId);
 
-            var conversationChannels = messageDomain.GetMessages(false, null, receiver).Result;
+            using (var scope = context.GetScope())
+            {
+                var conversationChannels = scope.MessageDomain.GetMessages(false, null, receiver).Result;
 
-            Assert.Single(conversationChannels);
-            Assert.Equal(messageIDs.Count, conversationChannels.SelectMany(cc => cc.Messages).Count());
+                Assert.Single(conversationChannels);
+                Assert.Equal(messageIDs.Count, conversationChannels.SelectMany(cc => cc.Messages).Count());
+            }
+            
         }
 
 
@@ -162,17 +215,22 @@ namespace Tests.IntegrationTests
         {
             var receiver = context.RandomUserNotPersisted();
             var sender = context.RandomUserNotPersisted();
-            userAccountDomain.CreateAccount(receiver).Wait();
-            userAccountDomain.CreateAccount(sender).Wait();
+            int channelId;
+            using (var scope = context.GetScope())
+            {
+                scope.UserAccountDomain.CreateAccount(receiver).Wait();
+                scope.UserAccountDomain.CreateAccount(sender).Wait();
 
-            var channelId = messageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+                channelId = scope.MessageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            }
             var messageIDs = context.SendMessage(sender, receiver, 5, channelId);
             messageIDs = messageIDs.Concat(context.SendMessage(receiver, sender, 5, channelId)).ToList();
             messageIDs = messageIDs.Concat(context.SendMessage(sender, receiver, 5, channelId)).ToList();
 
             List<int> replIds = new List<int>();
             int? parent2 = null;
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10; i++)
+            {
                 if (parent2.HasValue) replIds.Add(parent2.Value);
                 var parent1 = context.SendMessage(receiver, sender, 1, channelId, parent2).First();
                 replIds.Add(parent1);
@@ -181,26 +239,32 @@ namespace Tests.IntegrationTests
             }
             replIds.Add(parent2.Value);
 
-            var replyThread = messageDomain.RetrieveThread(parent2.Value, receiver).Result;
+            using (var scope = context.GetScope())
+            {
+                var replyThread = scope.MessageDomain.RetrieveThread(parent2.Value, receiver).Result;
 
-            Assert.Equal(channelId, replyThread.Channel.ChannelId);
-            Assert.All(replyThread.Messages, (m) => replIds.Contains(m.Message.MessageId));
+                Assert.Equal(channelId, replyThread.Channel.ChannelId);
+                Assert.All(replyThread.Messages, (m) => replIds.Contains(m.Message.MessageId));
 
-            Assert.Equal(replIds.Count, replyThread.Messages.Count());
+                Assert.Equal(replIds.Count, replyThread.Messages.Count());
+            }
         }
 
         [Fact]
         public void GetChannelsGetsAllChannelsForUser()
         {
             var channelOwner = context.RandomUserNotPersisted();
-            userAccountDomain.CreateAccount(channelOwner).Wait();
+            using (var scope = context.GetScope())
+            {
+                scope.UserAccountDomain.CreateAccount(channelOwner).Wait();
 
-            var channelIds = new List<int>(); 
-            for(int i = 0; i < 10; i++)
-            channelIds.Add(messageDomain.CreateChannel(channelOwner, $"{context.GetRandomString(6)} Component Test Channel", new List<string>() { channelOwner.UserName }).Result);
+                var channelIds = new List<int>();
+                for (int i = 0; i < 10; i++)
+                    channelIds.Add(scope.MessageDomain.CreateChannel(channelOwner, $"{context.GetRandomString(6)} Component Test Channel", new List<string>() { channelOwner.UserName }).Result);
 
-            var channels = messageDomain.GetChannels(channelIds, channelOwner);
-            Assert.Equal(channels.Result.Select(c => c.Channel.ChannelId).ToList(), channelIds);
+                var channels = scope.MessageDomain.GetChannels(channelIds, channelOwner);
+                Assert.Equal(channels.Result.Select(c => c.Channel.ChannelId).ToList(), channelIds);
+            }
         }
 
 
@@ -213,40 +277,55 @@ namespace Tests.IntegrationTests
         {
             var receiver = context.RandomUserNotPersisted();
             var sender = context.RandomUserNotPersisted();
-            userAccountDomain.CreateAccount(receiver).Wait();
-            userAccountDomain.CreateAccount(sender).Wait();
+            int channelId;
+            using (var scope = context.GetScope())
+            {
+                scope.UserAccountDomain.CreateAccount(receiver).Wait();
 
-            var channelId = messageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+                scope.UserAccountDomain.CreateAccount(sender).Wait();
+
+                channelId = scope.MessageDomain.CreateChannel(sender, $"{context.GetRandomString(6)} Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            }
+
+
             var originalMessageIds = context.SendMessage(sender, receiver, 30, channelId);
-
-            var messagesAcrossAllChannels = messageDomain.GetMessages(false, null, receiver).Result;
-            Assert.Single(messagesAcrossAllChannels); //this test is single channel only
-            Assert.Equal(originalMessageIds.Count, messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Count());
-
-            int reducedBy = 0;
-            List<int> disallowedMessageIds = new List<int>();
-            if (read)
+            int reducedBy;
+            List<int> disallowedMessageIds;
+            List<ChannelDetails> messagesAcrossAllChannels;
+            using (var scope = context.GetScope())
             {
-                reducedBy += 1;
-                messageDomain.ReadMessages(new List<int> { originalMessageIds[12] }, receiver).Wait();
-                disallowedMessageIds.Add(originalMessageIds[12]);
+                messagesAcrossAllChannels = scope.MessageDomain.GetMessages(false, null, receiver).Result;
+                Assert.Single(messagesAcrossAllChannels); //this test is single channel only
+                Assert.Equal(originalMessageIds.Count, messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Count());
 
+                reducedBy = 0;
+                disallowedMessageIds = new List<int>();
+                if (read)
+                {
+                    reducedBy += 1;
+                    scope.MessageDomain.ReadMessages(new List<int> { originalMessageIds[12] }, receiver).Wait();
+                    disallowedMessageIds.Add(originalMessageIds[12]);
+
+                }
+                if (delete)
+                {
+                    reducedBy += 1;
+                    scope.MessageDomain.DeleteMessages(new List<int> { originalMessageIds[6] }, receiver).Wait();
+                    disallowedMessageIds.Add(originalMessageIds[6]);
+                }
             }
-            if (delete)
+
+            using (var scope = context.GetScope())
             {
-                reducedBy += 1; 
-                messageDomain.DeleteMessages(new List<int> { originalMessageIds[6] }, receiver).Wait();
-                disallowedMessageIds.Add(originalMessageIds[6]);
-            }
+                messagesAcrossAllChannels = scope.MessageDomain.GetMessages(true, null, receiver).Result;
+                Assert.Equal(originalMessageIds.Count - reducedBy, messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Count());
 
-            messagesAcrossAllChannels = messageDomain.GetMessages(true, null, receiver).Result;
-            Assert.Equal(originalMessageIds.Count - reducedBy, messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Count());
+                var mergedConversationsMessageIds = messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Select(m => m.Message.MessageId);
 
-            var mergedConversationsMessageIds = messagesAcrossAllChannels.SelectMany(cc => cc.Messages).Select(m => m.Message.MessageId);
-
-            foreach (int removedMessageId in disallowedMessageIds)
-            {
-                Assert.DoesNotContain(removedMessageId, mergedConversationsMessageIds);
+                foreach (int removedMessageId in disallowedMessageIds)
+                {
+                    Assert.DoesNotContain(removedMessageId, mergedConversationsMessageIds);
+                }
             }
         }
 
@@ -257,29 +336,43 @@ namespace Tests.IntegrationTests
         {
             var receiver = context.RandomUserNotPersisted();
             var sender = context.RandomUserNotPersisted();
-            userAccountDomain.CreateAccount(receiver).Wait();
-            userAccountDomain.CreateAccount(sender).Wait();
-            var channelId = messageDomain.CreateChannel(sender, "Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            int channelId;
+            using (var scope = context.GetScope())
+            {
+                scope.UserAccountDomain.CreateAccount(receiver).Wait();
+                scope.UserAccountDomain.CreateAccount(sender).Wait();
+                channelId = scope.MessageDomain.CreateChannel(sender, "Component Test Friends", new List<string>() { receiver.UserName }).Result;
+            }
             var messageIDs = context.SendMessage(sender, receiver, 300, channelId);
 
+            IEnumerable<MessageDetails> mergedConversationsCurrentPage;
 
-            var messagesAcrossAllChannels = messageDomain.GetMessages(unreadOnly, null, receiver).Result;
-            var mergedConversations = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
-            Assert.Equal(100, mergedConversations.Count()); //we only page out 100 messages at once
-
-            messagesAcrossAllChannels = messageDomain.GetMessages(unreadOnly, mergedConversations.Last().Message.MessageId, receiver).Result;
-            var mergedConversations2 = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
-            Assert.Equal(100, mergedConversations2.Count()); //we only page out 100 messages at once
-
-            Assert.False(mergedConversations2.Any(m => mergedConversations.Any(m2 => m2.Message.MessageId == m.Message.MessageId)));
-
-            messagesAcrossAllChannels = messageDomain.GetMessages(unreadOnly, mergedConversations2.Last().Message.MessageId, receiver).Result;
-            var mergedConversations3 = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
-            Assert.Equal(100, mergedConversations3.Count()); //we only page out 100 messages at once
-
-            messagesAcrossAllChannels = messageDomain.GetMessages(unreadOnly, mergedConversations3.Last().Message.MessageId, receiver).Result;
-            var messageBatchLast = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
-            Assert.Empty(messageBatchLast); //300 sent, 300 retrieved, none left
+            using (var scope = context.GetScope())
+            {
+                var messagesAcrossAllChannels = scope.MessageDomain.GetMessages(unreadOnly, null, receiver).Result;
+                mergedConversationsCurrentPage = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
+                Assert.Equal(100, mergedConversationsCurrentPage.Count()); //we only page out 100 messages at once
+            }
+            using (var scope = context.GetScope())
+            {
+                var messagesAcrossAllChannels = scope.MessageDomain.GetMessages(unreadOnly, mergedConversationsCurrentPage.Last().Message.MessageId, receiver).Result;
+                var mergedConversationsPreviousPage = mergedConversationsCurrentPage;
+                mergedConversationsCurrentPage = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
+                Assert.Equal(100, mergedConversationsCurrentPage.Count()); //we only page out 100 messages at once
+                Assert.False(mergedConversationsCurrentPage.Any(m => mergedConversationsPreviousPage.Any(m2 => m2.Message.MessageId == m.Message.MessageId)));
+            }
+            using (var scope = context.GetScope())
+            {
+                var messagesAcrossAllChannels = scope.MessageDomain.GetMessages(unreadOnly, mergedConversationsCurrentPage.Last().Message.MessageId, receiver).Result;
+                mergedConversationsCurrentPage = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
+                Assert.Equal(100, mergedConversationsCurrentPage.Count()); //we only page out 100 messages at once
+            }
+            using (var scope = context.GetScope())
+            {
+                var messagesAcrossAllChannels = scope.MessageDomain.GetMessages(unreadOnly, mergedConversationsCurrentPage.Last().Message.MessageId, receiver).Result;
+                var messageBatchLast = messagesAcrossAllChannels.SelectMany(cc => cc.Messages);
+                Assert.Empty(messageBatchLast); //300 sent, 300 retrieved, none left
+            }
         }
     }
 }

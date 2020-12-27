@@ -52,6 +52,7 @@ namespace Tests.IntegrationTests
         {
             this.context = context;
             ScopedDbConnection = context.GetNewDbConnection();
+            ScopedDbConnection.Open();
         }
 
         [Fact]

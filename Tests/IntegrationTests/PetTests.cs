@@ -23,9 +23,12 @@ namespace Tests.IntegrationTests
     {
         UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
         PetDomain petDomain => new PetDomain(petRepo, cfgRepo);
-        IUserRepository userRepo => new UserRepository(GetNewDbConnection());
-        IPetRepository petRepo => new PetRepository(GetNewDbConnection());
-        IConfigRepository cfgRepo => new ConfigRepository(GetNewDbConnection());
+        //public IDbTransaction scopedDbTransaction;
+        public IDbConnection scopedDbConn;
+
+        IUserRepository userRepo => new UserRepository(scopedDbConn);//, scopedDbTransaction);
+        IPetRepository petRepo => new PetRepository(scopedDbConn);//, scopedDbTransaction);
+        IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);//, scopedDbTransaction);
 
         public JwtProvider jwtProvider = new JwtProvider(
             jwtSecretKey,
@@ -49,6 +52,9 @@ namespace Tests.IntegrationTests
 
         public PetTestsContext()
         {
+            scopedDbConn = GetNewDbConnection();
+            scopedDbConn.Open();
+            //scopedDbTransaction = scopedDbConn.BeginTransaction(IsolationLevel.ReadCommitted);
             PetColor1 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
             PetColor2 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
             PetSpecies1 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
@@ -67,16 +73,17 @@ namespace Tests.IntegrationTests
         PetTestsContext context;
         public UserDomain userAccountDomain => new UserDomain(userRepo, context.jwtProvider);
         public PetDomain petDomain => new PetDomain(petRepo, cfgRepo);
-        public IDbConnection scopedDbConn;
-        public IUserRepository userRepo => new UserRepository(scopedDbConn);
-        public IPetRepository petRepo => new PetRepository(scopedDbConn);
-        public IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);
-
+        IDbTransaction scopedDbTransaction;
+        IDbConnection scopedDbConn;
+        public IUserRepository userRepo => new UserRepository(scopedDbConn);//, scopedDbTransaction);
+        public IPetRepository petRepo => new PetRepository(scopedDbConn);//, scopedDbTransaction);
+        public IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);//, scopedDbTransaction);
 
         public PetTests(PetTestsContext context)
         {
             this.context = context;
-            this.scopedDbConn = context.GetNewDbConnection();
+            this.scopedDbConn = context.scopedDbConn;
+            //this.scopedDbTransaction = context.scopedDbTransaction;
         }
 
         [Fact]

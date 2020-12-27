@@ -21,7 +21,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreatePet(Pet pet, int ownerUserId)
         {
-            dbConnection.TryOpen();
+
             int output = (await dbConnection.QueryAsync<int>("INSERT INTO pets(petName, gender, colorID, ownerID, speciesID, currentHitPoints, isAbandoned)" +
                 "VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @currentHitPoints, false) RETURNING petID",
                 new
@@ -38,20 +38,20 @@ namespace CritterServer.DataAccess
 
         public async Task UpdatePetHealth(IEnumerable<(int PetId, int HealthDelta)> petIdAndDeltaHp)
         {
-            dbConnection.TryOpen();
+
             await dbConnection.ExecuteAsync($"UPDATE pets SET currentHitPoints = currentHitPoints + @hp WHERE petID = @petId", petIdAndDeltaHp.Select(p => new { petId = p.PetId, hp = p.HealthDelta }));
         }
 
         public async Task<IEnumerable<Pet>> RetrievePetsByIds(params int[] petIds)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<Pet>("SELECT * FROM pets WHERE petID = ANY(@petIds)",
                 new { petIds = petIds.Distinct().AsList() });
         }
 
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByIds(params int[] petIds)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<Pet,PetColorConfig, PetSpeciesConfig, PetDetails>(@"
                 SELECT * FROM pets p
                 INNER JOIN petColorConfigs pcc ON p.PetID = ANY(@petIds) AND p.colorID = pcc.petColorConfigID 
@@ -63,7 +63,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByNames(params string[] names)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<Pet, PetSpeciesConfig, PetColorConfig, PetDetails>(@"
                 SELECT * FROM pets p
                 INNER JOIN petColorConfigs pcc ON p.petName = ANY(@names) AND p.colorID = pcc.petColorConfigID 
@@ -76,7 +76,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Pet>> RetrievePetsByNames(params string[] names)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<Pet>(@"
                 SELECT * FROM pets
                 WHERE petName = ANY(@names)",
@@ -85,7 +85,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<PetDetails>> RetrieveFullPetsByOwnerId(int ownerUserId)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<Pet, PetSpeciesConfig, PetColorConfig, PetDetails>(@"
                 SELECT p.*, psc.*, pcc.* FROM pets p
                 INNER JOIN petColorConfigs pcc ON p.ownerID = @ownerUserId AND p.colorID = pcc.petColorConfigID 
@@ -97,19 +97,19 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Pet>> RetrievePetsByOwnerId(int ownerUserId)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<Pet>("SELECT * FROM pets WHERE ownerID = @ownerUserId", new { ownerUserId });
         }
 
         public async Task UpdatePet(string petName, string gender, int petId)
         {
-            dbConnection.TryOpen();
+
             await dbConnection.ExecuteAsync($"UPDATE pets SET petName = @petName, gender = @gender WHERE petID = @petId", new { petId, petName, gender });
         }
 
         public async Task AbandonPet(int petId)
         {
-            dbConnection.TryOpen();
+
             await dbConnection.ExecuteAsync($"UPDATE pets SET isAbandoned = true, ownerId = NULL WHERE petID = @petId", new { petId });
         }
     }
