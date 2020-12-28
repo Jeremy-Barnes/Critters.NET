@@ -13,16 +13,19 @@ namespace CritterServer.Domains
     {
         IPetRepository PetRepo;
         IConfigRepository CfgRepo;
-        public PetDomain(IPetRepository petRepo, IConfigRepository cfgRepo)
+        ITransactionScopeFactory TransactionScopeFactory;
+
+        public PetDomain(IPetRepository petRepo, IConfigRepository cfgRepo, ITransactionScopeFactory transactionScopeFactory)
         {
             this.PetRepo = petRepo;
             this.CfgRepo = cfgRepo;
+            TransactionScopeFactory = transactionScopeFactory;
         }
 
         public async Task<Pet> CreatePet(Pet pet, User user)
         {
 
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 await ValidatePet(pet, user);
                 pet.Level = 0;
@@ -44,7 +47,7 @@ namespace CritterServer.Domains
         }
         public async Task ChangePetHealth(List<(int PetId, int HealthDelta)> petToHpDelta)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 await PetRepo.UpdatePetHealth(petToHpDelta.ToArray());
                 trans.Complete();

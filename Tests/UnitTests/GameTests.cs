@@ -25,7 +25,8 @@ namespace Tests.UnitTests
             PetRepo = new Mock<IPetRepository>();
             CfgRepo = new Mock<IConfigRepository>();
             UserRepo = new Mock<IUserRepository>();
-           
+            TransactionScopeFactory = new Mock<ITransactionScopeFactory>();
+            TransactionScopeFactory.Setup(itsf => itsf.Create()).Returns(new System.Transactions.TransactionScope());
             CoachZ = new User
             {
                 Birthdate = new DateTime(1963, 9, 5),
@@ -122,8 +123,8 @@ namespace Tests.UnitTests
             AddUser(StrongBad);
             AddUser(Homsar);
             AddPet(StripedGreenRabbit);
-            PetDomain = new PetDomain(PetRepo.Object, CfgRepo.Object);
-            UserDomain = new UserDomain(UserRepo.Object, null);
+            PetDomain = new PetDomain(PetRepo.Object, CfgRepo.Object, TransactionScopeFactory.Object);
+            UserDomain = new UserDomain(UserRepo.Object, null, TransactionScopeFactory.Object);
 
             var battleHubContext = new Mock<IHubContext<BattleHub, IBattleClient>>();
             //var battleHub = new Mock<BattleHub>().Setup(bh => bh.AcceptChallenge(It.IsAny<string>(), It.IsAny<int>())).
@@ -155,7 +156,7 @@ namespace Tests.UnitTests
         Mock<IConfigRepository> CfgRepo;
         Mock<IPetRepository> PetRepo;
         Mock<IUserRepository> UserRepo;
-
+        Mock<ITransactionScopeFactory> TransactionScopeFactory;
         User CoachZ;
         User StrongBad;
         User Homsar;

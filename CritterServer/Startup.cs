@@ -62,9 +62,9 @@ namespace CritterServer
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");
-                conn.Open();
                 return conn;
             });
+            services.AddScoped<ITransactionScopeFactory, TransactionScopeFactory>();
 
             configureLogging();
 

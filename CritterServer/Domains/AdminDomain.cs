@@ -18,17 +18,19 @@ namespace CritterServer.Domains
         IConfigRepository ConfigRepo;
         IUserRepository UserRepo;
         IJwtProvider JwtProvider;
+        ITransactionScopeFactory TransactionScopeFactory;
 
-        public AdminDomain(IConfigRepository cfgRepo, IUserRepository userRepo, IJwtProvider jwtProvider)
+        public AdminDomain(IConfigRepository cfgRepo, IUserRepository userRepo, IJwtProvider jwtProvider, ITransactionScopeFactory transactionScopeFactory)
         {
-            this.ConfigRepo = cfgRepo;
-            this.UserRepo = userRepo;
-            this.JwtProvider = jwtProvider;
+            ConfigRepo = cfgRepo;
+            UserRepo = userRepo;
+            JwtProvider = jwtProvider;
+            TransactionScopeFactory = transactionScopeFactory;
         }
 
         public async Task<PetSpeciesConfig> CreatePetSpecies(PetSpeciesConfig species, User activeDev)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 species.PetSpeciesConfigID = await ConfigRepo.CreatePetSpecies(species);
                 trans.Complete();
@@ -39,7 +41,7 @@ namespace CritterServer.Domains
 
         public async Task<PetColorConfig> CreatePetColor(PetColorConfig color, User activeDev)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 color.PetColorConfigID = await ConfigRepo.CreatePetColor(color);
                 trans.Complete();
@@ -60,7 +62,7 @@ namespace CritterServer.Domains
 
         public async Task<string> CreateDev(User dev, User creatingUser) //todo log out activities by devs
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 dev.Cash = 1000000;
                 dev.IsActive = true;

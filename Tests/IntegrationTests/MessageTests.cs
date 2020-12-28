@@ -88,18 +88,19 @@ namespace Tests.IntegrationTests
     {
 
         IDbConnection ScopedDbConn;
-        JwtProvider jwtProvider;
+        JwtProvider JWTProvider;
 
         public MessageTestScope(IDbConnection dbc, JwtProvider jwtProvider)
         {
             ScopedDbConn = dbc;
             ScopedDbConn.Open();
-            this.jwtProvider = jwtProvider;
-            UserRepo = new UserRepository(ScopedDbConn);//, scopedDbTransaction);
-            UserAccountDomain = new UserDomain(UserRepo, jwtProvider);
-            MessageRepo = new MessageRepository(ScopedDbConn);//, scopedDbTransaction);
+            this.JWTProvider = jwtProvider;
+            UserRepo = new UserRepository(ScopedDbConn);
+            var transactionScopeFactory = new TransactionScopeFactory(ScopedDbConn);
+            UserAccountDomain = new UserDomain(UserRepo, JWTProvider, transactionScopeFactory);
+            MessageRepo = new MessageRepository(ScopedDbConn);
 
-            MessageDomain = new MessageDomain(MessageRepo, UserAccountDomain, null);
+            MessageDomain = new MessageDomain(MessageRepo, UserAccountDomain, null, transactionScopeFactory);
         }
 
         public UserDomain UserAccountDomain;
@@ -109,7 +110,6 @@ namespace Tests.IntegrationTests
 
         public void Dispose()
         {
-            ScopedDbConn.Close();
         }
     }
 

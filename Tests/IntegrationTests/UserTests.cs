@@ -22,7 +22,7 @@ namespace Tests.IntegrationTests
         public UserDomain UserAccountDomain;
 
 
-        public JwtProvider jwtProvider = new JwtProvider(
+        public JwtProvider JWTProvider = new JwtProvider(
             jwtSecretKey,
             new TokenValidationParameters
             {
@@ -38,14 +38,13 @@ namespace Tests.IntegrationTests
         public UserTestScope()
         {
             ScopedDbConnection = GetNewDbConnection();
-            ScopedDbConnection.Open();
             UserRepo = new UserRepository(ScopedDbConnection);
-            UserAccountDomain = new UserDomain(UserRepo, jwtProvider);
+            var transactionScopeFactory = new TransactionScopeFactory(ScopedDbConnection);
+            UserAccountDomain = new UserDomain(UserRepo, JWTProvider, transactionScopeFactory);
         }
 
         public void Dispose()
         {
-            ScopedDbConnection.Close();
         }
 
     }
@@ -93,7 +92,7 @@ namespace Tests.IntegrationTests
                 string jwt = new UserTestScope().UserAccountDomain.Login(randomUser).Result;
 
                 Assert.NotEmpty(jwt);
-                Assert.True(scope.jwtProvider.ValidateToken(jwt));
+                Assert.True(scope.JWTProvider.ValidateToken(jwt));
 
             }
         }
@@ -111,7 +110,7 @@ namespace Tests.IntegrationTests
                 randomUser.Password = password; //gets overwritten as the hashed value during acct create
                 string jwt = scope.UserAccountDomain.Login(randomUser).Result;
                 Assert.NotEmpty(jwt);
-                Assert.True(scope.jwtProvider.ValidateToken(jwt));
+                Assert.True(scope.JWTProvider.ValidateToken(jwt));
             }
             using (var scope = new UserTestScope())
             {

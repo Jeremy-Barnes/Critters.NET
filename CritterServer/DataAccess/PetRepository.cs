@@ -1,8 +1,6 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Models;
 using Dapper;
-using Newtonsoft.Json.Schema;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;

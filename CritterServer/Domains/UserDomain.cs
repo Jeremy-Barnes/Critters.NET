@@ -15,22 +15,23 @@ namespace CritterServer.Domains
 {
     public class UserDomain
     {
-        IUserRepository userRepo;
-        IJwtProvider jwtProvider;
-
-        public UserDomain(IUserRepository userRepo, IJwtProvider jwtProvider)
+        IUserRepository UserRepo;
+        IJwtProvider JWTProvider;
+        ITransactionScopeFactory TransactionScopeFactory;
+        public UserDomain(IUserRepository userRepo, IJwtProvider jwtProvider, ITransactionScopeFactory transactionScopeFactory)
         {
-            this.userRepo = userRepo;
-            this.jwtProvider = jwtProvider;
+            UserRepo = userRepo;
+            JWTProvider = jwtProvider;
+            TransactionScopeFactory = transactionScopeFactory;
         }
 
         public async Task<string> CreateAccount(User user)
         {
-            bool conflictFound = await userRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress);
+            bool conflictFound = await UserRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress);
             if (conflictFound)
                 throw new CritterException($"Sorry, someone already exists with that name or email!", $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}", System.Net.HttpStatusCode.Conflict);
 
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 
                 user.Cash = 500; //TODO economics
@@ -38,12 +39,12 @@ namespace CritterServer.Domains
                 user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
                 user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password, user.Salt);
 
-                user.UserId = await userRepo.CreateUser(user) ?? throw new CritterException("Could not create account, try again!", null, System.Net.HttpStatusCode.Conflict);
+                user.UserId = await UserRepo.CreateUser(user) ?? throw new CritterException("Could not create account, try again!", null, System.Net.HttpStatusCode.Conflict);
 
                 trans.Complete();
             }
             user = await RetrieveUser(user.UserId);
-            return jwtProvider.GenerateToken(user);
+            return JWTProvider.GenerateToken(user);
         }
 
         public async Task<string> Login(User user)
@@ -65,7 +66,7 @@ namespace CritterServer.Domains
                 if (dbUser.Password == hashPassword) //success
                 {
                     user = dbUser;
-                    return jwtProvider.GenerateToken(user);
+                    return JWTProvider.GenerateToken(user);
                 }
             }
             throw new CritterException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}", null, System.Net.HttpStatusCode.Unauthorized);
@@ -73,35 +74,35 @@ namespace CritterServer.Domains
 
         public async Task<User> RetrieveUser(int userId)
         {
-            return (await userRepo.RetrieveUsersByIds(userId)).FirstOrDefault();
+            return (await UserRepo.RetrieveUsersByIds(userId)).FirstOrDefault();
         }
 
         public async Task<List<User>> RetrieveUsers(IEnumerable<int> userIds)
         {
-            return (await userRepo.RetrieveUsersByIds(userIds.ToArray())).AsList();
+            return (await UserRepo.RetrieveUsersByIds(userIds.ToArray())).AsList();
         }
 
         public async Task<User> RetrieveUserByUserName(string userName)
         {
-            return (await userRepo.RetrieveUsersByUserName(userName)).FirstOrDefault();
+            return (await UserRepo.RetrieveUsersByUserName(userName)).FirstOrDefault();
         }
 
         public async Task<IEnumerable<User>> RetrieveUsersByUserName(IEnumerable<string> userNames)
         {
-            return await userRepo.RetrieveUsersByUserName(userNames.ToArray());
+            return await UserRepo.RetrieveUsersByUserName(userNames.ToArray());
         }
 
         public async Task<User> RetrieveUserByEmail(string email)
         {
-            return await userRepo.RetrieveUserByEmail(email);
+            return await UserRepo.RetrieveUserByEmail(email);
         }
 
 
         public async Task<User> ChangeUserCash(int byAmount, User user)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
-                await userRepo.UpdateUserCash(user.UserId, byAmount);
+                await UserRepo.UpdateUserCash(user.UserId, byAmount);
                 user.Cash += byAmount;
                 trans.Complete();
             }
@@ -111,9 +112,9 @@ namespace CritterServer.Domains
 
         public async Task ChangeUsersCash(List<(int UserId, int CashDelta)> userIdAndCashDeltas)
         {
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
-                await userRepo.UpdateUsersCash(userIdAndCashDeltas.ToArray());
+                await UserRepo.UpdateUsersCash(userIdAndCashDeltas.ToArray());
                 trans.Complete();
             }
         }
