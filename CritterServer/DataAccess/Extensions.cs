@@ -58,6 +58,7 @@ namespace CritterServer.DataAccess
                     {
                         dbc.Open();
                     }
+                    else
                     {
                         dbc.EnlistTransaction(System.Transactions.Transaction.Current);
                     }
