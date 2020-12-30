@@ -1,0 +1,10 @@
+﻿
+<form class="modal-body" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+  <input class="form-control" type="text" name="userName" [(ngModel)]="user.UserName" placeholder="userName" required />
+  <input class="form-control" type="password" name="password" [(ngModel)]="user.Password" placeholder="password" required />
+  <button class="btn btn-primary btn-block" type="submit">Login</button>
+</form>
+
+<h1 *ngIf="user && user.FirstName">{{user.UserName}} is logged in, his full name is {{user.FirstName}} {{user.LastName}}!</h1>
+
+<router-outlet></router-outlet>

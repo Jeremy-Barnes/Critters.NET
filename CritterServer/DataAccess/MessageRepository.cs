@@ -1,4 +1,5 @@
-﻿using CritterServer.Models;
+﻿using CritterServer.Contract;
+using CritterServer.Models;
 using Dapper;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,6 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId)
         {
-            dbConnection.TryOpen();
             int newMessageId = (await dbConnection.QueryAsync<int>("INSERT INTO messages(senderUserID, dateSent, messageText, messageSubject, deleted, parentMessageID, channelID)" +
                "VALUES(@senderUserId, @dateSent, @messageText, @messageSubject, @deleted, @parentMessageId, @channelId) RETURNING messageID",
                new
@@ -34,7 +34,6 @@ namespace CritterServer.DataAccess
                    parentMessageId = message.ParentMessageId,
                    channelId = message.ChannelId
                })).First();
-
             await dbConnection.ExecuteAsync("INSERT INTO readReceipts(messageID, recipientID) VALUES(@messageId, @recipientId)",
                recipientUserIds.Select(uid => 
                new 
@@ -49,7 +48,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId)
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<Message>(
                 $@"WITH RECURSIVE allMessages AS (
                     SELECT * FROM messages rootMessage  
@@ -75,7 +74,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Message>> RetrieveMessagesSinceMessage(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
         {
-            dbConnection.TryOpen();
+
 
             string joinTables = string.Join(" AND ", new string[] { unreadOnly ? "readReceipts rr" : "", channelId.HasValue || !unreadOnly ? "channelUsers cu" : "" }
             .Where(s => s.Length > 0));
@@ -105,7 +104,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> ReadMessages(IEnumerable<int> readMessageIds, int userId)
         {
-            dbConnection.TryOpen();
+
             int output = await dbConnection.ExecuteAsync(
                 $@"UPDATE readReceipts 
                 SET read = true
@@ -120,7 +119,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> DeleteMessages(IEnumerable<int> deleteMessageIds, int userId)
         {
-            dbConnection.TryOpen();
+
                 int output = await dbConnection.ExecuteAsync(
                     $@"UPDATE messages 
                     SET deleted = true
@@ -135,7 +134,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId)
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<int>(
                 $@"SELECT memberID from channelUsers
                     WHERE channelID = @channelId",
@@ -148,7 +147,7 @@ namespace CritterServer.DataAccess
 
         public async Task<bool> UserIsChannelMember(int channelId, int userId)
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<bool>(
                 $@"select exists (select 1 from channelusers where channelID = @channelId and memberID = @userId)",
                new
@@ -161,7 +160,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreateChannel(string channelName)
         {
-            dbConnection.TryOpen();
+
             int output = (await dbConnection.QueryAsync<int>("INSERT INTO channels(channelName)" +
                "VALUES(@channelName) RETURNING channelID",
                new
@@ -173,7 +172,7 @@ namespace CritterServer.DataAccess
 
         public async Task AddUsersToChannel(int channelId, IEnumerable<int> userIds)
         {
-            dbConnection.TryOpen();
+
             int rowsUpdated = await dbConnection.ExecuteAsync("INSERT INTO channelUsers(channelID, memberID)" +
                "VALUES(@channelId, @userId)",
                userIds.Distinct().Select(uid =>
@@ -186,7 +185,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Channel>> FindChannelsWithMembers(IEnumerable<int> userIds, bool exactMatch)
         {
-            dbConnection.TryOpen();
+
             await dbConnection.ExecuteAsync(@"
                 CREATE TEMP TABLE findChannelMembers(userID int);");
             await dbConnection.ExecuteAsync(@"INSERT INTO findChannelMembers(userID) VALUES
@@ -219,7 +218,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Channel>> GetChannels(params int[] channelIds)
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<Channel>(@"
                 SELECT * FROM channels
                 WHERE channelID = ANY(@channelIds)",
@@ -232,7 +231,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<int>> GetChannelsForUser(int userId)
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<int>("SELECT channelID FROM channelUsers WHERE memberID = @userId",
                new
                {

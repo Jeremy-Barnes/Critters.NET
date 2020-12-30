@@ -9,19 +9,20 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 using Xunit;
+using CritterServer.Contract;
 
 namespace Tests.IntegrationTests
 {
-    /// <summary>
-    /// Creaated once, reused for all tests in UserTests
-    /// Used to hold expensive resources that can be reused (like a DB connection!)
-    /// </summary>
-    public class UserTestsContext : TestUtilities
+    public class UserTestScope: TestUtilities, IDisposable
     {
-        public UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
-        public IUserRepository userRepo => new UserRepository(GetNewDbConnection());
 
-        public JwtProvider jwtProvider = new JwtProvider(
+        private IDbConnection ScopedDbConnection;
+
+        public IUserRepository UserRepo;
+        public UserDomain UserAccountDomain;
+
+
+        public JwtProvider JWTProvider = new JwtProvider(
             jwtSecretKey,
             new TokenValidationParameters
             {
@@ -34,63 +35,87 @@ namespace Tests.IntegrationTests
                 RequireExpirationTime = true
             });
 
-        public UserTestsContext()
+        public UserTestScope()
+        {
+            ScopedDbConnection = GetNewDbConnection();
+            UserRepo = new UserRepository(ScopedDbConnection);
+            var transactionScopeFactory = new TransactionScopeFactory(ScopedDbConnection);
+            UserAccountDomain = new UserDomain(UserRepo, JWTProvider, transactionScopeFactory);
+        }
+
+        public void Dispose()
         {
         }
 
     }
 
-    public class UserTests : IClassFixture<UserTestsContext>
+    public class UserTests
     {
-        UserTestsContext context;
 
-        public UserTests(UserTestsContext context)
+        public UserTests()
         {
-            this.context = context;
         }
 
         [Fact]
         public void UserAccountCreateAndRetrieveWorks()
         {
-            User randomUser = context.RandomUserNotPersisted();
-            string jwt = context.userAccountDomain.CreateAccount(randomUser).Result;
+            using (var scope = new UserTestScope())
+            {
 
-            var retrievedDbUser = context.userAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress).Result;
-            Assert.Equal(randomUser.UserName, retrievedDbUser.UserName);
-            Assert.NotEmpty(jwt);
+                User randomUser = scope.RandomUserNotPersisted();
+                string jwt = scope.UserAccountDomain.CreateAccount(randomUser).Result;
+
+                var retrievedDbUser = scope.UserAccountDomain.RetrieveUserByEmail(randomUser.EmailAddress).Result;
+                Assert.Equal(randomUser.UserName, retrievedDbUser.UserName);
+                Assert.NotEmpty(jwt);
+            }
+
 
         }
 
         [Fact]
         public void UserLoginWorksAndCreatesValidJwt()
         {
-            User randomUser = context.RandomUserNotPersisted();
-            string password = randomUser.Password;
+            User randomUser;
+            using (var scope = new UserTestScope())
+            {
+                randomUser = scope.RandomUserNotPersisted();
+                string password = randomUser.Password;
 
-            context.userAccountDomain.CreateAccount(randomUser).Wait();
-            randomUser.Password = password; //gets overwritten as the hashed value during acct create
+                scope.UserAccountDomain.CreateAccount(randomUser).Wait();
+                randomUser.Password = password; //gets overwritten as the hashed value during acct create
 
-            string jwt = context.userAccountDomain.Login(randomUser).Result;
+            }
 
-            Assert.NotEmpty(jwt);
-            Assert.True(context.jwtProvider.ValidateToken(jwt));
+            using (var scope = new UserTestScope())
+            {
+                string jwt = new UserTestScope().UserAccountDomain.Login(randomUser).Result;
+
+                Assert.NotEmpty(jwt);
+                Assert.True(scope.JWTProvider.ValidateToken(jwt));
+
+            }
         }
 
         [Fact]
         public void DuplicateCreateFails()
         {
-            User randomUser = context.RandomUserNotPersisted();
-            string password = randomUser.Password;
+            User randomUser;
+            using (var scope = new UserTestScope())
+            {
+                randomUser = scope.RandomUserNotPersisted();
+                string password = randomUser.Password;
 
-            context.userAccountDomain.CreateAccount(randomUser).Wait();
-            randomUser.Password = password; //gets overwritten as the hashed value during acct create
-
-            string jwt = context.userAccountDomain.Login(randomUser).Result;
-
-            Assert.NotEmpty(jwt);
-            Assert.True(context.jwtProvider.ValidateToken(jwt));
-
-            Assert.ThrowsAny<Exception>(() => context.userAccountDomain.CreateAccount(randomUser).Result);
+                scope.UserAccountDomain.CreateAccount(randomUser).Wait();
+                randomUser.Password = password; //gets overwritten as the hashed value during acct create
+                string jwt = scope.UserAccountDomain.Login(randomUser).Result;
+                Assert.NotEmpty(jwt);
+                Assert.True(scope.JWTProvider.ValidateToken(jwt));
+            }
+            using (var scope = new UserTestScope())
+            {
+                Assert.ThrowsAsync<CritterException>(() => scope.UserAccountDomain.CreateAccount(randomUser));
+            }
         }
     }
 }

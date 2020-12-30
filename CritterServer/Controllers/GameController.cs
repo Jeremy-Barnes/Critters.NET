@@ -51,13 +51,13 @@ namespace CritterServer.Controllers
             return Ok();
         }
 
-        [HttpPut("join/{gameId}")]
+        [HttpPut("join/{gameId}/{joinGameData}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> JoinGame(string gameId, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> JoinGame(string gameId, string joinGameData, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            if (GameManager.JoinGame(gameId, activeUser, null)) return Ok();
+            if (await GameManager.RequestJoinGame(gameId, activeUser, joinGameData)) return Ok();
             else return NotFound();
         }
     }

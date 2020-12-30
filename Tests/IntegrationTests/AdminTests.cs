@@ -41,17 +41,18 @@ namespace Tests.IntegrationTests
     {
         AdminTestsContext context;
         IDbConnection ScopedDbConnection;
-        public UserDomain UserDomain => new UserDomain(UserRepo, context.jwtProvider);
-        public PetDomain petDomain => new PetDomain(PetRepo, CfgRepo);
+        public UserDomain UserDomain => new UserDomain(UserRepo, context.jwtProvider, new TransactionScopeFactory(ScopedDbConnection));
+        public PetDomain petDomain => new PetDomain(PetRepo, CfgRepo, new TransactionScopeFactory(ScopedDbConnection));
         public IUserRepository UserRepo => new UserRepository(ScopedDbConnection);
         public IPetRepository PetRepo => new PetRepository(ScopedDbConnection);
         public IConfigRepository CfgRepo => new ConfigRepository(ScopedDbConnection);
-        AdminDomain AdminDomain => new AdminDomain(CfgRepo, UserRepo, context.jwtProvider);
+        AdminDomain AdminDomain => new AdminDomain(CfgRepo, UserRepo, context.jwtProvider, new TransactionScopeFactory(ScopedDbConnection));
 
         public AdminTests(AdminTestsContext context)
         {
             this.context = context;
             ScopedDbConnection = context.GetNewDbConnection();
+            //ScopedDbConnection.Open();
         }
 
         [Fact]

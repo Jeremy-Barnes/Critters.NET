@@ -17,20 +17,24 @@ namespace CritterServer.Domains
 {
     public class MessageDomain
     {
-        IMessageRepository messageRepo;
-        UserDomain userDomain;
-        IHubContext<NotificationHub, IUserClient> hubContext;
-        public MessageDomain(IMessageRepository messageRepo, UserDomain userDomain, IHubContext<NotificationHub, IUserClient> hubContext)
+        IMessageRepository MessageRepo;
+        UserDomain UserDomain;
+        IHubContext<NotificationHub, IUserClient> SignalRHubContext; 
+        ITransactionScopeFactory TransactionScopeFactory;
+
+        public MessageDomain(IMessageRepository messageRepo, UserDomain userDomain, 
+            IHubContext<NotificationHub, IUserClient> hubContext, ITransactionScopeFactory transactionScopeFactory)
         {
-            this.messageRepo = messageRepo;
-            this.userDomain = userDomain;
-            this.hubContext = hubContext;
+            MessageRepo = messageRepo;
+            UserDomain = userDomain;
+            SignalRHubContext = hubContext;
+            TransactionScopeFactory = transactionScopeFactory;
         }
 
         public async Task<List<ChannelDetails>> GetMessages(bool unreadOnly, int? lastMessageRetrieved, User activeUser)
         {
             List<Message> messages;
-            messages = (await messageRepo.RetrieveMessagesSinceMessage(activeUser.UserId, null, unreadOnly, lastMessageRetrieved ?? Int32.MaxValue)).AsList();
+            messages = (await MessageRepo.RetrieveMessagesSinceMessage(activeUser.UserId, null, unreadOnly, lastMessageRetrieved ?? Int32.MaxValue)).AsList();
 
             return await messagesToChannelInfo(messages);
         }
@@ -38,7 +42,7 @@ namespace CritterServer.Domains
         public async Task<ChannelDetails> RetrieveThread(int lastMessageRetrieved, User activeUser)
         {
             List<Message> messages;
-            messages = (await messageRepo.RetrieveReplyThread(activeUser.UserId, lastMessageRetrieved)).AsList();
+            messages = (await MessageRepo.RetrieveReplyThread(activeUser.UserId, lastMessageRetrieved)).AsList();
             if(messages.Count == 0)
             {
                 return null;
@@ -51,22 +55,22 @@ namespace CritterServer.Domains
             IEnumerable<int> recipientIds = new List<int>();
             message.SenderUserId = activeUser.UserId;
 
-            using (var trans = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
-                if(!await messageRepo.UserIsChannelMember(message.ChannelId, activeUser.UserId))
+                if (!await MessageRepo.UserIsChannelMember(message.ChannelId, activeUser.UserId))
                 {
                     throw new CritterException($"Could not send that message, recipient does not exist!",
                         $"Invalid channel provided - channel: {message.ChannelId}, sender: {message.SenderUserId}", 
                         System.Net.HttpStatusCode.BadRequest);
                 }
-                recipientIds = await messageRepo.GetAllChannelMemberIds(message.ChannelId);
+                recipientIds = await MessageRepo.GetAllChannelMemberIds(message.ChannelId);
                 
-                message.MessageId = await messageRepo.CreateMessage(message, recipientIds.Where(id => id != activeUser.UserId), activeUser.UserId);
+                message.MessageId = await MessageRepo.CreateMessage(message, recipientIds.Where(id => id != activeUser.UserId), activeUser.UserId);
 
                 trans.Complete();
             }
 
-            hubContext?.Clients?.GroupExcept(NotificationHub.GetChannelGroupIdentifier(message.ChannelId), activeUser.UserName)
+            SignalRHubContext?.Clients?.GroupExcept(NotificationHub.GetChannelGroupIdentifier(message.ChannelId), activeUser.UserName)
                 ?.ReceiveNotification(new NewMessageAlert(new MessageDetails() { Message = message, SenderUsername = activeUser.UserName }));
             
             return message.MessageId;
@@ -78,7 +82,7 @@ namespace CritterServer.Domains
             userIds.Add(activeUser.UserId);
             if (userNames != null)
             {
-                var recipients = (await userDomain.RetrieveUsersByUserName(userNames)).ToDictionary(u => u.UserName);
+                var recipients = (await UserDomain.RetrieveUsersByUserName(userNames)).ToDictionary(u => u.UserName);
 
                 foreach (var userName in userNames)
                 {
@@ -90,18 +94,18 @@ namespace CritterServer.Domains
                 }
             }
 
-            return await messageRepo.FindChannelsWithMembers(userIds, false);
+            return await MessageRepo.FindChannelsWithMembers(userIds, false);
         }
 
         public async Task<int> CreateChannel(User activeUser, string groupTitle, IEnumerable<string> addUserNames)
         {
             List<int> recipientIds = new List<int>();
             int channelId;
-            using (var trans = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
                 if (addUserNames != null && addUserNames.Count() > 0)
                 {
-                    var recipients = (await userDomain.RetrieveUsersByUserName(addUserNames)).ToDictionary(u => u.UserName);
+                    var recipients = (await UserDomain.RetrieveUsersByUserName(addUserNames)).ToDictionary(u => u.UserName);
                     foreach (var userName in addUserNames)
                     {
                         if (!recipients.ContainsKey(userName) || !recipients[userName].IsActive)
@@ -112,9 +116,9 @@ namespace CritterServer.Domains
                     }
                 }
                 if (string.IsNullOrEmpty(groupTitle)) groupTitle = string.Join(", ", addUserNames);
-                channelId = await messageRepo.CreateChannel(groupTitle);
+                channelId = await MessageRepo.CreateChannel(groupTitle);
                 recipientIds.Add(activeUser.UserId);
-                await messageRepo.AddUsersToChannel(channelId, recipientIds);
+                await MessageRepo.AddUsersToChannel(channelId, recipientIds);
 
                 trans.Complete();
             }
@@ -130,9 +134,9 @@ namespace CritterServer.Domains
                     System.Net.HttpStatusCode.BadRequest, LogLevel.Error);
             }
 
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
-                var outp = await messageRepo.DeleteMessages(messages, activeUser.UserId);
+                var outp = await MessageRepo.DeleteMessages(messages, activeUser.UserId);
                 trans.Complete();
             }
         }
@@ -146,28 +150,28 @@ namespace CritterServer.Domains
                     System.Net.HttpStatusCode.BadRequest, LogLevel.Error);
             }
 
-            using (var trans = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var trans = TransactionScopeFactory.Create())
             {
-                var outp = await messageRepo.ReadMessages(messages, activeUser.UserId);
+                var outp = await MessageRepo.ReadMessages(messages, activeUser.UserId);
                 trans.Complete();
             }
         }
 
         public async Task<IEnumerable<ChannelDetails>> GetChannels(IEnumerable<int> channelIds, User activeUser)
         {
-            var allUserChannelIds = await messageRepo.GetChannelsForUser(activeUser.UserId);
+            var allUserChannelIds = await MessageRepo.GetChannelsForUser(activeUser.UserId);
 
             if (channelIds == null || !channelIds.Any()) 
                 channelIds = allUserChannelIds;
             else 
                 channelIds = channelIds.Intersect(allUserChannelIds);
-            var channels = await messageRepo.GetChannels(channelIds.ToArray());
+            var channels = await MessageRepo.GetChannels(channelIds.ToArray());
             Dictionary<int, IEnumerable<int>> channelIdToUserIds = new Dictionary<int, IEnumerable<int>>();
             foreach (var channel in channels) 
             {
-                channelIdToUserIds.Add(channel.ChannelId, await messageRepo.GetAllChannelMemberIds(channel.ChannelId));
+                channelIdToUserIds.Add(channel.ChannelId, await MessageRepo.GetAllChannelMemberIds(channel.ChannelId));
             }
-            var users = await userDomain.RetrieveUsers(channelIdToUserIds.SelectMany(val => val.Value));
+            var users = await UserDomain.RetrieveUsers(channelIdToUserIds.SelectMany(val => val.Value));
             var channelsDetails = channels.Select(c => {
                 var channelUsers = users.Where(u => channelIdToUserIds[c.ChannelId].Contains(u.UserId));
                 return new ChannelDetails()
@@ -182,7 +186,7 @@ namespace CritterServer.Domains
         private async Task<IEnumerable<MessageDetails>> messageToMessageDetails(IEnumerable<Message> messages, Dictionary<int, User> userIdToUserMap)
         {
             if(userIdToUserMap == null || !userIdToUserMap.Any())
-                userIdToUserMap = (await userDomain.RetrieveUsers(messages.Select(m => m.SenderUserId))).ToDictionary(u => u.UserId);
+                userIdToUserMap = (await UserDomain.RetrieveUsers(messages.Select(m => m.SenderUserId))).ToDictionary(u => u.UserId);
 
             var messageDetails = messages.Select(m => new MessageDetails()
             {
@@ -196,8 +200,8 @@ namespace CritterServer.Domains
         {
             IEnumerable<IGrouping<int, Message>> messagesGroupedByChannel = messages.GroupBy(m => m.ChannelId);
             
-            Dictionary<int, Channel> channelIdMap = (await messageRepo.GetChannels(messagesGroupedByChannel.Select(mgbc => mgbc.Key).ToArray())).ToDictionary(c => c.ChannelId);
-            Dictionary<int, User> userIdMap = (await userDomain.RetrieveUsers(messages.Select(m => m.SenderUserId))).ToDictionary(u => u.UserId);
+            Dictionary<int, Channel> channelIdMap = (await MessageRepo.GetChannels(messagesGroupedByChannel.Select(mgbc => mgbc.Key).ToArray())).ToDictionary(c => c.ChannelId);
+            Dictionary<int, User> userIdMap = (await UserDomain.RetrieveUsers(messages.Select(m => m.SenderUserId))).ToDictionary(u => u.UserId);
 
             List<ChannelDetails> channelMessages = new List<ChannelDetails>();
             foreach (var channelsMessages in messagesGroupedByChannel)

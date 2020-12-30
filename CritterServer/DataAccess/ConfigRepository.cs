@@ -19,7 +19,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreatePetSpecies(PetSpeciesConfig species)
         {
-            dbConnection.TryOpen();
+
             int output = (await dbConnection.QueryAsync<int>("INSERT INTO petSpeciesConfigs(speciesName, maxHitPoints, description, imageBasePath)" +
                 "VALUES(@speciesName, @maxHP, @desc, @image) RETURNING petSpeciesConfigID",
                 new
@@ -34,7 +34,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreatePetColor(PetColorConfig color)
         {
-            dbConnection.TryOpen();
+
             int output = (await dbConnection.QueryAsync<int>("INSERT INTO petColorConfigs(colorName, imagePatternPath)" +
                 "VALUES(@color, @imagePath) RETURNING petColorConfigID",
                 new
@@ -47,14 +47,14 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<PetSpeciesConfig>> RetrieveSpeciesByIds(params int[] species)
         {
-            dbConnection.TryOpen();
+
             return await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM petSpeciesConfigs WHERE petSpeciesConfigID = ANY(@species)",
                 new { species = species.Distinct().AsList() });
         }
 
         public async Task<IEnumerable<PetColorConfig>> RetrieveColorsByIds(params int[] colors)
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs WHERE petColorConfigID = ANY(@colors)",
                 new { colors = colors.Distinct().AsList() });
             return output;
@@ -62,14 +62,14 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<PetSpeciesConfig>> RetrieveSpecies()
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM petSpeciesConfigs");
             return output;
         }
 
         public async Task<IEnumerable<PetColorConfig>> RetrieveColors()
         {
-            dbConnection.TryOpen();
+
             var output = await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs");
             return output;
         }

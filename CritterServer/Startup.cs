@@ -11,16 +11,12 @@ using Serilog;
 using CritterServer.Domains.Components;
 using Serilog.Events;
 using CritterServer.Pipeline;
-using Microsoft.IdentityModel.Tokens;
-using System;
 using CritterServer.Utilities.Serialization;
-using Microsoft.AspNetCore.Http;
 using CritterServer.Pipeline.Middleware;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Authentication;
 using CritterServer.Game;
+using CritterServer.Hubs;
+using System.Reflection;
 
 namespace CritterServer
 {
@@ -52,7 +48,8 @@ namespace CritterServer
                 options.AddPolicy(name: PermittedOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202")
+                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202",
+                                          "localhost:8080/", "http://localhost:8080", "http://localhost:8080/", "localhost:8080")
                                       .AllowAnyMethod()
                                       .AllowAnyHeader()
                                       .AllowCredentials();
@@ -61,18 +58,20 @@ namespace CritterServer
 
             //db
             DbProviderFactories.RegisterFactory("Npgsql", Npgsql.NpgsqlFactory.Instance);
-            services.AddTransient<IDbConnection>((sp) =>
+            services.AddScoped<IDbConnection>(sp =>
             {
                 var conn = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
                 conn.ConnectionString = Configuration.GetConnectionString("Sql");
                 return conn;
             });
+            services.AddScoped<ITransactionScopeFactory, TransactionScopeFactory>();
 
             configureLogging();
 
             //auth
             services.AddJwt(Configuration);
 
+            //real time talk, for whatever
             services.AddSignalR()
                 .AddNewtonsoftJsonProtocol(options =>
             {
@@ -124,8 +123,8 @@ namespace CritterServer
            app.UseEndpoints(endpoints => {
                endpoints.MapControllers();
                endpoints.MapHub<NotificationHub>("/notificationhub");
-               endpoints.MapHub<GameHub>("/gamehub");
-
+               endpoints.MapHub<GameHub>(typeof(GameHub).GetCustomAttribute<HubPathAttribute>().HubPath);
+               endpoints.MapHub<BattleHub>(typeof(BattleHub).GetCustomAttribute<HubPathAttribute>().HubPath);
            });//last thing
         }
 
@@ -147,7 +146,7 @@ namespace CritterServer
 
             Log.Logger = new LoggerConfiguration()
                .Enrich.FromLogContext()
-               .WriteTo.EventLog("Critters.NET", "Critters.NET", "343GuiltySpark")
+               .WriteTo.EventLog("Critters.NET", "Critters.NET")
                .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
                fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
                rollOnFileSizeLimit: true)

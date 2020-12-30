@@ -1,5 +1,6 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Domains;
+using CritterServer.Game;
 using CritterServer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -7,16 +8,24 @@ using Serilog;
 using System;
 using System.Threading.Tasks;
 
-namespace CritterServer.Game
+namespace CritterServer.Hubs
 {
-    [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
-    public class GameHub : Hub<IGameClient>
+    [HubPath("gamehub")]
+    public class GameHub : BaseGameHub<IGameClient> 
     {
-        private readonly UserDomain UserDomain;
-        private readonly GameManagerService GameManager;
+        public GameHub(GameManagerService gameManager, UserDomain userDomain) : base(gameManager, userDomain)
+        {
+        }
+    }
+
+    [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+    public class BaseGameHub<T> : Hub<T> where T : class, IGameClient
+    {
+        protected readonly UserDomain UserDomain;
+        protected readonly GameManagerService GameManager;
 
 
-        public GameHub(GameManagerService gameManager, UserDomain userDomain)
+        public BaseGameHub(GameManagerService gameManager, UserDomain userDomain)
         {
             this.GameManager = gameManager;
             this.UserDomain = userDomain;
@@ -29,15 +38,18 @@ namespace CritterServer.Game
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task Connect(string gameId)
+        public async virtual Task Connect(string gameId)
         {
+            var game = GameManager.GetGame(gameId);
+            if (game == null) return;
+
             var username = this.Context.GetHttpContext().User.Identity.Name;
-            User activeUser = UserDomain.RetrieveUserByUserName(username).Result;
-            await this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId));
-            GameManager.JoinGame(gameId, activeUser, this.Context.ConnectionId);
+            User activeUser = await UserDomain.RetrieveUserByUserName(username);
+            if(await game.JoinGameChat(activeUser, this.Context.ConnectionId))
+                await this.Groups.AddToGroupAsync(this.Context.ConnectionId, GetChannelGroupIdentifier(gameId));
         }
 
-        public async Task SendChatMessage(string message, string gameId)
+        public async virtual Task SendChatMessage(string message, string gameId)
         {
             //todo some kind of content filtering for the love of god
             await this.Clients.OthersInGroup(GetChannelGroupIdentifier(gameId)).ReceiveChat(this.Context.User.Identity.Name, message);
@@ -54,7 +66,6 @@ namespace CritterServer.Game
         Task ReceiveNotification(GameAlert serverNotification);
         Task ReceiveChat(string sender, string message);
         Task ReceiveSystemMessage(string message);
-
     }
 
 }

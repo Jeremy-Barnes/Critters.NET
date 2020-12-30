@@ -55,14 +55,11 @@ namespace Tests
         }
 
 
-        IDbConnection dbConnection;
         public IDbConnection GetNewDbConnection()
         {
-           // if (dbConnection == null)
-            {
-                dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-                dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
-            }
+
+            var dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
+            dbConnection.ConnectionString = "Server=localhost; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB";
             return dbConnection;
         }
 

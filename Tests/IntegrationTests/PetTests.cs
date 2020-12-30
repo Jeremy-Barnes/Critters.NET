@@ -21,11 +21,13 @@ namespace Tests.IntegrationTests
     /// </summary>
     public class PetTestsContext : TestUtilities
     {
-        UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider);
-        PetDomain petDomain => new PetDomain(petRepo, cfgRepo);
-        IUserRepository userRepo => new UserRepository(GetNewDbConnection());
-        IPetRepository petRepo => new PetRepository(GetNewDbConnection());
-        IConfigRepository cfgRepo => new ConfigRepository(GetNewDbConnection());
+        UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider, new TransactionScopeFactory(scopedDbConn));
+        PetDomain petDomain => new PetDomain(petRepo, cfgRepo, new TransactionScopeFactory(scopedDbConn));
+        public IDbConnection scopedDbConn;
+
+        IUserRepository userRepo => new UserRepository(scopedDbConn);
+        IPetRepository petRepo => new PetRepository(scopedDbConn);
+        IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);
 
         public JwtProvider jwtProvider = new JwtProvider(
             jwtSecretKey,
@@ -49,12 +51,14 @@ namespace Tests.IntegrationTests
 
         public PetTestsContext()
         {
+            scopedDbConn = GetNewDbConnection();
+            //scopedDbConn.Open();
             PetColor1 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
             PetColor2 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
             PetSpecies1 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
             PetSpecies2 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com" }).Result;
-            var uid1 = userRepo.CreateUser(RandomUserNotPersisted());
-            var uid2 = userRepo.CreateUser(RandomUserNotPersisted());
+            var uid1 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
+            var uid2 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
             var users = userRepo.RetrieveUsersByIds(uid1, uid2).Result;
             OwnerUser1 = users.AsList()[0];
             OwnerUser2 = users.AsList()[1];
@@ -65,13 +69,12 @@ namespace Tests.IntegrationTests
     public class PetTests : IClassFixture<PetTestsContext>
     {
         PetTestsContext context;
-        public UserDomain userAccountDomain => new UserDomain(userRepo, context.jwtProvider);
-        public PetDomain petDomain => new PetDomain(petRepo, cfgRepo);
-        public IDbConnection scopedDbConn;
+        public UserDomain userAccountDomain => new UserDomain(userRepo, context.jwtProvider, new TransactionScopeFactory(scopedDbConn));
+        public PetDomain petDomain => new PetDomain(petRepo, cfgRepo, new TransactionScopeFactory(scopedDbConn));
+        IDbConnection scopedDbConn;
         public IUserRepository userRepo => new UserRepository(scopedDbConn);
         public IPetRepository petRepo => new PetRepository(scopedDbConn);
         public IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);
-
 
         public PetTests(PetTestsContext context)
         {

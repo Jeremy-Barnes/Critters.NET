@@ -1,12 +1,11 @@
 ﻿using CritterServer.Contract;
 using CritterServer.Domains;
+using CritterServer.Hubs;
 using CritterServer.Models;
 using Dapper;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -16,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public class GuessTheNumber : Game
+    public class GuessTheNumber : CustomClientGame<IGameClient, GameHub>
     {
         private DateTime StartTime;
         private ConcurrentDictionary<int, List<Bet>> UserIdToBets = new ConcurrentDictionary<int, List<Bet>>();
@@ -54,23 +53,23 @@ namespace CritterServer.Game
             Task.Run(async () =>
             {
                 SendSystemMessage($"The winning number is {theWinningNumber}!");
-                var winners = UserIdToBets.Select(kvp => Tuple.Create<int, int?>(kvp.Key, kvp.Value.
-                    Where(bettingPair => bettingPair.NumberGuessed == theWinningNumber).Select(bet => bet.CashWagered).FirstOrDefault())).Where(t => t.Item2.HasValue && t.Item2 > 0).AsList();
+                var winners = UserIdToBets.Select(userAndBets => (UserId: userAndBets.Key,
+                 BetAmount: userAndBets.Value.Where(bet => bet.NumberGuessed == theWinningNumber).Select(bet => bet.CashWagered).FirstOrDefault())).Where(t => t.Item2 > 0).AsList();
 
                 await PayWinners(winners, CalculateTotalPot(), theWinningNumber);
             });
         }
 
-        private async Task PayWinners(List<Tuple<int, int?>> winnersAndTheirBets, int totalPotSize, int winningNumber)
+        private async Task PayWinners(List<(int UserId, int BetAmount)> winnersAndTheirBets, int totalPotSize, int winningNumber)
         {
-            int winningAmount = winnersAndTheirBets.Sum(t => t.Item2).Value;
-            List<Tuple<int, int>> winnerAndTheirWinnings = new List<Tuple<int, int>>();
+            int winningAmount = winnersAndTheirBets.Sum(t => t.Item2);
+            List<(int UserId, int CashDelta)> winnerAndTheirWinnings = new List<(int UserId, int CashDelta)>();
             List<Tuple<string, string>> userNameToWinMessage = new List<Tuple<string, string>>();
             foreach (var winnerAndBet in winnersAndTheirBets)
             {
-                int winnings = (int)(((1.0 * winnerAndBet.Item2.Value) / (1.0 * winningAmount)) * totalPotSize);
-                winnerAndTheirWinnings.Add(Tuple.Create(winnerAndBet.Item1, winnings));
-                userNameToWinMessage.Add(Tuple.Create(Players[winnerAndBet.Item1].User.UserName, $"Your bet for {winnerAndBet.Item2.Value} on {winningNumber} won! You receive {winnings}"));
+                int winnings = (int)(((1.0 * winnerAndBet.BetAmount) / (1.0 * winningAmount)) * totalPotSize);
+                winnerAndTheirWinnings.Add((winnerAndBet.Item1, winnings));
+                userNameToWinMessage.Add(Tuple.Create(Players.GetPlayer(winnerAndBet.UserId).User.UserName, $"Your bet for {winnerAndBet.BetAmount} on {winningNumber} won! You receive {winnings}"));
             }
             SendAlert(null, null, userNameToWinMessage);
             using (var scope = Services.CreateScope())
@@ -88,7 +87,6 @@ namespace CritterServer.Game
 
         public override async Task AcceptUserInput(string userCommand, User user)
         {
-
             if (BettingIsClosed)
             {
                 throw new CritterException("Sorry, no longer accepting guesses!", null, System.Net.HttpStatusCode.Gone);
