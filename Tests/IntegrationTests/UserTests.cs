@@ -11,7 +11,7 @@ using System.Text;
 using Xunit;
 using CritterServer.Contract;
 using System.Linq;
-
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 namespace Tests.IntegrationTests
 {
     public class UserTestScope: TestUtilities, IDisposable
