@@ -173,16 +173,21 @@ namespace CritterServer.Domains
             } 
             else
             {
-                if (dbShip.RequesterUserId == activeUser.UserId)
+                if (dbShip.RequesterUserId == activeUser.UserId && !unfriend)
                 {
                     throw new CritterException($"Relax! {friendUserName} will get your request.",
                     $"Weird double tap on Friendship for " +
                     $"{activeUser.UserName} : {activeUser.UserId} and {friendUserName} : {friend.UserId} \r\n " +
                     $"{JsonConvert.SerializeObject(dbShip, Formatting.Indented)}", System.Net.HttpStatusCode.BadRequest);
                 }
-                else if (dbShip.RequestedUserId == activeUser.UserId)
+                else if (dbShip.RequestedUserId == activeUser.UserId && !unfriend)
                 {
                     success = await FriendRepo.AcceptFriendship(activeUser.UserId, friend.UserId);
+                    dbShip.Accepted = true;
+                } 
+                else if (unfriend)
+                {
+                    success = await FriendRepo.DeleteFriendship(activeUser.UserId, friend.UserId);
                 }
             }
             if (!success)
