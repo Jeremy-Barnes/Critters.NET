@@ -55,10 +55,10 @@ namespace CritterServer.Controllers
             return Ok(new { AuthToken = authToken, User = user });
         }
 
+        [HttpGet]
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [Consumes("application/json")]
         [Produces("application/json")]
-
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetUser()
         {

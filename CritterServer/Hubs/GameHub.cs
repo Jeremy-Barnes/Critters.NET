@@ -13,7 +13,7 @@ namespace CritterServer.Hubs
     [HubPath("gamehub")]
     public class GameHub : BaseGameHub<IGameClient> 
     {
-        public GameHub(GameManagerService gameManager, UserDomain userDomain) : base(gameManager, userDomain)
+        public GameHub(MultiplayerGameService gameManager, UserDomain userDomain) : base(gameManager, userDomain)
         {
         }
     }
@@ -22,10 +22,10 @@ namespace CritterServer.Hubs
     public class BaseGameHub<T> : Hub<T> where T : class, IGameClient
     {
         protected readonly UserDomain UserDomain;
-        protected readonly GameManagerService GameManager;
+        protected readonly MultiplayerGameService GameManager;
 
 
-        public BaseGameHub(GameManagerService gameManager, UserDomain userDomain)
+        public BaseGameHub(MultiplayerGameService gameManager, UserDomain userDomain)
         {
             this.GameManager = gameManager;
             this.UserDomain = userDomain;

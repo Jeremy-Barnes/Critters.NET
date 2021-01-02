@@ -87,7 +87,7 @@ namespace CritterServer.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> CreateChannel([FromBody]ChannelDetails channel, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
-            var newChannelId = await domain.CreateChannel(activeUser, channel.Channel?.ChannelName, channel.UserNames);
+            var newChannelId = await domain.CreateChannel(activeUser, channel.Channel?.Name, channel.UserNames);
             return Ok(new { ChannelId = newChannelId });
         }
 
@@ -111,7 +111,9 @@ namespace CritterServer.Controllers
                     return Ok(new { ChannelDetails = channelDetails});
                 } catch(Exception ex)
                 {
-                    throw new CritterException("Sorry, that wasn't a valid list of channel IDs", $"{channelIdsCSV} provided to RetrieveChannel", System.Net.HttpStatusCode.BadRequest, ex);
+                    throw new CritterException("Sorry, that wasn't a valid list of channel IDs", 
+                        $"{channelIdsCSV} provided to RetrieveChannel by user {activeUser.UserId}", 
+                        System.Net.HttpStatusCode.BadRequest, ex);
                 }
             }
             return BadRequest();

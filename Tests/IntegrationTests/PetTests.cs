@@ -53,10 +53,10 @@ namespace Tests.IntegrationTests
         {
             scopedDbConn = GetNewDbConnection();
             //scopedDbConn.Open();
-            PetColor1 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
-            PetColor2 = cfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
-            PetSpecies1 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
-            PetSpecies2 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com" }).Result;
+            PetColor1 = cfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
+            PetColor2 = cfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
+            PetSpecies1 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
+            PetSpecies2 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com" }).Result;
             var uid1 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
             var uid2 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
             var users = userRepo.RetrieveUsersByIds(uid1, uid2).Result;
@@ -91,9 +91,9 @@ namespace Tests.IntegrationTests
 
             var retrievedPet = (await petDomain.RetrievePets(createPet.PetId)).FirstOrDefault();
             
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Equal(nonPersistedPet.PetName, retrievedPet?.PetName);
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Equal(nonPersistedPet.Name, retrievedPet?.Name);
             Assert.Equal(createPet.PetId, retrievedPet.PetId);
 
             Assert.Equal(nonPersistedPet.SpeciesId, createPet.SpeciesId);
@@ -110,9 +110,9 @@ namespace Tests.IntegrationTests
             var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
             var retrievedPets = (await petDomain.RetrievePetsByOwner(context.OwnerUser1.UserId)).AsList();
 
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Contains(retrievedPets, rp => nonPersistedPet.PetName == rp.PetName && 
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Contains(retrievedPets, rp => nonPersistedPet.Name == rp.Name && 
             rp.PetId == createPet.PetId && 
             rp.SpeciesId == nonPersistedPet.SpeciesId && 
             rp.ColorId == nonPersistedPet.ColorId);
@@ -125,14 +125,14 @@ namespace Tests.IntegrationTests
             var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
             var retrievedPets = (await petDomain.RetrieveFullPetInformationByOwner(context.OwnerUser1.UserId)).AsList();
 
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Contains(retrievedPets, rp => nonPersistedPet.PetName == rp.Pet.PetName && 
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Contains(retrievedPets, rp => nonPersistedPet.Name == rp.Pet.Name && 
             rp.Pet.PetId == createPet.PetId && 
             rp.Pet.SpeciesId == nonPersistedPet.SpeciesId && 
             rp.Pet.ColorId == nonPersistedPet.ColorId &&
-            rp.Color.PetColorConfigID == nonPersistedPet.ColorId &&
-            rp.Species.PetSpeciesConfigID == nonPersistedPet.SpeciesId);
+            rp.Color.PetColorConfigId == nonPersistedPet.ColorId &&
+            rp.Species.PetSpeciesConfigId == nonPersistedPet.SpeciesId);
         }
 
         [Fact]
@@ -142,14 +142,14 @@ namespace Tests.IntegrationTests
             var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
             var retrievedPet = (await petDomain.RetrieveFullPetInformation(createPet.PetId)).First();
 
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Equal(nonPersistedPet.PetName, createPet.PetName);
-            Assert.Equal(nonPersistedPet.PetName, retrievedPet.Pet.PetName);
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Equal(nonPersistedPet.Name, createPet.Name);
+            Assert.Equal(nonPersistedPet.Name, retrievedPet.Pet.Name);
             Assert.Equal(retrievedPet.Pet.PetId, createPet.PetId);
             Assert.Equal(retrievedPet.Pet.SpeciesId, nonPersistedPet.SpeciesId);
             Assert.Equal(retrievedPet.Pet.ColorId, nonPersistedPet.ColorId);
-            Assert.Equal(retrievedPet.Color.PetColorConfigID, nonPersistedPet.ColorId);
-            Assert.Equal(retrievedPet.Species.PetSpeciesConfigID, nonPersistedPet.SpeciesId);
+            Assert.Equal(retrievedPet.Color.PetColorConfigId, nonPersistedPet.ColorId);
+            Assert.Equal(retrievedPet.Species.PetSpeciesConfigId, nonPersistedPet.SpeciesId);
         }
 
         [Fact]

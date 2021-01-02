@@ -41,7 +41,7 @@ namespace CritterServer.Game
             {
                 if (WinningTeam != null)
                 {
-                    SendSystemMessage($"{WinningTeam.Value.Pet.PetName} wins!");
+                    SendSystemMessage($"{WinningTeam.Value.Pet.Name} wins!");
                 }
                 else
                 {
@@ -85,15 +85,15 @@ namespace CritterServer.Game
                 //sync to DB and send messages
                 UpdatePetHealth(new List<(int PetId, int HpDelta)> { (Team1.Pet.PetId, team1DamageTaken), (Team2.Pet.PetId, team2DamageTaken) });
 
-                SendSystemMessage($"{Team1.Pet.PetName} {ConstructVerb(Team1Move, team1DamageIssued, Team2.Pet)}!");
-                SendSystemMessage($"{Team2.Pet.PetName} {ConstructVerb(Team2Move, team2DamageIssued, Team1.Pet)}!");
+                SendSystemMessage($"{Team1.Pet.Name} {ConstructVerb(Team1Move, team1DamageIssued, Team2.Pet)}!");
+                SendSystemMessage($"{Team2.Pet.Name} {ConstructVerb(Team2Move, team2DamageIssued, Team1.Pet)}!");
                 if (Team1.Pet.CurrentHitPoints == 0)
                 {
-                    SendSystemMessage($"{Team1.Pet.PetName} is knocked out!");
+                    SendSystemMessage($"{Team1.Pet.Name} is knocked out!");
                 }
                 if (Team2.Pet.CurrentHitPoints == 0)
                 {
-                    SendSystemMessage($"{Team2.Pet.PetName} is knocked out!");
+                    SendSystemMessage($"{Team2.Pet.Name} is knocked out!");
                 }
                 //at the very end, null out moves and begin next turn
                 Team1Move = null;
@@ -199,9 +199,9 @@ namespace CritterServer.Game
         {
             switch (fightMove.Action)
             {
-                case BattleMove.AttackAction.Dodge: return $"dodges {enemy.PetName}";
-                case BattleMove.AttackAction.QuickAttack: return $"jabs {enemy.PetName} for {damageIssued}";
-                case BattleMove.AttackAction.HeavyAttack: return $"slams {enemy.PetName} for {damageIssued}";//and welcome to the jam
+                case BattleMove.AttackAction.Dodge: return $"dodges {enemy.Name}";
+                case BattleMove.AttackAction.QuickAttack: return $"jabs {enemy.Name} for {damageIssued}";
+                case BattleMove.AttackAction.HeavyAttack: return $"slams {enemy.Name} for {damageIssued}";//and welcome to the jam
                 default: return "does nothing at all";
             }
         }

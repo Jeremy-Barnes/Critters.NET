@@ -1,9 +1,12 @@
-CREATE COLLATION case_insensitive_collat (
+CREATE COLLATION IF NOT EXISTS case_insensitive_collat (
   provider = 'icu',
   locale = '@colStrength=secondary',
   deterministic = false
 );
-
+drop index if exists ix_leaderboard_ranking;
+drop table if exists leaderboardEntries;
+drop table if exists gameConfigs;
+drop table if exists friendships;
 drop table if exists pets;
 drop table if exists petSpeciesConfigs;
 drop table if exists petColorConfigs;
@@ -12,6 +15,7 @@ drop table if exists messages;
 drop table if exists channelUsers;
 drop table if exists channels;
 drop table if exists users;
+
 
 CREATE TABLE IF NOT EXISTS users(
     userID SERIAL NOT NULL PRIMARY KEY,
@@ -29,7 +33,7 @@ CREATE TABLE IF NOT EXISTS users(
     postcode VARCHAR(20),
     cash INT NOT NULL,
     isActive BOOLEAN NOT NULL DEFAULT 't',
-	dateJoined TIMESTAMP not null DEFAULT NOW(),
+	dateJoined TIMESTAMP not null DEFAULT (NOW() AT TIME ZONE 'utc'),
     isDev BOOLEAN NOT NULL DEFAULT 'f',
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
@@ -38,8 +42,8 @@ CREATE TABLE IF NOT EXISTS users(
 
 CREATE TABLE IF NOT EXISTS channels(
     channelID SERIAL NOT NULL PRIMARY KEY,
-    channelName VARCHAR(50),
-    createDate TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    name VARCHAR(50),
+    createDate TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS channelUsers(
@@ -47,15 +51,15 @@ CREATE TABLE IF NOT EXISTS channelUsers(
     memberID INT NOT NULL REFERENCES users(userID), 
 	PRIMARY KEY (channelID, memberID),
     admin BOOLEAN NOT NULL DEFAULT 'f',
-    joinDate TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    joinDate TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS messages(
     messageID SERIAL NOT NULL PRIMARY KEY,
     senderUserID INT NOT NULL REFERENCES users(userID),
-    dateSent TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    dateSent TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     messageText TEXT,
-    messageSubject VARCHAR(140),
+    subject VARCHAR(140),
     deleted BOOLEAN NOT NULL DEFAULT false,
     parentMessageID INT null REFERENCES messages(messageID), 
     channelID INT NOT NULL REFERENCES channels(channelID)
@@ -70,7 +74,7 @@ CREATE TABLE IF NOT EXISTS readReceipts(
 
 CREATE TABLE IF NOT EXISTS petSpeciesConfigs(
     petSpeciesConfigID SERIAL NOT NULL PRIMARY KEY,
-    speciesName VARCHAR(24) NOT NULL,
+    name VARCHAR(24) NOT NULL,
     maxHitPoints int NOT NULL,
     description VARCHAR(2000) NOT NULL,
     imageBasePath  VARCHAR(200) NOT NULL
@@ -78,7 +82,7 @@ CREATE TABLE IF NOT EXISTS petSpeciesConfigs(
 
 CREATE TABLE IF NOT EXISTS petColorConfigs(
     petColorConfigID SERIAL NOT NULL PRIMARY KEY,
-    colorName VARCHAR(24) NOT NULL,
+    name VARCHAR(24) NOT NULL,
     imagePatternPath varchar(200)
 );
 

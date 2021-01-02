@@ -32,10 +32,10 @@ namespace CritterServer.Domains
         {
             using (var trans = TransactionScopeFactory.Create())
             {
-                species.PetSpeciesConfigID = await ConfigRepo.CreatePetSpecies(species);
+                species.PetSpeciesConfigId = await ConfigRepo.CreatePetSpecies(species);
                 trans.Complete();
             }
-            species = (await ConfigRepo.RetrieveSpeciesByIds(species.PetSpeciesConfigID)).FirstOrDefault();
+            species = (await ConfigRepo.RetrieveSpeciesByIds(species.PetSpeciesConfigId)).FirstOrDefault();
             return species;
         }
 
@@ -43,10 +43,10 @@ namespace CritterServer.Domains
         {
             using (var trans = TransactionScopeFactory.Create())
             {
-                color.PetColorConfigID = await ConfigRepo.CreatePetColor(color);
+                color.PetColorConfigId = await ConfigRepo.CreatePetColor(color);
                 trans.Complete();
             }
-            color = (await ConfigRepo.RetrieveColorsByIds(color.PetColorConfigID)).FirstOrDefault();
+            color = (await ConfigRepo.RetrieveColorsByIds(color.PetColorConfigId)).FirstOrDefault();
             return color;
         }
 

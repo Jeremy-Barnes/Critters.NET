@@ -21,15 +21,15 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId)
         {
-            int newMessageId = (await dbConnection.QueryAsync<int>("INSERT INTO messages(senderUserID, dateSent, messageText, messageSubject, deleted, parentMessageID, channelID)" +
-               "VALUES(@senderUserId, @dateSent, @messageText, @messageSubject, @deleted, @parentMessageId, @channelId) RETURNING messageID",
+            int newMessageId = (await dbConnection.QueryAsync<int>("INSERT INTO messages(senderUserID, dateSent, messageText, subject, deleted, parentMessageID, channelID)" +
+               "VALUES(@senderUserId, @dateSent, @messageText, @channelNamemessageSubject, @deleted, @parentMessageId, @channelId) RETURNING messageID",
                new
                {
                    senderUserId = senderUserId,
                    read = false,
                    dateSent = DateTime.Now,
                    messageText = message.MessageText,
-                   messageSubject = message.MessageSubject,
+                   messageSubject = message.Subject,
                    deleted = false,
                    parentMessageId = message.ParentMessageId,
                    channelId = message.ChannelId
@@ -74,8 +74,6 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Message>> RetrieveMessagesSinceMessage(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue)
         {
-
-
             string joinTables = string.Join(" AND ", new string[] { unreadOnly ? "readReceipts rr" : "", channelId.HasValue || !unreadOnly ? "channelUsers cu" : "" }
             .Where(s => s.Length > 0));
 
@@ -134,7 +132,6 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId)
         {
-
             var output = await dbConnection.QueryAsync<int>(
                 $@"SELECT memberID from channelUsers
                     WHERE channelID = @channelId",
@@ -160,8 +157,7 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreateChannel(string channelName)
         {
-
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO channels(channelName)" +
+            int output = (await dbConnection.QueryAsync<int>("INSERT INTO channels(name)" +
                "VALUES(@channelName) RETURNING channelID",
                new
                {
@@ -172,7 +168,6 @@ namespace CritterServer.DataAccess
 
         public async Task AddUsersToChannel(int channelId, IEnumerable<int> userIds)
         {
-
             int rowsUpdated = await dbConnection.ExecuteAsync("INSERT INTO channelUsers(channelID, memberID)" +
                "VALUES(@channelId, @userId)",
                userIds.Distinct().Select(uid =>
@@ -185,7 +180,6 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Channel>> FindChannelsWithMembers(IEnumerable<int> userIds, bool exactMatch)
         {
-
             await dbConnection.ExecuteAsync(@"
                 CREATE TEMP TABLE findChannelMembers(userID int);");
             await dbConnection.ExecuteAsync(@"INSERT INTO findChannelMembers(userID) VALUES
@@ -218,7 +212,6 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<Channel>> GetChannels(params int[] channelIds)
         {
-
             var output = await dbConnection.QueryAsync<Channel>(@"
                 SELECT * FROM channels
                 WHERE channelID = ANY(@channelIds)",
@@ -231,7 +224,6 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<int>> GetChannelsForUser(int userId)
         {
-
             var output = await dbConnection.QueryAsync<int>("SELECT channelID FROM channelUsers WHERE memberID = @userId",
                new
                {
@@ -239,18 +231,15 @@ namespace CritterServer.DataAccess
                });
             return output;
         }
-
     }
 
     public interface IMessageRepository : IRepository
     {
         Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId);
-        //Task<List<Message>> RetrieveChannelConversation(int channelId, int userId, int? pageDelimiterMessageId);
         Task<IEnumerable<Message>> RetrieveMessagesSinceMessage(int userId, int? channelId, bool unreadOnly, int pageDelimiterMessageId = Int32.MaxValue);
         Task<IEnumerable<Message>> RetrieveReplyThread(int userId, int pageDelimiterMessageId);
         Task<int> ReadMessages(IEnumerable<int> readMessageIds, int userId);
         Task<int> DeleteMessages(IEnumerable<int> deleteMessageIds, int userId);
-
         Task<IEnumerable<int>> GetAllChannelMemberIds(int channelId);
         Task<bool> UserIsChannelMember(int channelId, int userId);
         Task<int> CreateChannel(string channelName);

@@ -19,12 +19,11 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreatePetSpecies(PetSpeciesConfig species)
         {
-
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO petSpeciesConfigs(speciesName, maxHitPoints, description, imageBasePath)" +
+            int output = (await dbConnection.QueryAsync<int>("INSERT INTO petSpeciesConfigs(name, maxHitPoints, description, imageBasePath)" +
                 "VALUES(@speciesName, @maxHP, @desc, @image) RETURNING petSpeciesConfigID",
                 new
                 {
-                    speciesName = species.SpeciesName,
+                    speciesName = species.Name,
                     maxHP = species.MaxHitPoints,
                     desc = species.Description,
                     image = species.ImageBasePath
@@ -34,12 +33,11 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreatePetColor(PetColorConfig color)
         {
-
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO petColorConfigs(colorName, imagePatternPath)" +
+            int output = (await dbConnection.QueryAsync<int>("INSERT INTO petColorConfigs(name, imagePatternPath)" +
                 "VALUES(@color, @imagePath) RETURNING petColorConfigID",
                 new
                 {
-                    color = color.ColorName,
+                    color = color.Name,
                     imagePath = color.ImagePatternPath
                 })).First();
             return output;
@@ -47,29 +45,25 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<PetSpeciesConfig>> RetrieveSpeciesByIds(params int[] species)
         {
-
             return await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM petSpeciesConfigs WHERE petSpeciesConfigID = ANY(@species)",
                 new { species = species.Distinct().AsList() });
         }
 
         public async Task<IEnumerable<PetColorConfig>> RetrieveColorsByIds(params int[] colors)
         {
-
             var output = await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs WHERE petColorConfigID = ANY(@colors)",
                 new { colors = colors.Distinct().AsList() });
             return output;
         }
 
         public async Task<IEnumerable<PetSpeciesConfig>> RetrieveSpecies()
-        {
-
+        { 
             var output = await dbConnection.QueryAsync<PetSpeciesConfig>("SELECT * FROM petSpeciesConfigs");
             return output;
         }
 
         public async Task<IEnumerable<PetColorConfig>> RetrieveColors()
         {
-
             var output = await dbConnection.QueryAsync<PetColorConfig>("SELECT * FROM petColorConfigs");
             return output;
         }

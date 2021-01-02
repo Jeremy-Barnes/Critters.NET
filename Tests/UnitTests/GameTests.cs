@@ -87,7 +87,7 @@ namespace Tests.UnitTests
                 Level = 0,
                 OwnerId = 2,
                 PetId = 1,
-                PetName = "The Cheat",
+                Name = "The Cheat",
                 SpeciesId = 1
             };
 
@@ -100,7 +100,7 @@ namespace Tests.UnitTests
                 Level = 0,
                 OwnerId = 1,
                 PetId = 2,
-                PetName = "The Sneak",
+                Name = "The Sneak",
                 SpeciesId = 2
             };
 
@@ -113,7 +113,7 @@ namespace Tests.UnitTests
                 Level = 0,
                 OwnerId = 3,
                 PetId = 3,
-                PetName = "Stripe`d Green Rabbit",
+                Name = "Stripe`d Green Rabbit",
                 SpeciesId = 3
             };
 

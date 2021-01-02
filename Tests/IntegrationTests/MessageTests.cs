@@ -72,7 +72,7 @@ namespace Tests.IntegrationTests
                 {
                     messageIds.Add(scope.MessageDomain.SendMessage(new Message
                     {
-                        MessageSubject = $"This message created at {DateTime.UtcNow}",
+                        Subject = $"This message created at {DateTime.UtcNow}",
                         MessageText = $"My dearest {receiver.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{sender.FirstName}",
                         ChannelId = channel,
                         ParentMessageId = parentId
@@ -143,7 +143,7 @@ namespace Tests.IntegrationTests
                 var generatedChannelId = scope.MessageDomain.CreateChannel(context.AUser1, $"{context.GetRandomString(30)}Component", new List<string> { context.AUser2.UserName }).Result;
                 var messageIdGenerated = scope.MessageDomain.SendMessage(new Message
                 {
-                    MessageSubject = $"This message created at {DateTime.UtcNow}",
+                    Subject = $"This message created at {DateTime.UtcNow}",
                     MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
                     ChannelId = generatedChannelId
                 },
@@ -162,7 +162,7 @@ namespace Tests.IntegrationTests
 
                 Assert.Throws<AggregateException>(() => scope.MessageDomain.SendMessage(new Message
                 {
-                    MessageSubject = $"This message created at {DateTime.UtcNow}",
+                    Subject = $"This message created at {DateTime.UtcNow}",
                     MessageText = $"My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
                 },
                     context.AUser1).Wait());
@@ -176,7 +176,7 @@ namespace Tests.IntegrationTests
             {
                 Assert.Throws<AggregateException>(() => scope.MessageDomain.SendMessage(new Message
                 {
-                    MessageSubject = $"This message created at {DateTime.UtcNow}",
+                    Subject = $"This message created at {DateTime.UtcNow}",
                     MessageText = $"{context.GetRandomString(6)} My dearest {context.AUser2.FirstName}, I hope this component test passes and finds you well. Happy {DateTime.UtcNow.DayOfWeek}! -{context.AUser1.FirstName}",
                     ChannelId = -1
                 },

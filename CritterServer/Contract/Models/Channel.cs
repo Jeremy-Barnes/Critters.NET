@@ -12,7 +12,7 @@ namespace CritterServer.Models
     {
         public int ChannelId { get; set; }
         [MaxLength(50)]
-        public string ChannelName { get; set; }
+        public string Name { get; set; }
         public DateTime CreateDate { get; set; }
     }
 }

@@ -20,12 +20,16 @@ namespace CritterServer.Controllers
     [ApiController]
     public class GameController : ControllerBase
     {
-        GameManagerService GameManager;
-        public GameController(GameManagerService gameManager)
+        MultiplayerGameService GameManager;
+        GameDomain GameDomain;
+        public GameController(MultiplayerGameService gameManager, GameDomain gameDomain)
         {
-            this.GameManager = gameManager;
+            GameManager = gameManager;
+            GameDomain = gameDomain;
+
         }
 
+#region multiplayer
         [HttpPut("create/{gameId}/{gameType}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -60,6 +64,7 @@ namespace CritterServer.Controllers
             if (await GameManager.RequestJoinGame(gameId, activeUser, joinGameData)) return Ok();
             else return NotFound();
         }
+        #endregion
     }
 
 

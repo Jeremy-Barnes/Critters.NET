@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public abstract class CustomClientGame<T,H> : Game where T : class, IGameClient where H : BaseGameHub<T>
+    public abstract class CustomClientGame<T,H> : MultiplayerGame where T : class, IGameClient where H : BaseGameHub<T>
     {
         public CustomClientGame(User host, IServiceProvider services, Action<string> gameEndCallBack, string gameName = null) : base(host, services, gameEndCallBack, gameName) { }
 
@@ -75,7 +75,7 @@ namespace CritterServer.Game
         }
     }
 
-    public abstract class Game
+    public abstract class MultiplayerGame
     {
         public User Host { get; protected set; }
         public string Id { get; protected set; }
@@ -89,7 +89,7 @@ namespace CritterServer.Game
 
         private Action<string> GameEndCallBack;
 
-        public Game(User host, IServiceProvider services, Action<string> gameEndCallBack, string gameName = null)
+        public MultiplayerGame(User host, IServiceProvider services, Action<string> gameEndCallBack, string gameName = null)
         {
             this.Host = host;
             this.Ticks = 0;
@@ -157,7 +157,7 @@ namespace CritterServer.Game
 
         public abstract Task TerminateGame();
 
-        ~Game()
+        ~MultiplayerGame()
         {
             GameOver = true;
             TerminateGame();
