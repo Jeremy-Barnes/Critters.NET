@@ -33,8 +33,10 @@ CREATE TABLE IF NOT EXISTS users(
     postcode VARCHAR(20),
     cash INT NOT NULL,
     isActive BOOLEAN NOT NULL DEFAULT 't',
-	dateJoined TIMESTAMP not null DEFAULT (NOW() AT TIME ZONE 'utc'),
     isDev BOOLEAN NOT NULL DEFAULT 'f',
+    isActive BOOLEAN NOT NULL DEFAULT true
+	dateJoined TIMESTAMP not null DEFAULT (NOW() AT TIME ZONE 'utc'),
+    isDev BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
     CHECK (gender IN ('male','female','other'))
@@ -43,7 +45,7 @@ CREATE TABLE IF NOT EXISTS users(
 CREATE TABLE IF NOT EXISTS channels(
     channelID SERIAL NOT NULL PRIMARY KEY,
     name VARCHAR(50),
-    createDate TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+    createDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS channelUsers(
@@ -51,13 +53,13 @@ CREATE TABLE IF NOT EXISTS channelUsers(
     memberID INT NOT NULL REFERENCES users(userID), 
 	PRIMARY KEY (channelID, memberID),
     admin BOOLEAN NOT NULL DEFAULT 'f',
-    joinDate TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
+    joinDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS messages(
     messageID SERIAL NOT NULL PRIMARY KEY,
     senderUserID INT NOT NULL REFERENCES users(userID),
-    dateSent TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+    dateSent TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     messageText TEXT,
     subject VARCHAR(140),
     deleted BOOLEAN NOT NULL DEFAULT false,
@@ -68,7 +70,7 @@ CREATE TABLE IF NOT EXISTS messages(
 CREATE TABLE IF NOT EXISTS readReceipts(
     messageID INT NOT NULL REFERENCES messages(messageID),
     recipientID INT NOT NULL REFERENCES users(userID),
-    read BOOLEAN NOT NULL DEFAULT 'f',
+    read BOOLEAN NOT NULL DEFAULT false,
     PRIMARY KEY (messageID, recipientID)
 );
 
@@ -95,7 +97,7 @@ CREATE TABLE IF NOT EXISTS pets(
     colorID INT NOT NULL REFERENCES petColorConfigs(petColorConfigID),
     ownerID INT NULL REFERENCES users(userID),
     speciesID INT NOT NULL REFERENCES petSpeciesConfigs(petSpeciesConfigID),
-    isAbandoned boolean not null default 'f',
+    isAbandoned boolean NOT NULL default false,
     CHECK (gender IN ('male','female','other'))
 );
 
@@ -126,3 +128,11 @@ CREATE INDEX IF NOT EXISTS ix_leaderboard_ranking ON leaderboardEntries(gameID D
 INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
 ('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 
 '$2a$11$6wlm9qA4W4DsGZVuncdDou', 'Chicago', 'IL', 'USA', '60613', 1000000000, true, '2020-06-02 20:53:18.636841', true)
+
+CREATE TABLE IF NOT EXISTS friendships(
+    requesterUserID INT NOT NULL REFERENCES users(userID),
+    requestedUserID INT NOT NULL REFERENCES users(userID),
+    accepted BOOLEAN NOT NULL DEFAULT false,
+    dateSent TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (requesterUserID, requestedUserID)
+);

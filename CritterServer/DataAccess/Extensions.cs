@@ -44,9 +44,9 @@ namespace CritterServer.DataAccess
                     {
                         IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted
                     };
-                    //var tran = new TransactionScope(
                     transaction = new TransactionScope(TransactionScopeOption.Required, txnOpts, TransactionScopeAsyncFlowOption.Enabled);
-                } else
+                } 
+                else
                 {
                     transaction = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
                 }
@@ -70,57 +70,10 @@ namespace CritterServer.DataAccess
                 throw ex;
             }
         }
-
-        //public TransactionScope Create()
-        //{
-        //    try
-        //    {
-        //        var transaction = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-        //        if (this.DbConnection is DbConnection)
-        //        {
-        //            var dbc = DbConnection as DbConnection;
-
-        //            if (dbc.State != ConnectionState.Open)
-        //            {
-        //                dbc.Open();
-        //            }
-        //            //else
-        //            {
-        //                dbc.EnlistTransaction(System.Transactions.Transaction.Current);
-        //            }
-        //        }
-        //        return transaction;
-        //    } catch(Exception ex)
-        //    {
-        //        throw ex;
-        //    }
-        //}
     }
 
     public interface ITransactionScopeFactory 
     {
         public abstract TransactionScope Create();
     }
-
-    public class Txn : IDisposable
-    {
-        bool committed = false;
-        IDbTransaction tx;
-        public Txn(IDbTransaction tx)
-        {
-            this.tx = tx;
-        }
-        public void Commit()
-        {
-            tx.Commit();
-        }
-        public void Dispose()
-        {
-            if (!committed)
-            {
-                tx.Rollback();
-            }
-        }
-    }
-
 }

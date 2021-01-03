@@ -10,17 +10,20 @@ using CritterServer.DataAccess;
 using CritterServer.Domains.Components;
 using CritterServer.Models;
 using Dapper;
-using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+
 namespace CritterServer.Domains
 {
     public class UserDomain
     {
         IUserRepository UserRepo;
+        IFriendshipRepository FriendRepo;
         IJwtProvider JWTProvider;
         ITransactionScopeFactory TransactionScopeFactory;
-        public UserDomain(IUserRepository userRepo, IJwtProvider jwtProvider, ITransactionScopeFactory transactionScopeFactory)
+        public UserDomain(IUserRepository userRepo, IFriendshipRepository friendRepo, IJwtProvider jwtProvider, ITransactionScopeFactory transactionScopeFactory)
         {
             UserRepo = userRepo;
+            FriendRepo = friendRepo;
             JWTProvider = jwtProvider;
             TransactionScopeFactory = transactionScopeFactory;
         }
@@ -107,7 +110,6 @@ namespace CritterServer.Domains
                 trans.Complete();
             }
             return user;
-
         }
 
         public async Task ChangeUsersCash(List<(int UserId, int CashDelta)> userIdAndCashDeltas)
@@ -118,6 +120,89 @@ namespace CritterServer.Domains
                 trans.Complete();
             }
         }
-    }
 
+
+        public async Task<IEnumerable<FriendshipDetails>> RetrieveFriends(User activeUser)
+        {
+            IEnumerable<Friendship> dbShips = await FriendRepo.RetrieveFriendships(activeUser.UserId);
+
+            IEnumerable<int> friendsIds = dbShips.Select(dbs => 
+                dbs.RequestedUserId == activeUser.UserId ? dbs.RequesterUserId : dbs.RequestedUserId);
+
+            var dbFriends = (await UserRepo.RetrieveUsersByIds(friendsIds.ToArray())).ToDictionary(user => user.UserId);
+            dbFriends.Add(activeUser.UserId, activeUser);
+
+            var friendshipDetails = dbShips
+                .Where(dbs => dbFriends.ContainsKey(dbs.RequesterUserId) && dbFriends.ContainsKey(dbs.RequestedUserId))
+                .Select(dbs => new FriendshipDetails()
+                {
+                    Friendship = dbs,
+                    RequestedUserName = dbFriends[dbs.RequestedUserId].UserName,
+                    RequesterUserName = dbFriends[dbs.RequesterUserId].UserName
+                });
+            return friendshipDetails;
+        }
+
+
+        public async Task<FriendshipDetails> UpdateFriendship(string friendUserName, User activeUser, bool unfriend)
+        {
+            User friend = (await UserRepo.RetrieveUsersByUserName(friendUserName)).FirstOrDefault();
+            if(friend == null || friend.UserId == activeUser.UserId)
+            {
+                string badRequestMsg = null;
+                if(friend.UserId == activeUser.UserId)
+                {
+                    badRequestMsg = "You're already friends with yourself, silly.";
+                }
+                throw new CritterException(badRequestMsg??$"No one exists with that name: {friendUserName}!",
+                    $"Invalid friendrequest sent by User {activeUser.UserId} to {friendUserName}", System.Net.HttpStatusCode.NotFound);
+            }
+            Friendship dbShip = (await FriendRepo.RetrieveFriendships(activeUser.UserId, friend.UserId)).FirstOrDefault();
+            bool success = false;
+            if(dbShip == null)
+            {
+                if(unfriend)
+                {
+                    throw new CritterException($"You can't unfriend {friend.UserName}, you aren't friends to start with!",
+                        $"Attempted to delete nonextant friendship for " +
+                        $"{activeUser.UserName } : {activeUser.UserId} and {friendUserName} : {friend.UserId}",
+                        System.Net.HttpStatusCode.NotFound);
+                }
+                success = await FriendRepo.CreateFriendship(activeUser.UserId, friend.UserId);
+                dbShip = new Friendship() { Accepted = false, DateSent = DateTime.UtcNow };
+            } 
+            else
+            {
+                if (dbShip.RequesterUserId == activeUser.UserId && !unfriend)
+                {
+                    throw new CritterException($"Relax! {friendUserName} will get your request.",
+                    $"Weird double tap on Friendship for " +
+                    $"{activeUser.UserName} : {activeUser.UserId} and {friendUserName} : {friend.UserId} \r\n " +
+                    $"{JsonConvert.SerializeObject(dbShip, Formatting.Indented)}", System.Net.HttpStatusCode.BadRequest);
+                }
+                else if (dbShip.RequestedUserId == activeUser.UserId && !unfriend)
+                {
+                    success = await FriendRepo.AcceptFriendship(activeUser.UserId, friend.UserId);
+                    dbShip.Accepted = true;
+                } 
+                else if (unfriend)
+                {
+                    success = await FriendRepo.DeleteFriendship(activeUser.UserId, friend.UserId);
+                }
+            }
+            if (!success)
+            {
+                throw new CritterException($"Couldn't update your friendship with {friendUserName}! Try again!",
+                    $"Failed DB update on Friendship for " +
+                    $"{activeUser.UserName} : {activeUser.UserId} and {friendUserName} : {friend.UserId} \r\n " +
+                    $"{JsonConvert.SerializeObject(dbShip, Formatting.Indented)}", System.Net.HttpStatusCode.InternalServerError);
+            }
+            return new FriendshipDetails()
+            {
+                RequesterUserName = activeUser.UserName,
+                RequestedUserName = friend.UserName,
+                Friendship = dbShip
+            };
+        }
+    }
 }

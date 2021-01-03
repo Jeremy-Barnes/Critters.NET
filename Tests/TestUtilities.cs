@@ -1,4 +1,6 @@
-﻿using CritterServer.Models;
+﻿using CritterServer.Domains.Components;
+using CritterServer.Models;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,6 +17,19 @@ namespace Tests
         }
 
         protected static string jwtSecretKey = "T25lIEV4Y2VwdGlvbmFsbHkgTG9uZyBTZWNyZXQgS2V5IFBsZWFzZSEgRm9yIFJlYWwhIEV2ZW4gTG9uZ2VyIFRoYW4gWW91J2QgUmVhc29uYWJseSBBbnRpY2lwYXRl";
+
+        public JwtProvider JWTProvider = new JwtProvider(
+          jwtSecretKey,
+          new TokenValidationParameters
+          {
+              IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey)),
+              ValidIssuer = "critters!",
+              ValidateAudience = false,
+              ValidateActor = false,
+              ValidateLifetime = true,
+              ValidateIssuerSigningKey = true,
+              RequireExpirationTime = true
+          });
 
 
         public User RandomUserNotPersisted()

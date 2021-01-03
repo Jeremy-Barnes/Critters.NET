@@ -17,30 +17,17 @@ namespace Tests.IntegrationTests
 {
     /// <summary>
     /// Creaated once, reused for all tests in PetTests
-    /// Used to hold expensive resources that can be reused (like a DB connection!)
+    /// Used to set up durable resources that can be reused (like users!)
     /// </summary>
     public class PetTestsContext : TestUtilities
     {
-        UserDomain userAccountDomain => new UserDomain(userRepo, jwtProvider, new TransactionScopeFactory(scopedDbConn));
-        PetDomain petDomain => new PetDomain(petRepo, cfgRepo, new TransactionScopeFactory(scopedDbConn));
-        public IDbConnection scopedDbConn;
+        private UserDomain userAccountDomain => new UserDomain(UserRepo, null, JWTProvider, new TransactionScopeFactory(DBConn));
+        private PetDomain petDomain => new PetDomain(PetRepo, CfgRepo, new TransactionScopeFactory(DBConn));
+        private IDbConnection DBConn;
 
-        IUserRepository userRepo => new UserRepository(scopedDbConn);
-        IPetRepository petRepo => new PetRepository(scopedDbConn);
-        IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);
-
-        public JwtProvider jwtProvider = new JwtProvider(
-            jwtSecretKey,
-            new TokenValidationParameters
-            {
-                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey)),
-                ValidIssuer = "critters!",
-                ValidateAudience = false,
-                ValidateActor = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                RequireExpirationTime = true
-            });
+        private IUserRepository UserRepo => new UserRepository(DBConn);
+        private IPetRepository PetRepo => new PetRepository(DBConn);
+        private IConfigRepository CfgRepo => new ConfigRepository(DBConn);
 
         public int PetColor1;
         public int PetColor2;
@@ -51,45 +38,45 @@ namespace Tests.IntegrationTests
 
         public PetTestsContext()
         {
-            scopedDbConn = GetNewDbConnection();
-            //scopedDbConn.Open();
-            PetColor1 = cfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
-            PetColor2 = cfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
-            PetSpecies1 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
-            PetSpecies2 = cfgRepo.CreatePetSpecies(new PetSpeciesConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com" }).Result;
-            var uid1 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
-            var uid2 = userRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
-            var users = userRepo.RetrieveUsersByIds(uid1, uid2).Result;
+            DBConn = GetNewDbConnection();
+            PetColor1 = CfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
+            PetColor2 = CfgRepo.CreatePetColor(new PetColorConfig() { ColorName = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
+            PetSpecies1 = CfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
+            PetSpecies2 = CfgRepo.CreatePetSpecies(new PetSpeciesConfig() { SpeciesName = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com" }).Result;
+            var uid1 = UserRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
+            var uid2 = UserRepo.CreateUser(RandomUserNotPersisted()).Result.Value;
+            var users = UserRepo.RetrieveUsersByIds(uid1, uid2).Result;
             OwnerUser1 = users.AsList()[0];
             OwnerUser2 = users.AsList()[1];
         }
-
     }
 
     public class PetTests : IClassFixture<PetTestsContext>
     {
-        PetTestsContext context;
-        public UserDomain userAccountDomain => new UserDomain(userRepo, context.jwtProvider, new TransactionScopeFactory(scopedDbConn));
-        public PetDomain petDomain => new PetDomain(petRepo, cfgRepo, new TransactionScopeFactory(scopedDbConn));
-        IDbConnection scopedDbConn;
-        public IUserRepository userRepo => new UserRepository(scopedDbConn);
-        public IPetRepository petRepo => new PetRepository(scopedDbConn);
-        public IConfigRepository cfgRepo => new ConfigRepository(scopedDbConn);
+        PetTestsContext Context;
+        public UserDomain UserAccountDomain => new UserDomain(UserRepo, FriendRepo, Context.JWTProvider, new TransactionScopeFactory(TestScopedDBConn));
+        public PetDomain PetDomain => new PetDomain(PetRepo, CfgRepo, new TransactionScopeFactory(TestScopedDBConn));
+        IDbConnection TestScopedDBConn;
+        public IUserRepository UserRepo => new UserRepository(TestScopedDBConn);
+        public IFriendshipRepository FriendRepo => new FriendshipRepository(TestScopedDBConn);
+
+        public IPetRepository PetRepo => new PetRepository(TestScopedDBConn);
+        public IConfigRepository CfgRepo => new ConfigRepository(TestScopedDBConn);
 
         public PetTests(PetTestsContext context)
         {
-            this.context = context;
-            this.scopedDbConn = context.GetNewDbConnection();
+            this.Context = context;
+            this.TestScopedDBConn = context.GetNewDbConnection();
         }
 
         [Fact]
         public async void CreateAndRetrievePetById()
         {
-            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
+            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
 
-            var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
+            var createPet = await PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1);
 
-            var retrievedPet = (await petDomain.RetrievePets(createPet.PetId)).FirstOrDefault();
+            var retrievedPet = (await PetDomain.RetrievePets(createPet.PetId)).FirstOrDefault();
             
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
@@ -106,9 +93,9 @@ namespace Tests.IntegrationTests
         [Fact]
         public async void CreateAndRetrievePetByOwner()
         {
-            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
-            var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
-            var retrievedPets = (await petDomain.RetrievePetsByOwner(context.OwnerUser1.UserId)).AsList();
+            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+            var createPet = await PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1);
+            var retrievedPets = (await PetDomain.RetrievePetsByOwner(Context.OwnerUser1.UserId)).AsList();
 
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
@@ -121,9 +108,9 @@ namespace Tests.IntegrationTests
         [Fact]
         public async void CreateAndRetrieveFullPetByOwner()
         {
-            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
-            var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
-            var retrievedPets = (await petDomain.RetrieveFullPetInformationByOwner(context.OwnerUser1.UserId)).AsList();
+            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+            var createPet = await PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1);
+            var retrievedPets = (await PetDomain.RetrieveFullPetInformationByOwner(Context.OwnerUser1.UserId)).AsList();
 
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
@@ -138,9 +125,9 @@ namespace Tests.IntegrationTests
         [Fact]
         public async void CreateAndRetrieveFullPetById()
         {
-            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, context.PetSpecies1, context.OwnerUser1.UserId);
-            var createPet = await petDomain.CreatePet(nonPersistedPet, context.OwnerUser1);
-            var retrievedPet = (await petDomain.RetrieveFullPetInformation(createPet.PetId)).First();
+            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+            var createPet = await PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1);
+            var retrievedPet = (await PetDomain.RetrieveFullPetInformation(createPet.PetId)).First();
 
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
             Assert.Equal(nonPersistedPet.Name, createPet.Name);
@@ -155,27 +142,27 @@ namespace Tests.IntegrationTests
         [Fact]
         public void CreateWithInvalidSpeciesFails()
         {
-            var nonPersistedPet = context.RandomPetNotPersisted(context.PetColor2, Int32.MinValue, context.OwnerUser1.UserId);
-            Assert.ThrowsAsync<CritterException>(() => petDomain.CreatePet(nonPersistedPet, context.OwnerUser1));
+            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Int32.MinValue, Context.OwnerUser1.UserId);
+            Assert.ThrowsAsync<CritterException>(() => PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1));
         }
 
         [Fact]
         public void CreateWithInvalidColorFails()
         {
-            var nonPersistedPet = context.RandomPetNotPersisted(Int32.MinValue, context.PetSpecies1, context.OwnerUser1.UserId);
-            Assert.ThrowsAsync<CritterException>(() => petDomain.CreatePet(nonPersistedPet, context.OwnerUser1));
+            var nonPersistedPet = Context.RandomPetNotPersisted(Int32.MinValue, Context.PetSpecies1, Context.OwnerUser1.UserId);
+            Assert.ThrowsAsync<CritterException>(() => PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1));
         }
 
         [Fact]
         public void RetrieveSpecies()
         {
-            Assert.NotEmpty(petDomain.RetrieveAvailableSpecies(context.OwnerUser1).Result);
+            Assert.NotEmpty(PetDomain.RetrieveAvailableSpecies(Context.OwnerUser1).Result);
         }
 
         [Fact]
         public void RetrieveColors()
         {
-            Assert.NotEmpty(petDomain.RetrieveAvailableColors(context.OwnerUser1).Result);
+            Assert.NotEmpty(PetDomain.RetrieveAvailableColors(Context.OwnerUser1).Result);
         }
 
     }
