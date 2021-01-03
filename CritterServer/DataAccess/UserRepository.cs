@@ -19,10 +19,10 @@ namespace CritterServer.DataAccess
 
         public async Task<int?> CreateUser(User user)
         {
-            int? output = (await dbConnection.QueryAsync<int?>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
-                "isActive, salt)" +
-                "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
-                "@isActive, @salt) RETURNING userID",
+            int? output = (await dbConnection.QueryAsync<int?>(@"INSERT INTO users(
+                userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, isActive, salt) 
+                VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, @isActive, @salt) 
+                RETURNING userID",
                 new
                 {
                     userName = user.UserName,
@@ -94,10 +94,10 @@ namespace CritterServer.DataAccess
         public int CreateDeveloper(User developer)
         {
 
-            int output = dbConnection.Query<int>("INSERT INTO users(userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, " +
-                "isActive, salt, isDev)" +
-                "VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, " +
-                "@isActive, @salt, @isDev) RETURNING userID",
+            int output = dbConnection.Query<int>(@"INSERT INTO users(
+                userName, firstName, lastName, emailAddress, password, gender, birthdate, cash, city, state, country, postcode, isActive, salt, isDev) 
+                VALUES(@userName, @firstName, @lastName, @emailAddress, @password, @gender, @birthdate, @cash, @city, @state, @country, @postcode, @isActive, @salt, @isDev) 
+                RETURNING userID",
                 new
                 {
                     userName = developer.UserName,

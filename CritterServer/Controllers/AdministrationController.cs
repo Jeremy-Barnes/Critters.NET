@@ -63,6 +63,16 @@ namespace CritterServer.Controllers
         {
             return Ok(await domain.CreatePetColor(color, activeUser));
         }
-        //todo delete species and color
+
+        [HttpPost("createGame")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer", Roles = RoleTypes.Dev)]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> CreateGame([FromBody] GameConfig game, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            return Ok(await domain.CreateGame(game, activeUser));
+        }
+        //todo delete species and color and game
     }
 }

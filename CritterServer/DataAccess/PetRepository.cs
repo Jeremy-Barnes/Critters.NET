@@ -20,8 +20,8 @@ namespace CritterServer.DataAccess
         public async Task<int> CreatePet(Pet pet, int ownerUserId)
         {
 
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO pets(name, gender, colorID, ownerID, speciesID, currentHitPoints, isAbandoned)" +
-                "VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @currentHitPoints, false) RETURNING petID",
+            int output = (await dbConnection.QueryAsync<int>(@"INSERT INTO pets(name, gender, colorID, ownerID, speciesID, currentHitPoints, isAbandoned) 
+                VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @currentHitPoints, false) RETURNING petID",
                 new
                 {
                     petName = pet.Name,

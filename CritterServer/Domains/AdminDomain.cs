@@ -50,6 +50,17 @@ namespace CritterServer.Domains
             return color;
         }
 
+        public async Task<GameConfig> CreateGame(GameConfig game, User activeDev)
+        {
+            using (var trans = TransactionScopeFactory.Create())
+            {
+                game.GameConfigId = await ConfigRepo.CreateGame(game);
+                trans.Complete();
+            }
+            game = (await ConfigRepo.RetrieveGamesConfigByIds(false, game.GameConfigId)).FirstOrDefault();
+            return game;
+        }
+
         public async Task<PetColorConfig> RetrievePetColorConfig(int cfgId)
         {
             return (await ConfigRepo.RetrieveColorsByIds(cfgId)).First();

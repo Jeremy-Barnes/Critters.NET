@@ -15,7 +15,7 @@ namespace CritterServer.Models
         [BindNever]
         public int PetId { get; set; }
         [MaxLength(24)]
-        public string PetName { get; set; }
+        public string Name { get; set; }
         public int Level { get; set; }
         public int CurrentHitPoints { get; set; }
         [AcceptedValues(false, true, "male", "female", "other")]
@@ -30,9 +30,9 @@ namespace CritterServer.Models
 
     public class PetSpeciesConfig
     {
-        public int PetSpeciesConfigID { get; set; }
+        public int PetSpeciesConfigId { get; set; }
         [MaxLength(24)]
-        public string SpeciesName { get; set; }
+        public string Name { get; set; }
         public int MaxHitPoints { get; set; }
         [MaxLength(2000)]
         public string Description { get; set; }
@@ -42,9 +42,9 @@ namespace CritterServer.Models
 
     public class PetColorConfig
     {
-        public int PetColorConfigID { get; set; }
+        public int PetColorConfigId { get; set; }
         [MaxLength(24)]
-        public string ColorName { get; set; }
+        public string Name { get; set; }
         [MaxLength(200)]
         public string ImagePatternPath { get; set; }
     }

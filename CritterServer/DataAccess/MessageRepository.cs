@@ -21,8 +21,8 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreateMessage(Message message, IEnumerable<int> recipientUserIds, int senderUserId)
         {
-            int newMessageId = (await dbConnection.QueryAsync<int>("INSERT INTO messages(senderUserID, dateSent, messageText, subject, deleted, parentMessageID, channelID)" +
-               "VALUES(@senderUserId, @dateSent, @messageText, @channelNamemessageSubject, @deleted, @parentMessageId, @channelId) RETURNING messageID",
+            int newMessageId = (await dbConnection.QueryAsync<int>(@"INSERT INTO messages(senderUserID, dateSent, messageText, subject, deleted, parentMessageID, channelID) 
+               VALUES(@senderUserId, @dateSent, @messageText, @messageSubject, @deleted, @parentMessageId, @channelId) RETURNING messageID",
                new
                {
                    senderUserId = senderUserId,
@@ -157,8 +157,8 @@ namespace CritterServer.DataAccess
 
         public async Task<int> CreateChannel(string channelName)
         {
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO channels(name)" +
-               "VALUES(@channelName) RETURNING channelID",
+            int output = (await dbConnection.QueryAsync<int>(@"INSERT INTO channels(name) 
+               VALUES(@channelName) RETURNING channelID",
                new
                {
                    channelName
@@ -168,8 +168,8 @@ namespace CritterServer.DataAccess
 
         public async Task AddUsersToChannel(int channelId, IEnumerable<int> userIds)
         {
-            int rowsUpdated = await dbConnection.ExecuteAsync("INSERT INTO channelUsers(channelID, memberID)" +
-               "VALUES(@channelId, @userId)",
+            int rowsUpdated = await dbConnection.ExecuteAsync(@"INSERT INTO channelUsers(channelID, memberID) 
+               VALUES(@channelId, @userId)",
                userIds.Distinct().Select(uid =>
                new
                {

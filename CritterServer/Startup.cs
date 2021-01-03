@@ -103,7 +103,7 @@ namespace CritterServer
             services.AddTransient<IConfigRepository, ConfigRepository>();
             services.AddTransient<IGameRepository, GameRepository>();
 
-            services.AddSingleton<IGameCache, GameCache>();
+            services.AddTransient<IGameCache, GameCache>();
             services.AddMemoryCache();
 
             //components

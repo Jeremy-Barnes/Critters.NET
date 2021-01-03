@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS petColorConfigs(
 
 CREATE TABLE IF NOT EXISTS pets(
     petID SERIAL NOT NULL PRIMARY KEY,
-    petName VARCHAR(24) NOT NULL,
+    name VARCHAR(24) NOT NULL,
     level int NOT NULL default 0,
     currentHitPoints int NOT NULL, 
     gender VARCHAR(8) NOT NULL,
@@ -98,6 +98,30 @@ CREATE TABLE IF NOT EXISTS pets(
     isAbandoned boolean not null default 'f',
     CHECK (gender IN ('male','female','other'))
 );
+
+CREATE TABLE IF NOT EXISTS gameConfigs(
+    gameConfigID SERIAL NOT NULL PRIMARY KEY,
+    isActive BOOLEAN DEFAULT false,
+    name VARCHAR(48) NOT NULL,
+    description VARCHAR(1000) NOT NULL,
+    iconPath VARCHAR(100) NOT NULL,
+	cashCap INT NULL,
+	dailyCashCountCap INT NULL,
+	scoreToCashFactor FLOAT NULL,
+	leaderboardMaxSpot INT NULL,
+    gameURL VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS leaderboardEntries(
+    gameID INT NOT NULL REFERENCES gameConfigs(gameConfigID),
+	score INT NOT NULL,
+    playerID INT NOT NULL REFERENCES users(userID),
+    dateSubmitted TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+	PRIMARY KEY (gameID, playerID)
+); 
+
+CREATE INDEX IF NOT EXISTS ix_leaderboard_ranking ON leaderboardEntries(gameID DESC, dateSubmitted DESC, score DESC) WITH (fillfactor = 50);
+
 
 INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
 ('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 
