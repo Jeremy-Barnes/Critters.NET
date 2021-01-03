@@ -52,7 +52,7 @@ namespace CritterServer.Pipeline.Middleware
             {
                 Log.Error(ex, "Error handled in Middleware");
                 responseCode = 500;
-                responseBody = ex.Message;
+                responseBody = "Ah jeez. Something went wrong!";
             }
             if (!string.IsNullOrEmpty(responseBody))
             {

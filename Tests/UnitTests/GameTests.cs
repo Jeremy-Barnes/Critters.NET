@@ -124,7 +124,7 @@ namespace Tests.UnitTests
             AddUser(Homsar);
             AddPet(StripedGreenRabbit);
             PetDomain = new PetDomain(PetRepo.Object, CfgRepo.Object, TransactionScopeFactory.Object);
-            UserDomain = new UserDomain(UserRepo.Object, null, TransactionScopeFactory.Object);
+            UserDomain = new UserDomain(UserRepo.Object, null, null, TransactionScopeFactory.Object);
 
             var battleHubContext = new Mock<IHubContext<BattleHub, IBattleClient>>();
             //var battleHub = new Mock<BattleHub>().Setup(bh => bh.AcceptChallenge(It.IsAny<string>(), It.IsAny<int>())).

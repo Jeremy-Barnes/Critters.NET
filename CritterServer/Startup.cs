@@ -98,6 +98,7 @@ namespace CritterServer
             services.AddTransient<IMessageRepository, MessageRepository>();
             services.AddTransient<IPetRepository, PetRepository>();
             services.AddTransient<IConfigRepository, ConfigRepository>();
+            services.AddTransient<IFriendshipRepository, FriendshipRepository>();
 
             //components
             services.AddHttpContextAccessor();

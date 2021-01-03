@@ -28,19 +28,6 @@ namespace Tests.IntegrationTests
         public User BUser1;
         public User BUser2;
 
-        public JwtProvider jwtProvider = new JwtProvider(
-            jwtSecretKey,
-            new TokenValidationParameters
-            {
-                IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtSecretKey)),
-                ValidIssuer = "critters!",
-                ValidateAudience = false,
-                ValidateActor = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                RequireExpirationTime = true
-            });
-
         public MessageTestsContext()
         {
             AUser1 = RandomUserNotPersisted();
@@ -58,7 +45,7 @@ namespace Tests.IntegrationTests
 
         public MessageTestScope GetScope()
         {
-            return new MessageTestScope(GetNewDbConnection(), jwtProvider);
+            return new MessageTestScope(GetNewDbConnection(), JWTProvider);
         }
 
 
@@ -97,9 +84,9 @@ namespace Tests.IntegrationTests
             this.JWTProvider = jwtProvider;
             UserRepo = new UserRepository(ScopedDbConn);
             var transactionScopeFactory = new TransactionScopeFactory(ScopedDbConn);
-            UserAccountDomain = new UserDomain(UserRepo, JWTProvider, transactionScopeFactory);
+            UserAccountDomain = new UserDomain(UserRepo, null, JWTProvider, transactionScopeFactory);
             MessageRepo = new MessageRepository(ScopedDbConn);
-
+            FriendRepo = new FriendshipRepository(ScopedDbConn);
             MessageDomain = new MessageDomain(MessageRepo, UserAccountDomain, null, transactionScopeFactory);
         }
 
@@ -107,7 +94,7 @@ namespace Tests.IntegrationTests
         public IUserRepository UserRepo;
         public MessageDomain MessageDomain;
         public IMessageRepository MessageRepo;
-
+        public IFriendshipRepository FriendRepo;
         public void Dispose()
         {
         }

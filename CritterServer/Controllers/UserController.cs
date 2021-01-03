@@ -56,9 +56,9 @@ namespace CritterServer.Controllers
         }
 
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [HttpGet]
         [Consumes("application/json")]
         [Produces("application/json")]
-
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetUser()
         {
@@ -75,6 +75,40 @@ namespace CritterServer.Controllers
             this.HttpContext.SignOutAsync("Cookie");
             return Ok();
         }
+
+        [HttpGet("friend")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetFriends([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            IEnumerable<FriendshipDetails> fs = await domain.RetrieveFriends(activeUser);
+            return Ok(fs);
+        }
+
+        [HttpPut("friend/{friendUserName}")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> AddFriend(string friendUserName, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            FriendshipDetails f = await domain.UpdateFriendship(friendUserName, activeUser, false);
+            return Ok(f);
+        }
+
+        [HttpDelete("friend/{friendUserName}")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> RemoveFriend(string friendUserName, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        {
+            await domain.UpdateFriendship(friendUserName, activeUser, true);
+            return Ok();
+        }
+
 
         private async Task addLoginCookie(HttpContext context, string userName, string email)
         {
