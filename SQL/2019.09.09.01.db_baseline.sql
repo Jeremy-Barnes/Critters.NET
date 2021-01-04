@@ -3,6 +3,7 @@ CREATE COLLATION IF NOT EXISTS case_insensitive_collat (
   locale = '@colStrength=secondary',
   deterministic = false
 );
+drop table if exists userMetaphones;
 drop index if exists ix_leaderboard_ranking;
 drop table if exists leaderboardEntries;
 drop table if exists gameConfigs;
@@ -32,11 +33,9 @@ CREATE TABLE IF NOT EXISTS users(
     country VARCHAR(50),
     postcode VARCHAR(20),
     cash INT NOT NULL,
-    isActive BOOLEAN NOT NULL DEFAULT 't',
-    isDev BOOLEAN NOT NULL DEFAULT 'f',
-    isActive BOOLEAN NOT NULL DEFAULT true
-	dateJoined TIMESTAMP not null DEFAULT (NOW() AT TIME ZONE 'utc'),
+    isActive BOOLEAN NOT NULL DEFAULT true,
     isDev BOOLEAN NOT NULL DEFAULT false,
+	dateJoined TIMESTAMP not null DEFAULT (NOW() AT TIME ZONE 'utc'),
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
     CHECK (gender IN ('male','female','other'))
@@ -52,7 +51,7 @@ CREATE TABLE IF NOT EXISTS channelUsers(
     channelID INT NOT NULL REFERENCES channels(channelID),
     memberID INT NOT NULL REFERENCES users(userID), 
 	PRIMARY KEY (channelID, memberID),
-    admin BOOLEAN NOT NULL DEFAULT 'f',
+    admin BOOLEAN NOT NULL DEFAULT false,
     joinDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
@@ -124,11 +123,6 @@ CREATE TABLE IF NOT EXISTS leaderboardEntries(
 
 CREATE INDEX IF NOT EXISTS ix_leaderboard_ranking ON leaderboardEntries(gameID DESC, dateSubmitted DESC, score DESC) WITH (fillfactor = 50);
 
-
-INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
-('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 
-'$2a$11$6wlm9qA4W4DsGZVuncdDou', 'Chicago', 'IL', 'USA', '60613', 1000000000, true, '2020-06-02 20:53:18.636841', true)
-
 CREATE TABLE IF NOT EXISTS friendships(
     requesterUserID INT NOT NULL REFERENCES users(userID),
     requestedUserID INT NOT NULL REFERENCES users(userID),
@@ -136,3 +130,13 @@ CREATE TABLE IF NOT EXISTS friendships(
     dateSent TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
 	PRIMARY KEY (requesterUserID, requestedUserID)
 );
+
+CREATE TABLE IF NOT EXISTS userMetaphones(
+    metaphone INT NOT NULL,
+    soundsLikeUserId INT NOT NULL REFERENCES users(userID),
+	PRIMARY KEY (metaphone, soundsLikeUserId)
+);
+
+INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
+('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 
+'$2a$11$6wlm9qA4W4DsGZVuncdDou', 'Chicago', 'IL', 'USA', '60613', 1000000000, true, '2020-06-02 20:53:18.636841', true)

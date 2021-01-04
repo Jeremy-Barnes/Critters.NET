@@ -20,4 +20,8 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Tools\DoubleMetaphone.NET\DoubleMetaphone.NET\DoubleMetaphone.NET.csproj" />
+  </ItemGroup>
+
 </Project>
