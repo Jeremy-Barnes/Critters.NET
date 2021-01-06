@@ -45,12 +45,13 @@ namespace CritterServer.DataAccess
 
         public async Task<User> RetrieveUserByEmail(string email)
         {
-
+            if (string.IsNullOrEmpty(email)) return null;
             return (await dbConnection.QueryAsync<User>("SELECT * from users WHERE emailAddress = @emailAddress AND isActive = true", new { emailAddress = email })).FirstOrDefault();
         }
 
         public async Task<IEnumerable<User>> RetrieveUsersByIds(params int[] userIds)
         {
+            if (userIds == null || userIds.Length == 0) return new List<User>();
 
             return await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userID = ANY(@userIdList) AND isActive = true",
                 new { userIdList = userIds.Distinct().AsList() });
@@ -58,6 +59,7 @@ namespace CritterServer.DataAccess
 
         public async Task<IEnumerable<User>> RetrieveUsersByUserName(params string[] userNames)
         {
+            if (userNames == null || userNames.Length == 0) return new List<User>();
 
             var users = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = ANY(@userNameList) AND isActive = true", new { userNameList = userNames.Distinct().AsList() });
 
@@ -70,19 +72,20 @@ namespace CritterServer.DataAccess
                 (!string.IsNullOrEmpty(userName) ? ("userName = @userName" + (!string.IsNullOrEmpty(email) ? " OR " : "")) : "") +
                 (!string.IsNullOrEmpty(email) ? "emailAddress = @email" : "");
 
+            if (string.IsNullOrEmpty(whereClause)) return false;
+
+
             var searchResult = await dbConnection.QueryAsync<bool>($"SELECT EXISTS (SELECT 1 FROM users WHERE {whereClause} )", new { userName = userName, email = email });
             return searchResult.FirstOrDefault();
         }
 
         public async Task UpdateUserCash(int userId, int deltaCash)
         {
-
             await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", new { userId, cash = deltaCash });
         }
 
         public async Task UpdateUsersCash(IEnumerable<(int UserId, int CashDelta)> userIdAndDeltaCashAmounts)
         {
-
             await dbConnection.ExecuteAsync($"UPDATE users SET cash = cash + @cash WHERE userID = @userId", userIdAndDeltaCashAmounts.Select(u => new { userId = u.UserId, cash = u.CashDelta}));
         }
 
@@ -121,12 +124,14 @@ namespace CritterServer.DataAccess
 
         public async Task<User> RetrieveDevByEmail(string email)
         {
+            if (string.IsNullOrEmpty(email)) return null;
 
             return (await dbConnection.QueryAsync<User>("SELECT * from users WHERE emailAddress = @emailAddress AND isActive = true and isDev = true", new { emailAddress = email })).FirstOrDefault();
         }
 
         public async Task<User> RetrieveDevByUserName(string userName)
         {
+            if (userName == null || userName.Length == 0) return null;
 
             var users = await dbConnection.QueryAsync<User>("SELECT * FROM users WHERE userName = @userName AND isActive = true AND isDev = true", new { userName });
 
