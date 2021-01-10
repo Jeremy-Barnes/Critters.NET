@@ -82,14 +82,31 @@ namespace CritterServer.Domains.Components
             return false;
         }
 
-        public ClaimsPrincipal CrackJwt(string jwtString)
+        public bool ValidateTokenSpecialKey(string jwtString, string specialKey)
+        {
+            if (!string.IsNullOrEmpty(jwtString))
+            {
+                if (CrackJwt(jwtString, specialKey) != null)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public ClaimsPrincipal CrackJwt(string jwtString, string specialKey = null)
         {
             SecurityToken jwt;
             JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-
+            TokenValidationParameters validationAlias = tokenValidationOptions;
+            if (!string.IsNullOrEmpty(specialKey))
+            {
+                validationAlias = JwtExtensions.getTokenValidationParameters(specialKey);
+                validationAlias.RequireExpirationTime = false;
+            }
             try
             {
-                return tokenHandler.ValidateToken(jwtString, tokenValidationOptions, out jwt);
+                return tokenHandler.ValidateToken(jwtString, validationAlias, out jwt);
             }
             catch (Exception ex)
             {
@@ -111,7 +128,7 @@ namespace CritterServer.Domains.Components
         string GenerateToken(IEnumerable<Claim> claims);
 
         bool ValidateToken(string jwtString);
-        ClaimsPrincipal CrackJwt(string jwtString);
+        ClaimsPrincipal CrackJwt(string jwtString, string specialKey = null);
         SymmetricSecurityKey GetSigningKey();
     }
 
@@ -163,7 +180,7 @@ namespace CritterServer.Domains.Components
             return services;
         }
 
-        private static TokenValidationParameters getTokenValidationParameters(string jwtSigningKey)
+        internal static TokenValidationParameters getTokenValidationParameters(string jwtSigningKey)
         { 
             return new TokenValidationParameters
             {

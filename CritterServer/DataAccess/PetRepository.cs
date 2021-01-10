@@ -20,11 +20,11 @@ namespace CritterServer.DataAccess
         public async Task<int> CreatePet(Pet pet, int ownerUserId)
         {
 
-            int output = (await dbConnection.QueryAsync<int>("INSERT INTO pets(petName, gender, colorID, ownerID, speciesID, currentHitPoints, isAbandoned)" +
-                "VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @currentHitPoints, false) RETURNING petID",
+            int output = (await dbConnection.QueryAsync<int>(@"INSERT INTO pets(name, gender, colorID, ownerID, speciesID, currentHitPoints, isAbandoned) 
+                VALUES(@petName, @gender, @colorId, @ownerUserId, @speciesId, @currentHitPoints, false) RETURNING petID",
                 new
                 {
-                    petName = pet.PetName,
+                    petName = pet.Name,
                     gender = pet.Gender,
                     colorId = pet.ColorId,
                     ownerUserId = ownerUserId,
@@ -64,7 +64,7 @@ namespace CritterServer.DataAccess
 
             return await dbConnection.QueryAsync<Pet, PetSpeciesConfig, PetColorConfig, PetDetails>(@"
                 SELECT * FROM pets p
-                INNER JOIN petColorConfigs pcc ON p.petName = ANY(@names) AND p.colorID = pcc.petColorConfigID 
+                INNER JOIN petColorConfigs pcc ON p.name = ANY(@names) AND p.colorID = pcc.petColorConfigID 
                 INNER JOIN petSpeciesConfigs psc ON p.speciesID = psc.petSpeciesConfigID",
                 param: new { names = names.Distinct().AsList() },
                 splitOn: "petColorConfigId,petSpeciesConfigID",
@@ -77,7 +77,7 @@ namespace CritterServer.DataAccess
 
             return await dbConnection.QueryAsync<Pet>(@"
                 SELECT * FROM pets
-                WHERE petName = ANY(@names)",
+                WHERE name = ANY(@names)",
                 param: new { names = names.Distinct().AsList() });
         }
 
@@ -102,7 +102,7 @@ namespace CritterServer.DataAccess
         public async Task UpdatePet(string petName, string gender, int petId)
         {
 
-            await dbConnection.ExecuteAsync($"UPDATE pets SET petName = @petName, gender = @gender WHERE petID = @petId", new { petId, petName, gender });
+            await dbConnection.ExecuteAsync($"UPDATE pets SET name = @petName, gender = @gender WHERE petID = @petId", new { petId, petName, gender });
         }
 
         public async Task AbandonPet(int petId)

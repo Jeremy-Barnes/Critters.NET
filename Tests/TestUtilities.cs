@@ -65,7 +65,7 @@ namespace Tests
                 IsAbandoned = false,
                 Level = mathRand.Next(),
                 OwnerId = ownerId,
-                PetName = Guid.NewGuid().ToString().Substring(0, 6)
+                Name = Guid.NewGuid().ToString().Substring(0, 6)
             };
         }
 

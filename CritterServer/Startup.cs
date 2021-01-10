@@ -17,6 +17,7 @@ using Microsoft.Extensions.Hosting;
 using CritterServer.Game;
 using CritterServer.Hubs;
 using System.Reflection;
+using CritterServer.DataAccess.Caching;
 
 namespace CritterServer
 {
@@ -88,10 +89,12 @@ namespace CritterServer
             services.AddTransient<MessageDomain>();
             services.AddTransient<AdminDomain>();
             services.AddTransient<PetDomain>();
+            services.AddTransient<GameDomain>();
+
             services.AddTransient<ErrorMiddleware>();
 
-            services.AddSingleton<GameManagerService>();
-            services.AddSingleton<IHostedService>(sp => sp.GetService<GameManagerService>());
+            services.AddSingleton<MultiplayerGameService>();
+            services.AddSingleton<IHostedService>(sp => sp.GetService<MultiplayerGameService>());
 
             //repositories
             services.AddTransient<IUserRepository, UserRepository>();
@@ -99,6 +102,10 @@ namespace CritterServer
             services.AddTransient<IPetRepository, PetRepository>();
             services.AddTransient<IConfigRepository, ConfigRepository>();
             services.AddTransient<IFriendshipRepository, FriendshipRepository>();
+            services.AddTransient<IGameRepository, GameRepository>();
+
+            services.AddTransient<IGameCache, GameCache>();
+            services.AddMemoryCache();
 
             //components
             services.AddHttpContextAccessor();

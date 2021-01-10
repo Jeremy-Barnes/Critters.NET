@@ -20,12 +20,16 @@ namespace CritterServer.Controllers
     [ApiController]
     public class GameController : ControllerBase
     {
-        GameManagerService GameManager;
-        public GameController(GameManagerService gameManager)
+        MultiplayerGameService GameManager;
+        GameDomain GameDomain;
+        public GameController(MultiplayerGameService gameManager, GameDomain gameDomain)
         {
-            this.GameManager = gameManager;
+            GameManager = gameManager;
+            GameDomain = gameDomain;
+
         }
 
+#region multiplayer
         [HttpPut("create/{gameId}/{gameType}")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -59,6 +63,52 @@ namespace CritterServer.Controllers
         {
             if (await GameManager.RequestJoinGame(gameId, activeUser, joinGameData)) return Ok();
             else return NotFound();
+        }
+        #endregion
+
+
+        [HttpGet]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetGames([FromQuery(Name = "id")] int[] ids)
+        {
+            var response = await GameDomain.RetrieveGameConfigs(ids);
+            if (response == null || response.Count() == 0) return NotFound();
+            return Ok(new { Games = response });
+        }
+
+        [HttpGet("scoreAuth/{gameId}")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetGameKey([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser, int gameId)
+        {
+            string key = await GameDomain.CreateKey(activeUser, gameId);
+            return Ok(new { Key = key });
+        }
+
+        [HttpPost("gameScore/{gameId}/{score}/{scoreToken}")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> SubmitGameScore([ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser, int gameId, int score, string scoreToken)
+        {
+            GameScoreResult result = await GameDomain.SubmitScore(activeUser, gameId, score, scoreToken);
+            return Ok(result);
+        }
+
+        [HttpGet("leaderboard/{gameId}")]
+        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult> GetLeaderboard(int gameId)
+        {
+            var result = await GameDomain.RetrieveLeaderboard(gameId);
+            return Ok(result);
         }
     }
 

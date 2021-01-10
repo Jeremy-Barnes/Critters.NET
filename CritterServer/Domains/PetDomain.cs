@@ -91,7 +91,7 @@ namespace CritterServer.Domains
         #region Validation
         private async Task ValidatePet(Pet pet, User owner)
         {
-            var dbPet = (await PetRepo.RetrievePetsByNames(pet.PetName)).FirstOrDefault();
+            var dbPet = (await PetRepo.RetrievePetsByNames(pet.Name)).FirstOrDefault();
             if (dbPet != null && dbPet.PetId != pet.PetId)
             {
                 throw new CritterException("Sorry that name is already taken!", null, System.Net.HttpStatusCode.Conflict);

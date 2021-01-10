@@ -16,13 +16,13 @@ namespace CritterServer.Models
         public DateTime DateSent { get; set; }
         public string MessageText { get; set; }
         [MaxLength(140)]
-        public string MessageSubject { get; set; }
+        public string Subject { get; set; }
         public int? ParentMessageId{ get; set; }
         public int ChannelId { get; set; }
 
         public string MessagePreview(int? truncateAfter)
         {
-            string preview = (MessageSubject ?? MessageText) ?? "";
+            string preview = (Subject ?? MessageText) ?? "";
             if (truncateAfter.HasValue)
             {
                 preview = preview.Substring(0, Math.Min(truncateAfter.Value, preview.Length));

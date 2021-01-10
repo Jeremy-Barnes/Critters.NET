@@ -55,6 +55,7 @@ namespace CritterServer.Controllers
             return Ok(new { AuthToken = authToken, User = user });
         }
 
+        [HttpGet]
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [HttpGet]
         [Consumes("application/json")]

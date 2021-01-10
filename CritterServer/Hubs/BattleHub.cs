@@ -12,7 +12,7 @@ namespace CritterServer.Hubs
     public class BattleHub : BaseGameHub<IBattleClient>
     {
         PetDomain PetDomain;
-        public BattleHub(GameManagerService gameManager, UserDomain userDomain, PetDomain petDomain) : base(gameManager, userDomain)
+        public BattleHub(MultiplayerGameService gameManager, UserDomain userDomain, PetDomain petDomain) : base(gameManager, userDomain)
         {
             this.PetDomain = petDomain;
         }

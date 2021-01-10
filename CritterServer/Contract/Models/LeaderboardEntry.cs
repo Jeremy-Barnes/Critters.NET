@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Models
 {
-    public class Channel
+    public class LeaderboardEntry
     {
-        public int ChannelId { get; set; }
-        [MaxLength(50)]
-        public string Name { get; set; }
-        public DateTime CreateDate { get; set; }
+        public int GameId { get; set; }
+        [InternalOnly]
+        public int PlayerId { get; set; }
+        public DateTime DateSubmitted { get; set; }
+        public int Score{ get; set; }
     }
 }

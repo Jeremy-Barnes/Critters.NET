@@ -1,9 +1,12 @@
-CREATE COLLATION case_insensitive_collat (
+CREATE COLLATION IF NOT EXISTS case_insensitive_collat (
   provider = 'icu',
   locale = '@colStrength=secondary',
   deterministic = false
 );
-
+drop index if exists ix_leaderboard_ranking;
+drop table if exists leaderboardEntries;
+drop table if exists gameConfigs;
+drop table if exists friendships;
 drop table if exists pets;
 drop table if exists petSpeciesConfigs;
 drop table if exists petColorConfigs;
@@ -12,6 +15,7 @@ drop table if exists messages;
 drop table if exists channelUsers;
 drop table if exists channels;
 drop table if exists users;
+
 
 CREATE TABLE IF NOT EXISTS users(
     userID SERIAL NOT NULL PRIMARY KEY,
@@ -28,8 +32,10 @@ CREATE TABLE IF NOT EXISTS users(
     country VARCHAR(50),
     postcode VARCHAR(20),
     cash INT NOT NULL,
+    isActive BOOLEAN NOT NULL DEFAULT 't',
+    isDev BOOLEAN NOT NULL DEFAULT 'f',
     isActive BOOLEAN NOT NULL DEFAULT true
-	dateJoined TIMESTAMP not null DEFAULT NOW(),
+	dateJoined TIMESTAMP not null DEFAULT (NOW() AT TIME ZONE 'utc'),
     isDev BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT uk_username UNIQUE (userName),
     CONSTRAINT uk_email UNIQUE (emailAddress),
@@ -38,24 +44,24 @@ CREATE TABLE IF NOT EXISTS users(
 
 CREATE TABLE IF NOT EXISTS channels(
     channelID SERIAL NOT NULL PRIMARY KEY,
-    channelName VARCHAR(50),
-    createDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+    name VARCHAR(50),
+    createDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS channelUsers(
     channelID INT NOT NULL REFERENCES channels(channelID),
     memberID INT NOT NULL REFERENCES users(userID), 
 	PRIMARY KEY (channelID, memberID),
-    admin BOOLEAN NOT NULL DEFAULT false,
-    joinDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+    admin BOOLEAN NOT NULL DEFAULT 'f',
+    joinDate TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')
 );
 
 CREATE TABLE IF NOT EXISTS messages(
     messageID SERIAL NOT NULL PRIMARY KEY,
     senderUserID INT NOT NULL REFERENCES users(userID),
-    dateSent TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    dateSent TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
     messageText TEXT,
-    messageSubject VARCHAR(140),
+    subject VARCHAR(140),
     deleted BOOLEAN NOT NULL DEFAULT false,
     parentMessageID INT null REFERENCES messages(messageID), 
     channelID INT NOT NULL REFERENCES channels(channelID)
@@ -70,7 +76,7 @@ CREATE TABLE IF NOT EXISTS readReceipts(
 
 CREATE TABLE IF NOT EXISTS petSpeciesConfigs(
     petSpeciesConfigID SERIAL NOT NULL PRIMARY KEY,
-    speciesName VARCHAR(24) NOT NULL,
+    name VARCHAR(24) NOT NULL,
     maxHitPoints int NOT NULL,
     description VARCHAR(2000) NOT NULL,
     imageBasePath  VARCHAR(200) NOT NULL
@@ -78,13 +84,13 @@ CREATE TABLE IF NOT EXISTS petSpeciesConfigs(
 
 CREATE TABLE IF NOT EXISTS petColorConfigs(
     petColorConfigID SERIAL NOT NULL PRIMARY KEY,
-    colorName VARCHAR(24) NOT NULL,
+    name VARCHAR(24) NOT NULL,
     imagePatternPath varchar(200)
 );
 
 CREATE TABLE IF NOT EXISTS pets(
     petID SERIAL NOT NULL PRIMARY KEY,
-    petName VARCHAR(24) NOT NULL,
+    name VARCHAR(24) NOT NULL,
     level int NOT NULL default 0,
     currentHitPoints int NOT NULL, 
     gender VARCHAR(8) NOT NULL,
@@ -94,6 +100,30 @@ CREATE TABLE IF NOT EXISTS pets(
     isAbandoned boolean NOT NULL default false,
     CHECK (gender IN ('male','female','other'))
 );
+
+CREATE TABLE IF NOT EXISTS gameConfigs(
+    gameConfigID SERIAL NOT NULL PRIMARY KEY,
+    isActive BOOLEAN DEFAULT false,
+    name VARCHAR(48) NOT NULL,
+    description VARCHAR(1000) NOT NULL,
+    iconPath VARCHAR(100) NOT NULL,
+	cashCap INT NULL,
+	dailyCashCountCap INT NULL,
+	scoreToCashFactor FLOAT NULL,
+	leaderboardMaxSpot INT NULL,
+    gameURL VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS leaderboardEntries(
+    gameID INT NOT NULL REFERENCES gameConfigs(gameConfigID),
+	score INT NOT NULL,
+    playerID INT NOT NULL REFERENCES users(userID),
+    dateSubmitted TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc'),
+	PRIMARY KEY (gameID, playerID)
+); 
+
+CREATE INDEX IF NOT EXISTS ix_leaderboard_ranking ON leaderboardEntries(gameID DESC, dateSubmitted DESC, score DESC) WITH (fillfactor = 50);
+
 
 INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
 ('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 

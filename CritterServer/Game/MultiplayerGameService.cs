@@ -14,12 +14,12 @@ using System.Threading.Tasks;
 
 namespace CritterServer.Game
 {
-    public class GameManagerService : IHostedService
+    public class MultiplayerGameService : IHostedService
     {
-        ConcurrentDictionary<string, Game> RunningGames = new ConcurrentDictionary<string, Game>();
+        ConcurrentDictionary<string, MultiplayerGame> RunningGames = new ConcurrentDictionary<string, MultiplayerGame>();
         ConcurrentBag<Task> RunningTasks = new ConcurrentBag<Task>();
         IServiceProvider Services;
-        public GameManagerService(IServiceProvider services)
+        public MultiplayerGameService(IServiceProvider services)
         {
             Services = services;
         }
@@ -37,7 +37,7 @@ namespace CritterServer.Game
                 return RunningGames.Keys.AsList();
         }
 
-        public Game GetGame(string gameId)
+        public MultiplayerGame GetGame(string gameId)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace CritterServer.Game
             try
             {
                 if (GetGame(gameId) != null) throw new CritterException("A game already exists with that name!", null, HttpStatusCode.Conflict);
-                Game game = null;
+                MultiplayerGame game = null;
                 switch (gameType)
                 {
                     case GameType.NumberGuesser: game = new GuessTheNumber(host, Services, EndGame, gameId); break;
