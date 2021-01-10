@@ -37,8 +37,8 @@ namespace CritterServer.Domains
         public async Task<SearchResult> Search(string searchString)
         {
             var result = new SearchResult();
-
             result.Users = await SearchUsers(searchString);
+            //todo search pets, pages, items
             return result;
         }
 

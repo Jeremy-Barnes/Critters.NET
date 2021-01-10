@@ -36,6 +36,7 @@ namespace CritterServer.Controllers
             var authToken = await domain.CreateAccount(user);
             user = await domain.RetrieveUserByUserName(user.UserName);
             await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            user.ShowPrivateData = true;
             return Ok(new { AuthToken = authToken, User = user});
         }
 
@@ -52,19 +53,24 @@ namespace CritterServer.Controllers
                 user = await domain.RetrieveUserByUserName(user.UserName);
  
             await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            user.ShowPrivateData = true;
             return Ok(new { AuthToken = authToken, User = user });
         }
 
-        [HttpGet]
+        [HttpGet("{username}")]
         [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [HttpGet]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> GetUser()
+        public async Task<ActionResult> GetUser(string username)
         {
-            User user = await domain.RetrieveUserByUserName(HttpContext.User.Identity.Name);
-            await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+            User user = await domain.RetrieveUserByUserName(username ?? HttpContext.User.Identity.Name);
+            if (username == null)
+            {
+                await addLoginCookie(this.HttpContext, user.UserName, user.EmailAddress);
+                user.ShowPrivateData = true;
+            }
             return Ok(user);
         }
 

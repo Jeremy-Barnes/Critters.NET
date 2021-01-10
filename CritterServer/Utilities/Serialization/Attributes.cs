@@ -8,4 +8,8 @@ namespace CritterServer.Utilities.Serialization
     public class InternalOnly: Attribute
     {
     }
+
+    public class OwnerOnly : Attribute
+    {
+    }
 }
