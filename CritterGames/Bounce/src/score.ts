@@ -26,9 +26,9 @@ export default class Score extends Phaser.Scene {
 
     create() {
         this.titleText = this.add.text(this.game.canvas.width / 2, this.game.canvas.height / 3, 
-            'Game over!', { font: '30px', fill: '#ffffff' }).setOrigin(.5);
+            'Game over!', { font: '30px Bubblegum Sans', fill: '#ffffff' }).setOrigin(.5);
         this.titleText = this.add.text(this.game.canvas.width / 2, this.game.canvas.height / 2, 
-            `Final score: ${this.score}.`, { font: '20px', fill: '#ffffff' }).setOrigin(.5);
+            `Final score: ${this.score}.`, { font: '20px Bubblegum Sans', fill: '#ffffff' }).setOrigin(.5);
 
         this.input.on(Phaser.Input.Events.POINTER_DOWN, function (pointer) {  
             this.scene.start(Game.SceneName);

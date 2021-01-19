@@ -1,7 +1,7 @@
 import 'phaser';
 import Menu from './menu'
 import Game from './Game'
-import Snowball from './snowball';
+import Ball from './ball';
 import Score from './score';
 
 export default class Boot extends Phaser.Scene {
@@ -10,7 +10,7 @@ export default class Boot extends Phaser.Scene {
     loadingTicker: Phaser.Time.TimerEvent;
 
 	preload() {
-        this.loading = this.add.text(phaserGameWidth/2, phaserGameHeight/2, 'Loading', { font: '30px', fill: '#ffffff' }).setOrigin(.5);
+        this.loading = this.add.text(phaserGameWidth/2, phaserGameHeight/2, 'Loading', { font: '30px Bubblegum Sans', fill: '#ffffff' }).setOrigin(.5);
         this.loadingTicker = this.time.addEvent({
             delay: 333,
             loop: true,
@@ -22,11 +22,12 @@ export default class Boot extends Phaser.Scene {
 
         this.input.mouse.disableContextMenu();
 
-        Snowball.preloadAssets(this);
-        this.load.image('ground', 'assets/ground.png');
+        Ball.preloadAssets(this);
+        this.load.image('bar', 'assets/bar.png');
         this.load.image('side1', 'assets/side1.png');
-        this.load.image('side2', 'assets/side2.png');
-        //load imgs
+        this.load.audio('score1', 'assets/zap1.mp3');
+        this.load.audio('score2', 'assets/zap2.mp3');
+
 	}
 
 	create() {
@@ -39,7 +40,7 @@ const phaserGameHeight: number = 600;
 
 const config : Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    backgroundColor: '#00000',
+    backgroundColor: '#49566b',
     width: phaserGameWidth,
     height: phaserGameHeight,
     scale: {
@@ -49,8 +50,8 @@ const config : Phaser.Types.Core.GameConfig = {
     physics: {
         default: 'arcade',
         arcade: {
-             gravity: { y: 700 },
-            debug: true,
+             gravity: { y: 600 },
+            debug: false,
             debugShowBody: true,
             debugShowStaticBody: true,
             debugShowVelocity: true
