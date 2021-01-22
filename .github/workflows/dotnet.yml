@@ -22,6 +22,7 @@ jobs:
       working-directory: ./CritterServer
     - name: Build
       run: dotnet build --no-restore
+      working-directory: ./CritterServer
     - name: Test
       run: dotnet test --no-build --verbosity normal --filter Tests.UnitTests
       working-directory: ./CritterServer
