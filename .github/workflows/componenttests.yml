@@ -1,0 +1,43 @@
+name: Server Component Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    container:  mcr.microsoft.com/dotnet/aspnet:3.1
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v2
+      #uses: actions/setup-dotnet@v1
+      #with:
+       # dotnet-version: 5.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Create DB
+      run: psql -h postgres -U postgres -w -c CREATE DATABASE "CrittersDB" WITH OWNER = postgres ENCODING = 'UTF8' CONNECTION LIMIT = -1
+    - name: Populate Schema
+      run: psql -h postgres -U postgres -w -f ./SQL/2019.09.09.01.db_baseline.sql
+      env:
+        PGPASSWORD:  postgres
