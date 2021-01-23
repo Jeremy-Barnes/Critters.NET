@@ -52,4 +52,6 @@ jobs:
     - name: Execute Component Tests
       run: dotnet test --no-build --verbosity normal
       working-directory: ./CritterServer
+      env:
+          PGHOST: postgres
   
