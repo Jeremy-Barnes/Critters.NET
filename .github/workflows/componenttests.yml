@@ -35,9 +35,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       working-directory: ./CritterServer
-    - name: Build
-      run: dotnet build --no-restore
-      working-directory: ./CritterServer
+   # - name: Build
+    #  run: dotnet build --no-restore
+     # working-directory: ./CritterServer
     - name: Create DB
       run: psql -h postgres -U postgres -w -c CREATE DATABASE "CrittersDB" WITH OWNER = postgres ENCODING = 'UTF8' CONNECTION LIMIT = -1
     - name: Populate Schema
