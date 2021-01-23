@@ -32,6 +32,10 @@ jobs:
     - uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+    - name: Install Psql utility
+      run: |
+       apt-get update
+       apt-get install --yes --no-install-recommends postgresql-client
     - name: Restore dependencies
       run: dotnet restore
       working-directory: ./CritterServer
@@ -39,8 +43,8 @@ jobs:
     #  run: dotnet build --no-restore
      # working-directory: ./CritterServer
     - name: Create DB
-      run: docker-exec postgres psql -h postgres -U postgres -w -c CREATE DATABASE "CrittersDB" WITH OWNER = postgres ENCODING = 'UTF8' CONNECTION LIMIT = -1
+      run: psql -h postgres -U postgres -w -c CREATE DATABASE "CrittersDB" WITH OWNER = postgres ENCODING = 'UTF8' CONNECTION LIMIT = -1
     - name: Populate Schema
-      run: docker-exec postgres psql -h postgres -U postgres -w -f ./SQL/2019.09.09.01.db_baseline.sql
+      run: psql -h postgres -U postgres -w -f ./SQL/2019.09.09.01.db_baseline.sql
       env:
         PGPASSWORD:  postgres
