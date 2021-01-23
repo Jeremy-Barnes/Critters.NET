@@ -122,6 +122,18 @@ namespace CritterServer.DataAccess
             return output;
         }
 
+        public async Task<bool> InsertMetaphone(int userId, params int[] meta)
+        {
+            int output = await dbConnection.ExecuteAsync(@"INSERT INTO userMetaphones (metaphone, soundsLikeUserId) VALUES (@metaphone, @userId) ON CONFLICT DO NOTHING",
+                    meta.Distinct().Select(m =>
+               new
+               {
+                   userId,
+                   metaphone = m
+               }).ToArray());
+            return output > 0;
+        }
+
         public async Task<User> RetrieveDevByEmail(string email)
         {
             if (string.IsNullOrEmpty(email)) return null;
@@ -138,6 +150,13 @@ namespace CritterServer.DataAccess
             return users.FirstOrDefault();
         }
 
+        public async Task<IEnumerable<User>> RetrieveUsersIfMetaphoneMatch(int metaphone)
+        {
+            var users = await dbConnection.QueryAsync<User>(@"SELECT u.* FROM userMetaphones um INNER JOIN users u 
+                        ON um.metaphone = @metaphone AND um.soundsLikeUserId = u.userId AND u.isActive = true", new { metaphone });
+            return users;
+
+        }
     }
 
     public interface IUserRepository : IRepository
@@ -152,5 +171,7 @@ namespace CritterServer.DataAccess
         int CreateDeveloper(User developer);
         Task<User> RetrieveDevByEmail(string email);
         Task<User> RetrieveDevByUserName(string userNames);
+        Task<IEnumerable<User>> RetrieveUsersIfMetaphoneMatch(int metaphone);
+        Task<bool> InsertMetaphone(int userId, params int[] meta);
     }
 }

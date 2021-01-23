@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CritterServer.Models
 {
-    public class User
+    public class User : IDataOwner
     {
         [InternalOnly]
         [BindNever]
@@ -21,9 +21,10 @@ namespace CritterServer.Models
         public string LastName { get; set; }
         [EmailAddress]
         [MaxLength(100)]
+        [OwnerOnly]
         public string EmailAddress { get; set; }
-
         [BindNever]
+        [OwnerOnly]
         public int Cash { get; set; }
         [AcceptedValues(false, true, "male","female","other")]
         public string Gender { get; set; }
@@ -32,14 +33,16 @@ namespace CritterServer.Models
         public string State { get; set; }
         public string Country { get; set; }
         public string Postcode { get; set; }
-
         [InternalOnly]
         public string Password { get; set; }
         [JsonIgnore]
         [BindNever]
         public string Salt { get; set; }
-
+        [InternalOnly]
         public bool IsActive { get; set; }
-
+        [JsonIgnore]
+        [BindNever]
+        [InternalOnly]
+        public bool ShowPrivateData { get; set; } = false;
     }
 }

@@ -1,4 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using CritterServer.DataAccess;
+using CritterServer.Models;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -19,7 +22,17 @@ namespace CritterServer.Utilities.Serialization
                 {
                     return false;
                 };
-            
+
+            if (member.CustomAttributes?.Any(a => a.AttributeType == typeof(OwnerOnly)) ?? false)
+                property.ShouldSerialize = (instance) =>
+                {
+                    if (instance is IDataOwner ido)
+                    {
+                        return ido.ShowPrivateData;
+                    };
+                    return true;
+                };
+
             return property;
         }
     }

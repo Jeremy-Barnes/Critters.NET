@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Authors>Jeremy Barnes</Authors>
+    <Company />
+    <Description>.NET implementation of Lawrence Phillips' phonetic matching algorithm, ported to NET Standard and modern C#</Description>
+    <Copyright>N/A</Copyright>
+    <PackageLicenseExpression>N/A</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>

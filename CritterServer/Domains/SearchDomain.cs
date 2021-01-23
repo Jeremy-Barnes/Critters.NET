@@ -10,95 +10,70 @@ using CritterServer.DataAccess;
 using CritterServer.Domains.Components;
 using CritterServer.Models;
 using Dapper;
-using jabarnes.Metaphone;
 using Newtonsoft.Json;
+using jabarnes;
+using jabarnes.Metaphone;
+using CritterServer.Utilities;
 
 namespace CritterServer.Domains
 {
-    public class UserDomain
+    public class SearchDomain
     {
+        UserDomain UserDomain;
         IUserRepository UserRepo;
         IFriendshipRepository FriendRepo;
         IJwtProvider JWTProvider;
         ITransactionScopeFactory TransactionScopeFactory;
-        public UserDomain(IUserRepository userRepo, IFriendshipRepository friendRepo, IJwtProvider jwtProvider, ITransactionScopeFactory transactionScopeFactory)
+
+        public SearchDomain(UserDomain userDomain, IUserRepository userRepo, IFriendshipRepository friendRepo, IJwtProvider jwtProvider, ITransactionScopeFactory transactionScopeFactory)
         {
+            UserDomain = userDomain;
             UserRepo = userRepo;
             FriendRepo = friendRepo;
             JWTProvider = jwtProvider;
             TransactionScopeFactory = transactionScopeFactory;
         }
 
-        public async Task<string> CreateAccount(User user)
+        public async Task<SearchResult> Search(string searchString)
         {
-            bool conflictFound = await UserRepo.UserExistsByUserNameOrEmail(user.UserName, user.EmailAddress);
-            if (conflictFound)
-                throw new CritterException($"Sorry, someone already exists with that name or email!", $"Duplicate account creation attempt on {user.UserName} or {user.EmailAddress}", System.Net.HttpStatusCode.Conflict);
-
-            using (var trans = TransactionScopeFactory.Create())
-            {
-                
-                user.Cash = 500; //TODO economics
-                user.IsActive = true;
-                user.Salt = BCrypt.Net.BCrypt.GenerateSalt();
-                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password, user.Salt);
-
-                user.UserId = await UserRepo.CreateUser(user) ?? throw new CritterException("Could not create account, try again!", null, System.Net.HttpStatusCode.Conflict);
-
-                List<int> metaphones = new List<int>();
-                var doubles = new List<ShortDoubleMetaphone>();
-                doubles.Add(new ShortDoubleMetaphone(user.UserName));
-                doubles.Add(new ShortDoubleMetaphone(user.FirstName));
-                doubles.Add(new ShortDoubleMetaphone(user.LastName));
-                doubles.ForEach(d => { metaphones.Add(d.PrimaryShortKey); metaphones.Add(d.AlternateShortKey); });
-                metaphones = metaphones.Distinct().AsList();
-                await UserRepo.InsertMetaphone(user.UserId, metaphones.ToArray());
-                
-                trans.Complete();
-            }
-            user = await RetrieveUser(user.UserId);
-            return JWTProvider.GenerateToken(user);
+            var result = new SearchResult();
+            result.Users = await SearchUsers(searchString);
+            //todo search pets, pages, items
+            return result;
         }
 
-        public async Task<string> Login(User user)
+        public async Task<IEnumerable<User>> SearchUsers(string searchString)
         {
-            User dbUser = null;
-            if (!string.IsNullOrEmpty(user.UserName))
+            List<User> results = new List<User>();
+            if (string.IsNullOrEmpty(searchString))
             {
-                dbUser = await RetrieveUserByUserName(user.UserName);
-            }
-            else if (!string.IsNullOrEmpty(user.EmailAddress))
-            {
-                dbUser = await RetrieveUserByEmail(user.EmailAddress);
+                return results;
             }
 
-            if (dbUser != null && !string.IsNullOrEmpty(user.Password))
+            if (searchString.IsValidEmail())
             {
+                var exactMatch = await UserDomain.RetrieveUserByEmail(searchString);
+                if (exactMatch != null)
+                    results.Add(exactMatch);
+            }
+            else
+            {
+                var topResult = await UserDomain.RetrieveUserByUserName(searchString);
+                if (topResult != null)
+                    results.Add(topResult);
 
-                string hashPassword = BCrypt.Net.BCrypt.HashPassword(user.Password, dbUser.Salt);
-                if (dbUser.Password == hashPassword) //success
+                var metaphone = new ShortDoubleMetaphone(searchString);
+
+                results.AddRange(await UserDomain.RetrieveUsersBySoundsLike(metaphone.PrimaryShortKey));
+                if (metaphone.AlternateShortKey != ShortDoubleMetaphone.METAPHONE_INVALID_KEY && metaphone.AlternateShortKey != metaphone.PrimaryShortKey)
                 {
-                    user = dbUser;
-                    return JWTProvider.GenerateToken(user);
+                    results.AddRange((await UserDomain.RetrieveUsersBySoundsLike(metaphone.AlternateShortKey)));
                 }
             }
-            throw new CritterException($"The provided credentials were invalid for {user.UserName ?? user.EmailAddress}", null, System.Net.HttpStatusCode.Unauthorized);
+            return results;
+
         }
 
-        public async Task<User> RetrieveUser(int userId)
-        {
-            return (await UserRepo.RetrieveUsersByIds(userId)).FirstOrDefault();
-        }
-
-        public async Task<List<User>> RetrieveUsers(IEnumerable<int> userIds)
-        {
-            return (await UserRepo.RetrieveUsersByIds(userIds.ToArray())).AsList();
-        }
-
-        public async Task<User> RetrieveUserByUserName(string userName)
-        {
-            return (await UserRepo.RetrieveUsersByUserName(userName)).FirstOrDefault();
-        }
 
         public async Task<IEnumerable<User>> RetrieveUsersByUserName(IEnumerable<string> userNames)
         {
@@ -110,11 +85,6 @@ namespace CritterServer.Domains
             return await UserRepo.RetrieveUserByEmail(email);
         }
 
-        public async Task<IEnumerable<User>> RetrieveUsersBySoundsLike(int metaphone)
-        {
-            if (metaphone < 0) return null;
-            return await UserRepo.RetrieveUsersIfMetaphoneMatch(metaphone);
-        }
 
         public async Task<User> ChangeUserCash(int byAmount, User user)
         {

@@ -30,6 +30,7 @@ namespace CritterServer.Controllers
         public async Task<ActionResult> LoginDev([FromBody] User dev)
         {
             var authToken = await domain.LoginDev(dev);
+            dev.ShowPrivateData = true;
             return Ok(new { AuthToken = authToken });
         }
 
