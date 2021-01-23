@@ -10,6 +10,7 @@ jobs:
   container-job:
     runs-on: ubuntu-latest
     container:  mcr.microsoft.com/dotnet/aspnet:3.1
+    continue-on-error: true
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
@@ -28,9 +29,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      #uses: actions/setup-dotnet@v1
-      #with:
-       # dotnet-version: 5.0.x
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
