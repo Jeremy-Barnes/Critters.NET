@@ -36,7 +36,6 @@ namespace CritterServer.DataAccess
         public TransactionScope Create()
         {
             string guid = Guid.NewGuid().ToString();
-            guid += "\r\n" + Environment.StackTrace;
             try
             {
                 TransactionScope transaction;
@@ -51,7 +50,10 @@ namespace CritterServer.DataAccess
                 } 
                 else
                 {
+                    guid += "\r\n" + Environment.StackTrace;
+
                     Console.WriteLine($"Txn is NOT null {guid}");
+
                     transaction = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
                 }
                 if (this.DbConnection is DbConnection)
@@ -65,6 +67,8 @@ namespace CritterServer.DataAccess
                     }
                     else
                     {
+                        guid += "\r\n" + Environment.StackTrace;
+
                         Console.WriteLine($"Txn is enlisting {guid}");
                         dbc.EnlistTransaction(System.Transactions.Transaction.Current);
                     }
@@ -73,6 +77,8 @@ namespace CritterServer.DataAccess
             }
             catch (Exception ex)
             {
+                guid += "\r\n" + Environment.StackTrace;
+
                 Console.WriteLine($"Ex {guid}");
                 throw ex;
             }
