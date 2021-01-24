@@ -35,8 +35,8 @@ namespace CritterServer.DataAccess
 
         public TransactionScope Create()
         {
-            string guid = new Guid().ToString();
-
+            string guid = Guid.NewGuid().ToString();
+            guid += "\r\n" + Environment.StackTrace;
             try
             {
                 TransactionScope transaction;
