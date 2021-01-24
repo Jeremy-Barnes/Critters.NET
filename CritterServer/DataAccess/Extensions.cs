@@ -73,7 +73,7 @@ namespace CritterServer.DataAccess
             }
             catch (Exception ex)
             {
-                guid += "\r\n" + Environment.StackTrace;
+                guid += "\r\n" + ex.Message + "\r\n" + Environment.StackTrace;
 
                 Console.WriteLine($"Ex {guid}");
                 throw ex;

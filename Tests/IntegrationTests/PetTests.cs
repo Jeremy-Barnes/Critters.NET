@@ -39,11 +39,9 @@ namespace Tests.IntegrationTests
 
         public PetTestsContext()
         {
-            //using (var t = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             {
                 DBConn = GetNewDbConnection();
                 DBConn.Open();
-                //var tt  = DBConn.BeginTransaction();
                 PetColor1 = CfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
                 PetColor2 = CfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
                 PetSpecies1 = CfgRepo.CreatePetSpecies(new PetSpeciesConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
@@ -54,9 +52,6 @@ namespace Tests.IntegrationTests
                 OwnerUser1 = users.AsList()[0];
                 OwnerUser2 = users.AsList()[1];
                 DBConn.Dispose();
-                //tt.Commit();
-                
-                //t.Complete();
             }
         }
     }
