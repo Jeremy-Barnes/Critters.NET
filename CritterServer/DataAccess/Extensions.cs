@@ -35,6 +35,7 @@ namespace CritterServer.DataAccess
 
         public TransactionScope Create()
         {
+            Console.WriteLine("Debug logging?");
             try
             {
                 TransactionScope transaction;
@@ -67,6 +68,7 @@ namespace CritterServer.DataAccess
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Exceptional!");
                 throw ex;
             }
         }
