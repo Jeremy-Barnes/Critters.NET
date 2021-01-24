@@ -97,6 +97,7 @@ namespace Tests.IntegrationTests
         public IFriendshipRepository FriendRepo;
         public void Dispose()
         {
+            ScopedDbConn.Close();
         }
     }
 
