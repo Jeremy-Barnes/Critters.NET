@@ -35,12 +35,14 @@ namespace CritterServer.DataAccess
 
         public TransactionScope Create()
         {
-            Console.WriteLine("Debug logging?");
+            string guid = new Guid().ToString();
+
             try
             {
                 TransactionScope transaction;
                 if (System.Transactions.Transaction.Current == null)
                 {
+                    Console.WriteLine($"Txn is null {guid}");
                     var txnOpts = new TransactionOptions
                     {
                         IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted
@@ -49,6 +51,7 @@ namespace CritterServer.DataAccess
                 } 
                 else
                 {
+                    Console.WriteLine($"Txn is NOT null {guid}");
                     transaction = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
                 }
                 if (this.DbConnection is DbConnection)
@@ -57,10 +60,12 @@ namespace CritterServer.DataAccess
 
                     if (dbc.State != ConnectionState.Open)
                     {
+                        Console.WriteLine($"Txn is opening {guid}");
                         dbc.Open();
                     }
                     else
                     {
+                        Console.WriteLine($"Txn is enlisting {guid}");
                         dbc.EnlistTransaction(System.Transactions.Transaction.Current);
                     }
                 }
@@ -68,7 +73,7 @@ namespace CritterServer.DataAccess
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exceptional!");
+                Console.WriteLine($"Ex {guid}");
                 throw ex;
             }
         }
