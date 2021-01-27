@@ -16,7 +16,8 @@ on:
 jobs:
   checkout:
     runs-on: ubuntu-latest
-
+    environment: PRD
+    
     steps:
       - name: SSH + Build
         uses: appleboy/ssh-action@master
