@@ -1,0 +1,36 @@
+name: Deploy Main
+
+# Controls when the action will run. 
+on:
+  push:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      commit-sha:
+        description: 'The commit ID from the master branch to checkout, build, and deploy'
+        required: false
+        default: 'HEAD'
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH + Build
+        uses: appleboy/ssh-action@latest
+        with: 
+          host: ${{secrets.SSH_HOST}}
+          sshKey: ${{secrets.SSH_KEY}}
+          user: ${{secrets.SSH_USER}}
+          
+          script: |
+            mkdir CRITTER_PRD_DEPLOY
+            cd CRITTER_PRD_DEPLOY
+            git clone https://github.com/Jeremy-Barnes/Critters.NET.git
+            git checkout ${{github.event.inputs.commit-sha}}
+            cd Critters.NET
+            cd CritterServer
+            dotnet publish -c Release
+          # todo lock this down
