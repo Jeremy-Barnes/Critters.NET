@@ -1,0 +1,38 @@
+name: Deploy Main
+
+# Controls when the action will run. 
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      commit-sha:
+        description: 'The commit ID from the master branch to checkout, build, and deploy'
+        required: false
+        default: 'HEAD'
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    environment: TST
+    
+    steps:
+      - name: SSH + Build
+        uses: appleboy/ssh-action@master
+        with: 
+          host: ${{secrets.SSH_HOST}}
+          key: ${{secrets.SSH_KEY}}
+          username: ${{secrets.SSH_USER}}
+          passphrase: ${{secrets.SSH_PASSPHRASE}}
+          
+          script: |
+            mkdir ~/CRITTER_TST_DEPLOY
+            cd CRITTER_PRD_DEPLOY
+            git clone https://github.com/Jeremy-Barnes/Critters.NET.git
+            git checkout ${{github.event.inputs.commit-sha}}
+            cd Critters.NET
+            cd CritterServer
+            dotnet publish -c Release
+            mk dir ~/CRITTER_TST_DEPLOY/SERVER
+            cp ~/CRITTER_TST_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1 ~/CRITTER_TST_DEPLOY/SERVER
+            rm -r ~/CRITTER_TST_DEPLOY/CRITTERS.NET
+          # todo lock this down
