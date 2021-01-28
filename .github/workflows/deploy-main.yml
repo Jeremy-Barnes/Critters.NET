@@ -12,15 +12,11 @@ on:
         description: 'The commit ID from the master branch to checkout, build, and deploy'
         required: false
         default: 'HEAD'
-      env:
-        description: 'The place to deploy your code, TST or PRD'
-        required: true
-        default: 'PRD'
 
 jobs:
   checkout:
     runs-on: ubuntu-latest
-    environment: ${{github.event.inputs.env}}
+    environment: PRD
     
     steps:
       - name: SSH + Build
