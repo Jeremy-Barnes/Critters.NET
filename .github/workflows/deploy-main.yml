@@ -20,7 +20,7 @@ on:
 jobs:
   checkout:
     runs-on: ubuntu-latest
-    environment: ${{github.event.inputs.env }}
+    environment: ${{github.event.inputs.env}}
     
     steps:
       - name: SSH + Build
