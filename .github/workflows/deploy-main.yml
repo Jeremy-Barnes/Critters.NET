@@ -12,11 +12,15 @@ on:
         description: 'The commit ID from the master branch to checkout, build, and deploy'
         required: false
         default: 'HEAD'
+      env:
+        description: 'The place to deploy your code, TST or PRD'
+        required: true
+        default: 'PRD'
 
 jobs:
   checkout:
     runs-on: ubuntu-latest
-    environment: PRD
+    environment: ${{github.event.inputs.env }}
     
     steps:
       - name: SSH + Build
@@ -28,11 +32,14 @@ jobs:
           passphrase: ${{secrets.SSH_PASSPHRASE}}
           
           script: |
-            mkdir CRITTER_PRD_DEPLOY
+            mkdir ~/CRITTER_PRD_DEPLOY
             cd CRITTER_PRD_DEPLOY
             git clone https://github.com/Jeremy-Barnes/Critters.NET.git
             git checkout ${{github.event.inputs.commit-sha}}
             cd Critters.NET
             cd CritterServer
             dotnet publish -c Release
+            mk dir ~/CRITTER_PRD_DEPLOY/SERVER
+            cp ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1 ~/CRITTER_PRD_DEPLOY/SERVER
+            rm -r ~/CRITTER_PRD_DEPLOY/CRITTERS.NET
           # todo lock this down
