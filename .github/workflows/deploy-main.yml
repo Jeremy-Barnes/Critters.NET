@@ -28,14 +28,21 @@ jobs:
           passphrase: ${{secrets.SSH_PASSPHRASE}}
           
           script: |
+            rm -r ~/CRITTER_PRD_DEPLOY
             mkdir ~/CRITTER_PRD_DEPLOY
-            cd CRITTER_PRD_DEPLOY
+            mkdir ~/CRITTER_PRD_DEPLOY/SERVER
+            cd ~/CRITTER_PRD_DEPLOY
             git clone https://github.com/Jeremy-Barnes/Critters.NET.git
             git checkout ${{github.event.inputs.commit-sha}}
             cd Critters.NET
             cd CritterServer
             dotnet publish -c Release
-            mk dir ~/CRITTER_PRD_DEPLOY/SERVER
             cp ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1 ~/CRITTER_PRD_DEPLOY/SERVER
             rm -r ~/CRITTER_PRD_DEPLOY/CRITTERS.NET
+            sudo systemctl stop critter-app-prd.service
+            sudo rm -r /srv/CRITTERS/PRD/
+            sudo mkdir /srv/CRITTERS/PRD/
+            sudo cp ~/CRITTER_PRD_DEPLOY/SERVER /srv/CRITTERS/PRD/
+            sudo systemctl start critter-app-prd.service
+            sudo systemctl status critter-app-prd.service
           # todo lock this down
