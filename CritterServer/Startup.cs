@@ -25,12 +25,14 @@ namespace CritterServer
     {
         readonly string PermittedOrigins = "XMenOrigins";
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -67,7 +69,7 @@ namespace CritterServer
             });
             services.AddScoped<ITransactionScopeFactory, TransactionScopeFactory>();
 
-            configureLogging();
+            configureLogging(Environment);
 
             //auth
             services.AddJwt(Configuration);
@@ -136,7 +138,7 @@ namespace CritterServer
            });//last thing
         }
 
-        private void configureLogging()
+        private void configureLogging(IWebHostEnvironment env)
         {
             var stringLevel = Configuration.GetSection("Logging:LogLevel:Default").Value;
 
@@ -152,15 +154,20 @@ namespace CritterServer
                 default: logLevel = LogEventLevel.Warning; break;
             }
 
-            Log.Logger = new LoggerConfiguration()
-               .Enrich.FromLogContext()
-               .WriteTo.EventLog("Critters.NET", "Critters.NET")
-               .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
-               fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
-               rollOnFileSizeLimit: true)
-               .WriteTo.Debug()
-               .MinimumLevel.Is(logLevel)
-                   .CreateLogger();
+            var logCfg = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
+            fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
+            rollOnFileSizeLimit: true)
+            .WriteTo.Debug()
+            .MinimumLevel.Is(logLevel);
+
+            if (env.IsDevelopment())
+            {
+                logCfg.WriteTo.EventLog("Critters.NET", "Critters.NET");
+            }
+
+            Log.Logger = logCfg.CreateLogger();
 
             Log.Warning("Logger configured to {debugLevel}", stringLevel);
         }
