@@ -14,7 +14,7 @@ on:
         default: 'HEAD'
           
 jobs: 
-  prepare and deploy:
+  prepare-and-deploy:
       runs-on: ubuntu-latest
       environment: PRD
     
