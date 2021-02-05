@@ -23,8 +23,11 @@ jobs:
       with:
           files: 'appsettings.Production.json'
       env:
-          JwtSigningKey: tcranz
+          JwtSigningKey: ${{ secrets.JWT_SIGNING_KEY }}
           ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
+          Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
+          Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
+
 
   checkout:
     runs-on: ubuntu-latest
