@@ -35,7 +35,8 @@ jobs:
               git checkout ${{github.event.inputs.commit-sha}}
         
         - uses: actions/checkout@master
-          ref: ${{github.event.inputs.commit-sha}}      
+          with: 
+            ref: ${{github.event.inputs.commit-sha}}      
         - name: Populate AppSettings
           uses: microsoft/variable-substitution@v1 
           with:
