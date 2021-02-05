@@ -3,20 +3,6 @@ CREATE COLLATION IF NOT EXISTS case_insensitive_collat (
   locale = '@colStrength=secondary',
   deterministic = false
 );
-drop table if exists userMetaphones;
-drop index if exists ix_leaderboard_ranking;
-drop table if exists leaderboardEntries;
-drop table if exists gameConfigs;
-drop table if exists friendships;
-drop table if exists pets;
-drop table if exists petSpeciesConfigs;
-drop table if exists petColorConfigs;
-drop table if exists readReceipts;
-drop table if exists messages;
-drop table if exists channelUsers;
-drop table if exists channels;
-drop table if exists users;
-
 
 CREATE TABLE IF NOT EXISTS users(
     userID SERIAL NOT NULL PRIMARY KEY,
@@ -139,4 +125,4 @@ CREATE TABLE IF NOT EXISTS userMetaphones(
 
 INSERT INTO users(username, firstname, lastname, emailaddress, password, gender, birthdate, salt, city, state, country, postcode, cash, isactive, datejoined, isDev) VALUES 
 ('TheOneTrueAdmin', 'Nic', 'Cage', 'jabarnes2112@gmail.com', '$2a$11$6wlm9qA4W4DsGZVuncdDouxwrqLrAYkwK2YLZuk6yJKfelGAOtlbi', 'male', '1991-12-05', 
-'$2a$11$6wlm9qA4W4DsGZVuncdDou', 'Chicago', 'IL', 'USA', '60613', 1000000000, true, '2020-06-02 20:53:18.636841', true)
+'$2a$11$6wlm9qA4W4DsGZVuncdDou', 'Chicago', 'IL', 'USA', '60613', 1000000000, true, '2020-06-02 20:53:18.636841', true);
