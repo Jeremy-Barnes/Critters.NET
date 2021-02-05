@@ -14,6 +14,18 @@ on:
         default: 'HEAD'
 
 jobs:
+    populate-appsettings:
+      runs-on: ubuntu-latest
+      environment: PRD
+      steps:
+      - uses: actions/checkout@v2
+      - uses: microsoft/variable-substitution@v1 
+      with:
+          files: 'appsettings.Production.json'
+      env:
+          JwtSigningKey: tcranz
+          ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
+
   checkout:
     runs-on: ubuntu-latest
     environment: PRD
@@ -37,8 +49,8 @@ jobs:
             cd Critters.NET
             cd CritterServer
             dotnet publish -c Release
-            cp -r ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1/. ~/CRITTER_PRD_DEPLOY/SERVER
-            rm -r ~/CRITTER_PRD_DEPLOY/CRITTERS.NET
+            cp -r ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1/publish/. ~/CRITTER_PRD_DEPLOY/SERVER
+            rm -r ~/CRITTER_PRD_DEPLOY/Critters.NET
             sudo systemctl stop critter-app-prd.service
             sudo rm -r /srv/CRITTERS/PRD/
             sudo mkdir /srv/CRITTERS/PRD/

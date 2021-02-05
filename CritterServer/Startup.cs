@@ -18,6 +18,8 @@ using CritterServer.Game;
 using CritterServer.Hubs;
 using System.Reflection;
 using CritterServer.DataAccess.Caching;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Collections.Generic;
 
 namespace CritterServer
 {
@@ -46,13 +48,22 @@ namespace CritterServer
                     options.EnableEndpointRouting = true;
                 });
 
+            List<string> permittedOriginUrls = new List<string>
+            { "jabarnes.io", "jabarnes.io/", "http://jabarnes.io", "https://jabarnes.io", "http://jabarnes.io/", "https://jabarnes.io/" };
+
+            if (Environment.IsDevelopment())
+            {
+                permittedOriginUrls.Add("localhost:8080");
+                permittedOriginUrls.Add("localhost:8080/");
+                permittedOriginUrls.Add("http://localhost:8080");
+                permittedOriginUrls.Add("http://localhost:8080/");
+            }
             services.AddCors(options =>
             {
                 options.AddPolicy(name: PermittedOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202",
-                                          "localhost:8080/", "http://localhost:8080", "http://localhost:8080/", "localhost:8080")
+                                      builder.WithOrigins(permittedOriginUrls.ToArray())
                                       .AllowAnyMethod()
                                       .AllowAnyHeader()
                                       .AllowCredentials();
@@ -123,6 +134,11 @@ namespace CritterServer
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
             app.UseCors(PermittedOrigins);
             app.UseRouting();
             app.UseAuthorization();
