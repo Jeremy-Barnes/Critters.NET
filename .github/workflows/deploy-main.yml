@@ -27,37 +27,36 @@ jobs:
           ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
           Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
           Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
-
-
-  checkout:
-    runs-on: ubuntu-latest
-    environment: PRD
+  
+    checkout:
+      runs-on: ubuntu-latest
+      environment: PRD
     
-    steps:
-      - name: SSH + Build
-        uses: appleboy/ssh-action@master
-        with: 
-          host: ${{secrets.SSH_HOST}}
-          key: ${{secrets.SSH_KEY}}
-          username: ${{secrets.SSH_USER}}
-          passphrase: ${{secrets.SSH_PASSPHRASE}}
-          
-          script: |
-            rm -r ~/CRITTER_PRD_DEPLOY
-            mkdir ~/CRITTER_PRD_DEPLOY
-            mkdir ~/CRITTER_PRD_DEPLOY/SERVER
-            cd ~/CRITTER_PRD_DEPLOY
-            git clone https://github.com/Jeremy-Barnes/Critters.NET.git
-            git checkout ${{github.event.inputs.commit-sha}}
-            cd Critters.NET
-            cd CritterServer
-            dotnet publish -c Release
-            cp -r ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1/publish/. ~/CRITTER_PRD_DEPLOY/SERVER
-            rm -r ~/CRITTER_PRD_DEPLOY/Critters.NET
-            sudo systemctl stop critter-app-prd.service
-            sudo rm -r /srv/CRITTERS/PRD/
-            sudo mkdir /srv/CRITTERS/PRD/
-            sudo cp -r ~/CRITTER_PRD_DEPLOY/SERVER/. /srv/CRITTERS/PRD/
-            sudo systemctl start critter-app-prd.service
-            sudo systemctl status critter-app-prd.service
-          # todo lock this down
+      steps:
+        - name: SSH + Build
+          uses: appleboy/ssh-action@master
+          with: 
+            host: ${{secrets.SSH_HOST}}
+            key: ${{secrets.SSH_KEY}}
+            username: ${{secrets.SSH_USER}}
+            passphrase: ${{secrets.SSH_PASSPHRASE}}
+
+            script: |
+              rm -r ~/CRITTER_PRD_DEPLOY
+              mkdir ~/CRITTER_PRD_DEPLOY
+              mkdir ~/CRITTER_PRD_DEPLOY/SERVER
+              cd ~/CRITTER_PRD_DEPLOY
+              git clone https://github.com/Jeremy-Barnes/Critters.NET.git
+              git checkout ${{github.event.inputs.commit-sha}}
+              cd Critters.NET
+              cd CritterServer
+              dotnet publish -c Release
+              cp -r ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1/publish/. ~/CRITTER_PRD_DEPLOY/SERVER
+              rm -r ~/CRITTER_PRD_DEPLOY/Critters.NET
+              sudo systemctl stop critter-app-prd.service
+              sudo rm -r /srv/CRITTERS/PRD/
+              sudo mkdir /srv/CRITTERS/PRD/
+              sudo cp -r ~/CRITTER_PRD_DEPLOY/SERVER/. /srv/CRITTERS/PRD/
+              sudo systemctl start critter-app-prd.service
+              sudo systemctl status critter-app-prd.service
+            # todo lock this down
