@@ -14,21 +14,21 @@ on:
         default: 'HEAD'
 
 jobs:
-    populate-appsettings:
+  populate-appsettings:
       runs-on: ubuntu-latest
       environment: PRD
       steps:
-      - uses: actions/checkout@v2
-      - uses: microsoft/variable-substitution@v1 
-      with:
-          files: 'appsettings.Production.json'
-      env:
-          JwtSigningKey: ${{ secrets.JWT_SIGNING_KEY }}
-          ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
-          Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
-          Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
+         - uses: microsoft/variable-substitution@v1 
+           with:
+              files: 'CritterServer/appsettings.Production.json'
+           env:
+              JwtSigningKey: ${{ secrets.JWT_SIGNING_KEY }}
+              ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
+              Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
+              Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
+
   
-    checkout:
+  checkout:
       runs-on: ubuntu-latest
       environment: PRD
     
