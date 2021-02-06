@@ -66,6 +66,7 @@ jobs:
             username: ${{secrets.SSH_USER}}
             passphrase: ${{secrets.SSH_PASSPHRASE}}
             script: |
+              sleep 240
               cd ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer
               dotnet publish -c Release
               cp -r ~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1/publish/. ~/CRITTER_PRD_DEPLOY/SERVER
