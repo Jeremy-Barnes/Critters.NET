@@ -41,7 +41,7 @@ jobs:
         - name: Populate AppSettings
           uses: microsoft/variable-substitution@v1 
           with:
-              files: '$GITHUB_WORKSPACE/Critters.Net/CritterServer/appsettings.Production.json'
+              files: '${{github.workspace}}/Critters.Net/CritterServer/appsettings.Production.json'
           env:
               JwtSigningKey: ${{ secrets.JWT_SIGNING_KEY }}
               ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
