@@ -172,7 +172,7 @@ namespace CritterServer
 
             var logCfg = new LoggerConfiguration()
             .Enrich.FromLogContext()
-            .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
+            .WriteTo.File(path: "logs/Critter.log", rollingInterval: RollingInterval.Day,
             fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
             rollOnFileSizeLimit: true)
             .WriteTo.Debug()

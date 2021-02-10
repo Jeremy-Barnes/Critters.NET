@@ -27,8 +27,9 @@ jobs:
           ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
           Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
           Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
-
-
+          Certificates.Default.Path: ${{ secrets.SSH_CERT_PATH }}
+          Certificates.Default.Password: ${{ secrets.SSH_CERT_PASSWORD }}
+          
   checkout:
     runs-on: ubuntu-latest
     environment: PRD
