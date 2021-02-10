@@ -49,7 +49,8 @@ namespace CritterServer
                 });
 
             List<string> permittedOriginUrls = new List<string>
-            { "jabarnes.io", "jabarnes.io/", "http://jabarnes.io", "https://jabarnes.io", "http://jabarnes.io/", "https://jabarnes.io/" };
+            { "jabarnes.io", "jabarnes.io/", "http://jabarnes.io", "https://jabarnes.io", "http://jabarnes.io/", "https://jabarnes.io/",
+            "https://app.jabarnes.io/", "http://app.jabarnes.io/"};
 
             if (Environment.IsDevelopment())
             {
@@ -156,7 +157,7 @@ namespace CritterServer
 
         private void configureLogging(IWebHostEnvironment env)
         {
-            var stringLevel = Configuration.GetSection("Logging:LogLevel:Default").Value;
+            var stringLevel = Configuration.GetSection("Logging__LogLevel__Default").Value;
 
             LogEventLevel logLevel;
             switch (stringLevel)
