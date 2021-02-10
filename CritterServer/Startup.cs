@@ -157,7 +157,7 @@ namespace CritterServer
 
         private void configureLogging(IWebHostEnvironment env)
         {
-            var stringLevel = Configuration.GetSection("Logging__LogLevel__Default").Value;
+            var stringLevel = Configuration.GetSection("Logging:LogLevel:Default").Value;
 
             LogEventLevel logLevel;
             switch (stringLevel)

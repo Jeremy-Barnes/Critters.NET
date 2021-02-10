@@ -47,8 +47,8 @@ jobs:
               ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
               Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
               Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
-              Certificates.Default.Path: ${{ secrets.SSH_CERT_PATH }}
-              Certificates.Default.Password: ${{ secrets.SSH_CERT_PASSWORD }}
+              Kestrel.Certificates.Default.Path: ${{ secrets.SSH_CERT_PATH }}
+              Kestrel.Certificates.Default.Password: ${{ secrets.SSH_CERT_PASSWORD }}
         - name: Copy AppSettings
           uses: appleboy/scp-action@master
           with:
