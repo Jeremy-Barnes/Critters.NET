@@ -47,6 +47,8 @@ jobs:
               ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
               Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
               Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
+              Certificates.Default.Path: ${{ secrets.SSH_CERT_PATH }}
+              Certificates.Default.Password: ${{ secrets.SSH_CERT_PASSWORD }}
         - name: Copy AppSettings
           uses: appleboy/scp-action@master
           with:
@@ -58,7 +60,6 @@ jobs:
             overwrite: true
             target: "~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer"
             strip_components: 3
-
         - name: Build And Deploy
           uses: appleboy/ssh-action@master
           with: 
