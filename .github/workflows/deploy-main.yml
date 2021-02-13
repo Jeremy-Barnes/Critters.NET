@@ -68,7 +68,7 @@ jobs:
             username: ${{secrets.SSH_USER}}
             passphrase: ${{secrets.SSH_PASSPHRASE}}
             script: |              
-              sudo ./~/CRITTER_PRD_DEPLOY/Critters.NET/Tools/runSQL.sh '~/CRITTER_PRD_DEPLOY/Critters.NET/SQL'
+              sudo bash ~/CRITTER_PRD_DEPLOY/Critters.NET/Tools/runSQL.sh '~/CRITTER_PRD_DEPLOY/Critters.NET/SQL'
 
 
   build-and-deploy:
