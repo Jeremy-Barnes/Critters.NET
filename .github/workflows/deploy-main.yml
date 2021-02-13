@@ -14,7 +14,7 @@ on:
         default: 'HEAD'
           
 jobs: 
-  prepare-and-deploy:
+  checkout-repo:
       runs-on: ubuntu-latest
       environment: PRD
     
@@ -60,6 +60,22 @@ jobs:
             overwrite: true
             target: "~/CRITTER_PRD_DEPLOY/Critters.NET/CritterServer"
             strip_components: 3
+        - name: Run SQL Scripts
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{secrets.SSH_HOST}}
+            key: ${{secrets.SSH_KEY}}
+            username: ${{secrets.SSH_USER}}
+            passphrase: ${{secrets.SSH_PASSPHRASE}}
+            script: |              
+              sudo ./~/CRITTER_PRD_DEPLOY/Critters.NET/Tools/runSQL.sh '~/CRITTER_PRD_DEPLOY/Critters.NET/SQL'
+
+
+  build-and-deploy:
+      runs-on: ubuntu-latest
+      environment: PRD
+    
+      steps:
         - name: Build And Deploy
           uses: appleboy/ssh-action@master
           with: 
