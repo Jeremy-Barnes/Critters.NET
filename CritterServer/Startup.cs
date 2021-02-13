@@ -184,7 +184,6 @@ namespace CritterServer
             {
                 logCfg.WriteTo.EventLog("Critters.NET", "Critters.NET");
             }
-
             Log.Logger = logCfg.CreateLogger();
 
             Log.Warning("Logger configured to {debugLevel}", stringLevel);
