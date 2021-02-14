@@ -1,4 +1,4 @@
-name: Deploy Main
+name: Deploy TST
 
 # Controls when the action will run. 
 on:
