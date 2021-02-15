@@ -20,6 +20,8 @@ using System.Reflection;
 using CritterServer.DataAccess.Caching;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Collections.Generic;
+using System.IO;
+using System;
 
 namespace CritterServer
 {
