@@ -54,7 +54,7 @@ namespace CritterServer
             { "jabarnes.io", "jabarnes.io/", "http://jabarnes.io", "https://jabarnes.io", "http://jabarnes.io/", "https://jabarnes.io/",
             "https://app.jabarnes.io/", "http://app.jabarnes.io/"};
 
-            if (Environment.IsDevelopment())
+            if (Environment.IsDevelopment() || Environment.EnvironmentName == "Test")
             {
                 permittedOriginUrls.Add("localhost:8080");
                 permittedOriginUrls.Add("localhost:8080/");
@@ -188,7 +188,7 @@ namespace CritterServer
             }
             Log.Logger = logCfg.CreateLogger();
 
-            Log.Warning("Logger configured to {debugLevel}", stringLevel);
+            Log.Warning("Logger configured to {debugLevel}, saving to {path}", stringLevel, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs/.log"));
         }
     }
 }
