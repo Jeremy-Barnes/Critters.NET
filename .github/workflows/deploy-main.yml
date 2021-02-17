@@ -68,7 +68,7 @@ jobs:
             username: ${{secrets.SSH_USER}}
             passphrase: ${{secrets.SSH_PASSPHRASE}}
             script: |              
-              for FILE in ~/CRITTER_PRD_DEPLOY/Critters.NET/SQL/*; do sudo -u postgres psql postgres -f $FILE; done
+              for FILE in ~/CRITTER_PRD_DEPLOY/Critters.NET/SQL/*; do sudo -u postgres psql postgres -d CrittersDB -f $FILE; done
 
 
   build-and-deploy:
