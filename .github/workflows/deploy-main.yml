@@ -74,7 +74,7 @@ jobs:
   build-and-deploy:
       runs-on: ubuntu-latest
       environment: PRD
-    
+      needs: [checkout-repo]
       steps:
         - name: Build And Deploy
           uses: appleboy/ssh-action@master
