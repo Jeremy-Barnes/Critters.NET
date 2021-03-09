@@ -58,8 +58,8 @@ namespace CritterServer
             {
                 permittedOriginUrls.Add("localhost:8080");
                 permittedOriginUrls.Add("localhost:8080/");
-                permittedOriginUrls.Add("http://localhost:8080");
-                permittedOriginUrls.Add("http://localhost:8080/");
+                permittedOriginUrls.Add("http://localhost:4200");
+                permittedOriginUrls.Add("http://localhost:4200/");
             }
             services.AddCors(options =>
             {

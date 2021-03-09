@@ -1,2 +1,6 @@
 <p>dashboard works!</p>
+
+<button (click)="signInClicked()">Sign In</button>
+    <span>Signing in... {{ user | async }}</span>
+
 <a [routerLink]="['/signup']"> Go to signup! </a>
