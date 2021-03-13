@@ -1,6 +1,18 @@
-<p>dashboard works!</p>
+<p>dashboard</p>
 
 <button (click)="signInClicked()">Sign In</button>
     <span>Signing in... {{ user | async }}</span>
 
-<a [routerLink]="['/signup']"> Go to signup! </a>
+    <div *ngIf="user | async else signIn">
+
+    </div>
+    <ng-template #signIn>                
+        <form class="modal-body" (ngSubmit)="signInClicked()" #loginForm="ngForm">
+            <input class="form-control" type="email" name="emailAddress" placeholder="email address" required ngModel />
+            <input class="form-control" type="password" name="password" placeholder="password" required ngModel />
+            <button class="btn btn-primary btn-block" type="submit">Login</button>
+        </form>
+    </ng-template>
+
+
+<a [routerLink]="['/signup']"> Sign Up! </a>

@@ -14,7 +14,6 @@ export class UserService {
 
     private user: User;
     constructor(private http: HttpClient) { 
-
         this.user = new User();
         //todo some cookie bullshit here
     }
@@ -30,14 +29,24 @@ export class UserService {
         }, 
         {
             headers: new HttpHeaders(
-                {
-                    'Content-Type':  'application/json'
-                })
+            {
+                'Content-Type':  'application/json'
+            })
         }).pipe(
             retry(2),
             catchError(this.handleError),
         );
     }
+
+    cookieSignIn() : Observable<User> {
+        return this.http.get<User>(environment.apiUrl + "/user/")
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        );
+    }
+
+
 
     private handleError(error: HttpErrorResponse) {
         if (error.error instanceof ErrorEvent) {

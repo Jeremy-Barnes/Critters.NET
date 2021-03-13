@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
+import { FormsModule }   from '@angular/forms';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,10 +11,10 @@ export class DashboardComponent implements OnInit {
 
     user : any;
     constructor(private userService: UserService) { 
+        this.user = this.userService.cookieSignIn();
     }
 
     signInClicked(){
-        this.user = this.userService.signIn('','');
     }
 
     ngOnInit(): void {
