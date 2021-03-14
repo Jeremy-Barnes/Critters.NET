@@ -13,19 +13,28 @@ import { catchError, retry } from 'rxjs/operators';
 export class UserService {
 
     private user: User;
+    private signInData: AuthResponse;
     constructor(private http: HttpClient) { 
         this.user = new User();
+        this.signInData = new AuthResponse();
         //todo some cookie bullshit here
     }
 
-    signIn(userNameOrEmail: string, password: string) : Observable<AuthResponse> {
-        return this.http.post<AuthResponse>(environment.apiUrl + "/user/login/", 
+    signIn(userNameOrEmail: string, password: string) : AuthResponse {
+        let email = null;
+        let userName = null;
+        if(userNameOrEmail.includes('@')) {
+            email = userNameOrEmail;
+        } else {
+            userName = userNameOrEmail;
+        }
+        this.http.post<AuthResponse>(environment.apiUrl + "/user/login/", 
         {
-            UserName: "",
+            UserName: userName,
             FirstName: "",
             LastName: "",
-            EmailAddress: "",
-            Password: ""
+            EmailAddress: email,
+            Password: password
         }, 
         {
             headers: new HttpHeaders(
@@ -35,7 +44,8 @@ export class UserService {
         }).pipe(
             retry(2),
             catchError(this.handleError),
-        );
+        ).subscribe((data : AuthResponse) => {this.signInData = data;});
+        return this.signInData;
     }
 
     cookieSignIn() : Observable<User> {

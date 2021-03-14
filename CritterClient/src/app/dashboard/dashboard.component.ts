@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
-import { FormsModule }   from '@angular/forms';
+import { FormsModule, NgForm }   from '@angular/forms';
+import { AuthResponse } from '../dto';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,7 +15,8 @@ export class DashboardComponent implements OnInit {
         this.user = this.userService.cookieSignIn();
     }
 
-    signInClicked(){
+    signInClicked(loginForm: NgForm){
+        var auth = this.userService.signIn(loginForm.value.emailAddress, loginForm.value.password);
     }
 
     ngOnInit(): void {
