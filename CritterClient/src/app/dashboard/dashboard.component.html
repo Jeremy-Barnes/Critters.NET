@@ -4,7 +4,7 @@
     <span>Signing in... {{ user | async }}</span> -->
 
     <div *ngIf="user | async else signIn">
-
+        <div>{{user.userName}}</div>
     </div>
     <ng-template #signIn>                
         <form class="modal-body" (ngSubmit)="signInClicked(loginForm)" #loginForm="ngForm">

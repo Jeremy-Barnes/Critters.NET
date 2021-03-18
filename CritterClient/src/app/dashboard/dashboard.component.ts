@@ -17,6 +17,8 @@ export class DashboardComponent implements OnInit {
 
     signInClicked(loginForm: NgForm){
         var auth = this.userService.signIn(loginForm.value.emailAddress, loginForm.value.password);
+        this.user = auth.subscribe();
+        alert(this.user);
     }
 
     ngOnInit(): void {

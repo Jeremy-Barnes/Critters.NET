@@ -129,7 +129,9 @@ namespace CritterServer.Controllers
                     )
                 );
             context.User = claims;
-            await this.HttpContext.SignInAsync("Cookie", claims);
+            await this.HttpContext.SignInAsync("Cookie", claims, new AuthenticationProperties
+            {
+                ExpiresUtc = DateTime.MinValue});
         }
     }
 

@@ -13,6 +13,7 @@ import { catchError, retry } from 'rxjs/operators';
 export class UserService {
 
     private user: User;
+    private userObs!: Observable<User>;
     private signInData: AuthResponse;
     constructor(private http: HttpClient) { 
         this.user = new User();
@@ -20,7 +21,7 @@ export class UserService {
         //todo some cookie bullshit here
     }
 
-    signIn(userNameOrEmail: string, password: string) : AuthResponse {
+    signIn(userNameOrEmail: string, password: string) : Observable<User> {
         let email = null;
         let userName = null;
         if(userNameOrEmail.includes('@')) {
@@ -37,6 +38,7 @@ export class UserService {
             Password: password
         }, 
         {
+            withCredentials : true,
             headers: new HttpHeaders(
             {
                 'Content-Type':  'application/json'
@@ -44,12 +46,32 @@ export class UserService {
         }).pipe(
             retry(2),
             catchError(this.handleError),
-        ).subscribe((data : AuthResponse) => {this.signInData = data;});
-        return this.signInData;
+        ).subscribe((data : AuthResponse) => {
+            this.signInData = data;
+            this.fullSignIn(this.signInData.AuthToken)
+        });
+        //this.userObs = this.cookieSignIn();
+        this.userObs.subscribe();
+        return this.userObs;
     }
 
     cookieSignIn() : Observable<User> {
-        return this.http.get<User>(environment.apiUrl + "/user/")
+        return this.http.get<User>(environment.apiUrl + "/user/", {withCredentials : true })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        );
+    }
+
+    fullSignIn(jwt: string) : Observable<User> {
+        return this.http.get<User>(environment.apiUrl + "/user/",
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: jwt
+              })
+        })
         .pipe(
             retry(2),
             catchError(this.handleError),
