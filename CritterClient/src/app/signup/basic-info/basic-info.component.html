@@ -1,1 +1,31 @@
-<p>basic-info works!</p>
+<p>basic-info subcomponent!</p>
+<form (ngSubmit)="onSubmit(accountCreateForm)" #accountCreateForm="ngForm">
+
+            <p>Enter your basic account details — your username will be the name that other players identify you be, and your first name will be visible on your profile.</p>
+
+            <input class="form-control" type="email" name="emailAddress" ngModel placeholder="email address" required />
+
+            <input class="form-control" type="text" name="userName" placeholder="userName" ngModel required />
+            <input class="form-control" type="password" name="password" placeholder="password" ngModel required />
+            <input class="form-control" type="password" name="password" placeholder="confirm password" ngModel required />
+
+            <div class="row">
+                <div class="col-sm-6">
+                    <select class="form-control" name="birthmonthSelect" ngModel>
+                        <option class="placeholder" value="" disabled selected>Birth Month</option>
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <select class="form-control" name="birthdaySelect" ngModel>
+                        <option class="placeholder" value="" disabled selected>Birth Day</option>
+                    </select>
+                </div>
+            </div>
+
+            <input class="form-control" type="text" name="firstName" placeholder="first name" ngModel required />
+            <input class="btn btn-primary" type="submit" value="Next" />
+        
+            <div class="col-md-6 hidden-sm hidden-xs">
+            <img src="https://i.imgflip.com/1gjc7j.jpg" />
+        </div>
+</form>

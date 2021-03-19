@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { AuthResponse, User } from './dto';
 import { environment } from './../environments/environment';
 import { HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Observer, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
 
 
@@ -12,16 +12,16 @@ import { catchError, retry } from 'rxjs/operators';
 })
 export class UserService {
 
-    private user: User;
-    private userObs!: Observable<User>;
-    private signInData: AuthResponse;
+    public userSubject : BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
+
+    private jwtToken: string;
+
     constructor(private http: HttpClient) { 
-        this.user = new User();
-        this.signInData = new AuthResponse();
-        //todo some cookie bullshit here
+        this.jwtToken = '';
+        this.cookieSignIn();
     }
 
-    signIn(userNameOrEmail: string, password: string) : Observable<User> {
+    signIn(userNameOrEmail: string, password: string) {
         let email = null;
         let userName = null;
         if(userNameOrEmail.includes('@')) {
@@ -47,23 +47,20 @@ export class UserService {
             retry(2),
             catchError(this.handleError),
         ).subscribe((data : AuthResponse) => {
-            this.signInData = data;
-            this.fullSignIn(this.signInData.AuthToken)
+            this.jwtToken = data.AuthToken;
+            this.userSubject.next(data.User);
         });
-        //this.userObs = this.cookieSignIn();
-        this.userObs.subscribe();
-        return this.userObs;
     }
 
-    cookieSignIn() : Observable<User> {
-        return this.http.get<User>(environment.apiUrl + "/user/", {withCredentials : true })
+    cookieSignIn() {
+        this.http.get<User>(environment.apiUrl + "/user/", { withCredentials : true })
         .pipe(
             retry(2),
             catchError(this.handleError),
-        );
+        ).subscribe(o => this.userSubject.next(o));
     }
 
-    fullSignIn(jwt: string) : Observable<User> {
+    retrieveUser(jwt: string) : Observable<User> {
         return this.http.get<User>(environment.apiUrl + "/user/",
         {
             withCredentials : true,
@@ -77,8 +74,6 @@ export class UserService {
             catchError(this.handleError),
         );
     }
-
-
 
     private handleError(error: HttpErrorResponse) {
         if (error.error instanceof ErrorEvent) {
@@ -94,5 +89,5 @@ export class UserService {
         // Return an observable with a user-facing error message.
         return throwError(
           'Something bad happened; please try again later.');
-      }
+    }
 }

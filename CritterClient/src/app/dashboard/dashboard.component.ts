@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { FormsModule, NgForm }   from '@angular/forms';
-import { AuthResponse } from '../dto';
+import { AuthResponse, User } from '../dto';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,15 +11,13 @@ import { AuthResponse } from '../dto';
 })
 export class DashboardComponent implements OnInit {
 
-    user : any;
+    uo : Observable<User | null>;
     constructor(private userService: UserService) { 
-        this.user = this.userService.cookieSignIn();
+        this.uo = this.userService.userSubject.asObservable();
     }
 
     signInClicked(loginForm: NgForm){
-        var auth = this.userService.signIn(loginForm.value.emailAddress, loginForm.value.password);
-        this.user = auth.subscribe();
-        alert(this.user);
+        this.userService.signIn(loginForm.value.emailAddress, loginForm.value.password);
     }
 
     ngOnInit(): void {

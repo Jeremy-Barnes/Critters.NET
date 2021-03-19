@@ -3,16 +3,25 @@
 <button (click)="signInClicked()">Sign In</button>
     <span>Signing in... {{ user | async }}</span> -->
 
-    <div *ngIf="user | async else signIn">
-        <div>{{user.userName}}</div>
+    <div *ngIf="(uo | async) as user else signIn" >
+        <div>Welcome back! </div>
+        <div>Username: {{user.UserName}}</div>
+        <div>{{user.FirstName}} {{user.LastName}}</div>
+        <div>cB: {{user.Cash}}</div>
     </div>
-    <ng-template #signIn>                
-        <form class="modal-body" (ngSubmit)="signInClicked(loginForm)" #loginForm="ngForm">
+
+    
+    <ng-template #signIn>              
+        <div>Sign in! </div>
+        <form ngNativeValidate class="modal-body" (ngSubmit)="signInClicked(loginForm)" #loginForm="ngForm" >
             <input class="form-control" type="email" name="emailAddress" placeholder="email address" required ngModel />
             <input class="form-control" type="password" name="password" placeholder="password" required ngModel />
             <button class="btn btn-primary btn-block" type="submit">Login</button>
         </form>
+
+        <a [routerLink]="['/signup']"> Sign Up! </a>
+
+
     </ng-template>
 
 
-<a [routerLink]="['/signup']"> Sign Up! </a>
