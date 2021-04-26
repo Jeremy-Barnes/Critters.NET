@@ -64,7 +64,6 @@ namespace CritterServer.Controllers
         }
 
         [HttpGet("colors")]
-        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -75,7 +74,6 @@ namespace CritterServer.Controllers
         }
 
         [HttpGet("species")]
-        [Authorize(AuthenticationSchemes = "Cookie,Bearer")]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]

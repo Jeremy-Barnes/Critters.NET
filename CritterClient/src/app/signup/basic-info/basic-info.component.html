@@ -3,29 +3,33 @@
 
             <p>Enter your basic account details — your username will be the name that other players identify you be, and your first name will be visible on your profile.</p>
 
-            <input class="form-control" type="email" name="emailAddress" ngModel placeholder="email address" required />
+            <input class="form-control" type="email" name="emailAddress" [(ngModel)]="this.userState.EmailAddress" 
+                (ngModelChange)="this.userService.userSubject.next(this.userState);" placeholder="email address" required />
 
-            <input class="form-control" type="text" name="userName" placeholder="userName" ngModel required />
-            <input class="form-control" type="password" name="password" placeholder="password" ngModel required />
-            <input class="form-control" type="password" name="password" placeholder="confirm password" ngModel required />
+            <input class="form-control" type="text" name="userName" [(ngModel)]="this.userState.UserName" 
+                (ngModelChange)="this.userService.userSubject.next(this.userState);" placeholder="userName" required />
 
-            <div class="row">
-                <div class="col-sm-6">
-                    <select class="form-control" name="birthmonthSelect" ngModel>
-                        <option class="placeholder" value="" disabled selected>Birth Month</option>
-                    </select>
-                </div>
-                <div class="col-sm-6">
-                    <select class="form-control" name="birthdaySelect" ngModel>
-                        <option class="placeholder" value="" disabled selected>Birth Day</option>
-                    </select>
-                </div>
-            </div>
+            <input class="form-control" type="password" name="password" [(ngModel)]="this.userState.Password" 
+                (ngModelChange)="this.userService.userSubject.next(this.userState);" (blur)="this.confirmPassword();" placeholder="password" required />
 
-            <input class="form-control" type="text" name="firstName" placeholder="first name" ngModel required />
+            <input class="form-control" type="password" name="password" placeholder="confirm password" [(ngModel)]="this.passwordConfirm" 
+                (blur)="this.confirmPassword();" [ngClass]="{'invalidField': !this.passwordsMatch }" required />
+            
+            <select class="form-control" name="birthmonthSelect">
+                <option class="placeholder" value="" disabled selected>Birth Month</option>
+            </select>
+        
+            <select class="form-control" name="birthdaySelect">
+                <option class="placeholder" value="" disabled selected>Birth Day</option>
+            </select>
+            
+
+            <input class="form-control" type="text" name="firstName" placeholder="first name" [(ngModel)]="this.userState.FirstName" 
+            (ngModelChange)="this.userService.userSubject.next(this.userState);" required />
+            
             <input class="btn btn-primary" type="submit" value="Next" />
         
-            <div class="col-md-6 hidden-sm hidden-xs">
-            <img src="https://i.imgflip.com/1gjc7j.jpg" />
-        </div>
+            <div>
+                <img src="https://i.imgflip.com/1gjc7j.jpg" />
+            </div>
 </form>

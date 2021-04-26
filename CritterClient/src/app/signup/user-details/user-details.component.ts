@@ -1,16 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
 import { User } from 'src/app/dto';
 import { UserService } from 'src/app/user.service';
 
 @Component({
-    selector: 'app-basic-info',
-    templateUrl: './basic-info.component.html',
-    styleUrls: ['./basic-info.component.css']
+  selector: 'app-user-details',
+  templateUrl: './user-details.component.html',
+  styleUrls: ['./user-details.component.css']
 })
-export class BasicInfoComponent implements OnInit {
+export class UserDetailsComponent implements OnInit {
 
     public userState = new User();
     public passwordConfirm = '';
@@ -23,12 +22,9 @@ export class BasicInfoComponent implements OnInit {
                 this.userState = u ?? new User(); 
             });
     }
-    updateGlobalUser(user : User){
-        this.userService.userSubject.next(user);
-    }
 
     onSubmit(signUpForm: NgForm){
-        let link = ['1'];
+        let link = ['2'];
         this.router.navigate(link, { relativeTo: this.route.parent});
     }
 
@@ -38,7 +34,5 @@ export class BasicInfoComponent implements OnInit {
 
     ngOnInit(): void {
     }
-
-
 
 }

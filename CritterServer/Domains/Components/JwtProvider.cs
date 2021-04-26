@@ -174,6 +174,10 @@ namespace CritterServer.Domains.Components
                     opts.ExpireTimeSpan = new TimeSpan(14);//todo configurable
                     opts.EventsType = typeof(CookieEventHandler);
                     opts.TicketDataFormat = new CookieTicketDataFormat(jwtProvider);
+                    opts.Cookie.SameSite = SameSiteMode.None;
+                    opts.Cookie.Domain = null;
+                    opts.Cookie.SecurePolicy = CookieSecurePolicy.None;
+                    opts.Cookie.Path = "/api/";
                 });
 
 

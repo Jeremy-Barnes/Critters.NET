@@ -8,6 +8,8 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { SignupComponent } from './signup/signup.component';
 import { BasicInfoComponent } from './signup/basic-info/basic-info.component';
 import { FormsModule } from '@angular/forms';
+import { UserDetailsComponent } from './signup/user-details/user-details.component';
+import { PetCreateComponent } from './signup/pet-create/pet-create.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +17,8 @@ import { FormsModule } from '@angular/forms';
     DashboardComponent,
     SignupComponent,
     BasicInfoComponent,
+    UserDetailsComponent,
+    PetCreateComponent,
   ],
   imports: [
     BrowserModule,
