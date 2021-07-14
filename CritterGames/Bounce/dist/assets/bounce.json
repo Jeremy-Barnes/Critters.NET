@@ -1,0 +1,60 @@
+{
+  "resources": [
+    "assets/bounce.ogg",
+    "assets/bounce.m4a",
+    "assets/bounce.mp3",
+    "assets/bounce.ac3"
+  ],
+  "spritemap": {
+    "1": {
+      "start": 0,
+      "end": 0.4179591836734694,
+      "loop": false
+    },
+    "2": {
+      "start": 2,
+      "end": 2.2554195011337868,
+      "loop": false
+    },
+    "3": {
+      "start": 4,
+      "end": 4.429569160997732,
+      "loop": false
+    },
+    "4": {
+      "start": 6,
+      "end": 6.429569160997732,
+      "loop": false
+    },
+    "5": {
+      "start": 8,
+      "end": 8.359909297052154,
+      "loop": false
+    },
+    "6": {
+      "start": 10,
+      "end": 10.452789115646258,
+      "loop": false
+    },
+    "7": {
+      "start": 12,
+      "end": 12.290249433106576,
+      "loop": false
+    },
+    "8": {
+      "start": 14,
+      "end": 14.243809523809524,
+      "loop": false
+    },
+    "9": {
+      "start": 16,
+      "end": 16.27863945578231,
+      "loop": false
+    },
+    "10": {
+      "start": 18,
+      "end": 18.30185941043084,
+      "loop": false
+    }
+  }
+}
