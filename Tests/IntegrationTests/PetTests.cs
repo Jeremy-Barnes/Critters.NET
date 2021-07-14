@@ -13,6 +13,7 @@ using Dapper;
 using System.Linq;
 using CritterServer.Contract;
 using System.Transactions;
+using Npgsql;
 
 namespace Tests.IntegrationTests
 {
@@ -72,7 +73,6 @@ namespace Tests.IntegrationTests
         {
             this.Context = context;
             this.TestScopedDBConn = context.GetNewDbConnection();
-            Console.WriteLine("new PetTests ");
         }
 
         [Fact]
