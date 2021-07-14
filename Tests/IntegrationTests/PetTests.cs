@@ -77,71 +77,135 @@ namespace Tests.IntegrationTests
         [Fact]
         public void CreateAndRetrievePetById()
         {
-            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+            try
+            {
+                var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
 
-            var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
+                var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
 
-            var retrievedPet = (PetDomain.RetrievePets(createPet.PetId)).Result.FirstOrDefault();
-            
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Equal(nonPersistedPet.Name, retrievedPet?.Name);
-            Assert.Equal(createPet.PetId, retrievedPet.PetId);
+                var retrievedPet = (PetDomain.RetrievePets(createPet.PetId)).Result.FirstOrDefault();
 
-            Assert.Equal(nonPersistedPet.SpeciesId, createPet.SpeciesId);
-            Assert.Equal(nonPersistedPet.ColorId, createPet.ColorId);
-            Assert.Equal(nonPersistedPet.OwnerId, retrievedPet?.OwnerId);
-            Assert.False(createPet.IsAbandoned);
-            Assert.False(retrievedPet.IsAbandoned);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Equal(nonPersistedPet.Name, retrievedPet?.Name);
+                Assert.Equal(createPet.PetId, retrievedPet.PetId);
+
+                Assert.Equal(nonPersistedPet.SpeciesId, createPet.SpeciesId);
+                Assert.Equal(nonPersistedPet.ColorId, createPet.ColorId);
+                Assert.Equal(nonPersistedPet.OwnerId, retrievedPet?.OwnerId);
+                Assert.False(createPet.IsAbandoned);
+                Assert.False(retrievedPet.IsAbandoned);
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+            }
         }
 
         [Fact]
         public void CreateAndRetrievePetByOwner()
         {
-            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
-            var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
-            var retrievedPets = (PetDomain.RetrievePetsByOwner(Context.OwnerUser1.UserId)).Result.AsList();
+            try
+            {
+                var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+                var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
+                var retrievedPets = (PetDomain.RetrievePetsByOwner(Context.OwnerUser1.UserId)).Result.AsList();
 
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Contains(retrievedPets, rp => nonPersistedPet.Name == rp.Name && 
-            rp.PetId == createPet.PetId && 
-            rp.SpeciesId == nonPersistedPet.SpeciesId && 
-            rp.ColorId == nonPersistedPet.ColorId);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Contains(retrievedPets, rp => nonPersistedPet.Name == rp.Name &&
+                rp.PetId == createPet.PetId &&
+                rp.SpeciesId == nonPersistedPet.SpeciesId &&
+                rp.ColorId == nonPersistedPet.ColorId);
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+            }
         }
 
         [Fact]
         public void CreateAndRetrieveFullPetByOwner()
         {
-            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
-            var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
-            var retrievedPets = (PetDomain.RetrieveFullPetInformationByOwner(Context.OwnerUser1.UserId)).Result.AsList();
+            try
+            {
+                var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+                var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
+                var retrievedPets = (PetDomain.RetrieveFullPetInformationByOwner(Context.OwnerUser1.UserId)).Result.AsList();
 
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Contains(retrievedPets, rp => nonPersistedPet.Name == rp.Pet.Name && 
-            rp.Pet.PetId == createPet.PetId && 
-            rp.Pet.SpeciesId == nonPersistedPet.SpeciesId && 
-            rp.Pet.ColorId == nonPersistedPet.ColorId &&
-            rp.Color.PetColorConfigId == nonPersistedPet.ColorId &&
-            rp.Species.PetSpeciesConfigId == nonPersistedPet.SpeciesId);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Contains(retrievedPets, rp => nonPersistedPet.Name == rp.Pet.Name &&
+                rp.Pet.PetId == createPet.PetId &&
+                rp.Pet.SpeciesId == nonPersistedPet.SpeciesId &&
+                rp.Pet.ColorId == nonPersistedPet.ColorId &&
+                rp.Color.PetColorConfigId == nonPersistedPet.ColorId &&
+                rp.Species.PetSpeciesConfigId == nonPersistedPet.SpeciesId);
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+            }
         }
 
         [Fact]
         public void CreateAndRetrieveFullPetById()
         {
-            var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
-            var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
-            var retrievedPet = (PetDomain.RetrieveFullPetInformation(createPet.PetId)).Result.First();
+            try
+            {
+                var nonPersistedPet = Context.RandomPetNotPersisted(Context.PetColor2, Context.PetSpecies1, Context.OwnerUser1.UserId);
+                var createPet = PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1).Result;
+                var retrievedPet = (PetDomain.RetrieveFullPetInformation(createPet.PetId)).Result.First();
 
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Equal(nonPersistedPet.Name, createPet.Name);
-            Assert.Equal(nonPersistedPet.Name, retrievedPet.Pet.Name);
-            Assert.Equal(retrievedPet.Pet.PetId, createPet.PetId);
-            Assert.Equal(retrievedPet.Pet.SpeciesId, nonPersistedPet.SpeciesId);
-            Assert.Equal(retrievedPet.Pet.ColorId, nonPersistedPet.ColorId);
-            Assert.Equal(retrievedPet.Color.PetColorConfigId, nonPersistedPet.ColorId);
-            Assert.Equal(retrievedPet.Species.PetSpeciesConfigId, nonPersistedPet.SpeciesId);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Equal(nonPersistedPet.Name, createPet.Name);
+                Assert.Equal(nonPersistedPet.Name, retrievedPet.Pet.Name);
+                Assert.Equal(retrievedPet.Pet.PetId, createPet.PetId);
+                Assert.Equal(retrievedPet.Pet.SpeciesId, nonPersistedPet.SpeciesId);
+                Assert.Equal(retrievedPet.Pet.ColorId, nonPersistedPet.ColorId);
+                Assert.Equal(retrievedPet.Color.PetColorConfigId, nonPersistedPet.ColorId);
+                Assert.Equal(retrievedPet.Species.PetSpeciesConfigId, nonPersistedPet.SpeciesId);
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+            }
         }
 
         [Fact]
