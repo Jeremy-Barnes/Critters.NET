@@ -48,7 +48,6 @@ namespace CritterServer.DataAccess
                 } 
                 else
                 {
-
                     transaction = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
                 }
                 if (this.DbConnection is DbConnection)

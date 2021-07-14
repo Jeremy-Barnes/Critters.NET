@@ -72,6 +72,7 @@ namespace Tests.IntegrationTests
         {
             this.Context = context;
             this.TestScopedDBConn = context.GetNewDbConnection();
+            Console.WriteLine("new PetTests ");
         }
 
         [Fact]
