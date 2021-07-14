@@ -18,6 +18,10 @@ using CritterServer.Game;
 using CritterServer.Hubs;
 using System.Reflection;
 using CritterServer.DataAccess.Caching;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Collections.Generic;
+using System.IO;
+using System;
 
 namespace CritterServer
 {
@@ -25,12 +29,14 @@ namespace CritterServer
     {
         readonly string PermittedOrigins = "XMenOrigins";
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -44,13 +50,23 @@ namespace CritterServer
                     options.EnableEndpointRouting = true;
                 });
 
+            List<string> permittedOriginUrls = new List<string>
+            { "jabarnes.io", "jabarnes.io/", "http://jabarnes.io", "https://jabarnes.io", "http://jabarnes.io/", "https://jabarnes.io/",
+            "https://app.jabarnes.io/", "http://app.jabarnes.io/"};
+
+            if (Environment.IsDevelopment() || Environment.EnvironmentName == "Test")
+            {
+                permittedOriginUrls.Add("localhost:8080");
+                permittedOriginUrls.Add("localhost:8080/");
+                permittedOriginUrls.Add("http://localhost:8080");
+                permittedOriginUrls.Add("http://localhost:8080/");
+            }
             services.AddCors(options =>
             {
                 options.AddPolicy(name: PermittedOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("localhost:10202/", "http://localhost:10202", "http://localhost:10202/", "localhost:10202",
-                                          "localhost:8080/", "http://localhost:8080", "http://localhost:8080/", "localhost:8080")
+                                      builder.WithOrigins(permittedOriginUrls.ToArray())
                                       .AllowAnyMethod()
                                       .AllowAnyHeader()
                                       .AllowCredentials();
@@ -67,7 +83,7 @@ namespace CritterServer
             });
             services.AddScoped<ITransactionScopeFactory, TransactionScopeFactory>();
 
-            configureLogging();
+            configureLogging(Environment);
 
             //auth
             services.AddJwt(Configuration);
@@ -121,6 +137,11 @@ namespace CritterServer
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
             app.UseCors(PermittedOrigins);
             app.UseRouting();
             app.UseAuthorization();
@@ -136,7 +157,7 @@ namespace CritterServer
            });//last thing
         }
 
-        private void configureLogging()
+        private void configureLogging(IWebHostEnvironment env)
         {
             var stringLevel = Configuration.GetSection("Logging:LogLevel:Default").Value;
 
@@ -152,17 +173,22 @@ namespace CritterServer
                 default: logLevel = LogEventLevel.Warning; break;
             }
 
-            Log.Logger = new LoggerConfiguration()
-               .Enrich.FromLogContext()
-               .WriteTo.EventLog("Critters.NET", "Critters.NET")
-               .WriteTo.File(path: "bin/logs/Critter.log", rollingInterval: RollingInterval.Day,
-               fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
-               rollOnFileSizeLimit: true)
-               .WriteTo.Debug()
-               .MinimumLevel.Is(logLevel)
-                   .CreateLogger();
+            var logCfg = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .WriteTo.File(path: Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs/.log"), 
+            rollingInterval: RollingInterval.Day,
+            fileSizeLimitBytes: 1000 * 1000 * 100, //100mb
+            rollOnFileSizeLimit: true)
+            .WriteTo.Debug()
+            .MinimumLevel.Is(logLevel);
 
-            Log.Warning("Logger configured to {debugLevel}", stringLevel);
+            if (env.IsDevelopment())
+            {
+                logCfg.WriteTo.EventLog("Critters.NET", "Critters.NET");
+            }
+            Log.Logger = logCfg.CreateLogger();
+
+            Log.Warning("Logger configured to {debugLevel}, saving to {path}", stringLevel, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs/.log"));
         }
     }
 }

@@ -1,0 +1,95 @@
+name: Deploy TST
+
+# Controls when the action will run. 
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      commit-sha:
+        description: 'The commit ID from the specified branch to checkout, build, and deploy'
+        required: true
+        default: 'HEAD'
+
+jobs: 
+  checkout-repo:
+      runs-on: ubuntu-latest
+      environment: TST
+    
+      steps:
+        - name: Checkout
+          uses: appleboy/ssh-action@master
+          with: 
+            host: ${{secrets.SSH_HOST}}
+            key: ${{secrets.SSH_KEY}}
+            username: ${{secrets.SSH_USER}}
+            passphrase: ${{secrets.SSH_PASSPHRASE}}
+            script: |
+              rm -r ~/CRITTER_TST_DEPLOY
+              mkdir ~/CRITTER_TST_DEPLOY
+              mkdir ~/CRITTER_TST_DEPLOY/SERVER
+              cd ~/CRITTER_TST_DEPLOY
+              git clone https://github.com/Jeremy-Barnes/Critters.NET.git
+              cd ./Critters.NET
+              git checkout ${{github.event.inputs.commit-sha}}
+        
+        - uses: actions/checkout@master
+          with: 
+            ref: ${{github.event.inputs.commit-sha}}      
+        - name: Populate AppSettings
+          uses: microsoft/variable-substitution@v1 
+          with:
+              files: '${{github.workspace}}/CritterServer/appsettings.Test.json'
+          env:
+              JwtSigningKey: ${{ secrets.JWT_SIGNING_KEY }}
+              ConnectionStrings.Sql: ${{ secrets.SQL_CONNECTION_STRING }}
+              Kestrel.EndPoints.Http.Url: ${{ secrets.APPLICATION_URL_HTTP }}
+              Kestrel.EndPoints.Https.Url: ${{ secrets.APPLICATION_URL_HTTPS }}
+              Kestrel.Certificates.Default.Path: ${{ secrets.SSH_CERT_PATH }}
+              Kestrel.Certificates.Default.Password: ${{ secrets.SSH_CERT_PASSWORD }}
+        - name: Copy AppSettings
+          uses: appleboy/scp-action@master
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{secrets.SSH_KEY}}
+            passphrase: ${{secrets.SSH_PASSPHRASE}}
+            source: "${{github.workspace}}/CritterServer/appsettings.Test.json"
+            overwrite: true
+            target: "~/CRITTER_TST_DEPLOY/Critters.NET/CritterServer"
+            strip_components: 3
+        - name: Run SQL Scripts
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{secrets.SSH_HOST}}
+            key: ${{secrets.SSH_KEY}}
+            username: ${{secrets.SSH_USER}}
+            passphrase: ${{secrets.SSH_PASSPHRASE}}
+            script: |              
+              for FILE in ~/CRITTER_TST_DEPLOY/Critters.NET/SQL/*; do sudo -u postgres psql postgres -d TstDB -f $FILE; done
+
+
+
+  build-and-deploy:
+      runs-on: ubuntu-latest
+      environment: TST
+    
+      steps:
+        - name: Build And Deploy
+          uses: appleboy/ssh-action@master
+          with: 
+            host: ${{secrets.SSH_HOST}}
+            key: ${{secrets.SSH_KEY}}
+            username: ${{secrets.SSH_USER}}
+            passphrase: ${{secrets.SSH_PASSPHRASE}}
+            script: |
+              cd ~/CRITTER_TST_DEPLOY/Critters.NET/CritterServer
+              dotnet publish -c Release
+              cp -r ~/CRITTER_TST_DEPLOY/Critters.NET/CritterServer/bin/Release/netcoreapp3.1/publish/. ~/CRITTER_TST_DEPLOY/SERVER
+              rm -r ~/CRITTER_TST_DEPLOY/Critters.NET
+              sudo systemctl stop critter-app-tst.service
+              sudo rm -r /srv/CRITTERS/TST/
+              sudo mkdir /srv/CRITTERS/TST/
+              sudo cp -r ~/CRITTER_TST_DEPLOY/SERVER/. /srv/CRITTERS/TST/
+              sudo systemctl start critter-app-tst.service
+              sudo systemctl status critter-app-tst.service
+            # todo lock this down
