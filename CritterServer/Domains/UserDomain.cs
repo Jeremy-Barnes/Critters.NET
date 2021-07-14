@@ -165,7 +165,7 @@ namespace CritterServer.Domains
             if(friend == null || friend.UserId == activeUser.UserId)
             {
                 string badRequestMsg = null;
-                if(friend.UserId == activeUser.UserId)
+                if(friend?.UserId == activeUser.UserId)
                 {
                     badRequestMsg = "You're already friends with yourself, silly.";
                 }

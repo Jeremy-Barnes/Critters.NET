@@ -5,6 +5,8 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   container-job:
@@ -42,14 +44,16 @@ jobs:
       run: dotnet build --no-restore
       working-directory: ./CritterServer
     - name: Create DB
-      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -c "CREATE DATABASE CrittersDB WITH OWNER = postgres ENCODING = 'UTF8' CONNECTION LIMIT = -1;"
+      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -c "CREATE DATABASE \"CrittersDB\" WITH OWNER = postgres ENCODING = 'UTF8' CONNECTION LIMIT = -1;"
     - name: Update Db Perms
-      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO PUBLIC; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO PUBLIC;"
+      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -d CrittersDB -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO PUBLIC; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO PUBLIC;"
     - name: Create DB Access Role for App
-      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -c "CREATE ROLE LocalApp WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT NOREPLICATION CONNECTION LIMIT -1 PASSWORD 'localapplicationpassword';"
+      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -d CrittersDB -c "CREATE ROLE \"LocalApp\" WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT NOREPLICATION CONNECTION LIMIT -1 PASSWORD 'localapplicationpassword';"
     - name: Populate Schema
-      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -f ./SQL/2019.09.09.01.db_baseline.sql    
+      run: PGPASSWORD=postgres psql -h postgres -U postgres -w -d CrittersDB -f ./SQL/2019.09.09.01.db_baseline.sql    
     - name: Execute Component Tests
       run: dotnet test --no-build --verbosity normal
       working-directory: ./CritterServer
+      env:
+          PGHOST: postgres
   
