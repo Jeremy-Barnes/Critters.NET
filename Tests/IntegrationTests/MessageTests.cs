@@ -80,7 +80,6 @@ namespace Tests.IntegrationTests
         public MessageTestScope(IDbConnection dbc, JwtProvider jwtProvider)
         {
             ScopedDbConn = dbc;
-            ScopedDbConn.Open();
             this.JWTProvider = jwtProvider;
             UserRepo = new UserRepository(ScopedDbConn);
             var transactionScopeFactory = new TransactionScopeFactory(ScopedDbConn);

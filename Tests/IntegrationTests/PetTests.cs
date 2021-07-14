@@ -1,19 +1,12 @@
 ﻿using CritterServer.Models;
 using CritterServer.DataAccess;
 using CritterServer.Domains;
-using CritterServer.Domains.Components;
-using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Text;
 using Xunit;
 using Dapper;
 using System.Linq;
 using CritterServer.Contract;
-using System.Transactions;
-using Npgsql;
 
 namespace Tests.IntegrationTests
 {
@@ -42,7 +35,6 @@ namespace Tests.IntegrationTests
         {
             {
                 DBConn = GetNewDbConnection();
-                DBConn.Open();
                 PetColor1 = CfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
                 PetColor2 = CfgRepo.CreatePetColor(new PetColorConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), ImagePatternPath = "8clFw0e.jpg" }).Result;
                 PetSpecies1 = CfgRepo.CreatePetSpecies(new PetSpeciesConfig() { Name = Guid.NewGuid().ToString().Substring(0, 5), Description = "", MaxHitPoints = 1000, ImageBasePath = "https://i.imgur.com/" }).Result;
@@ -104,11 +96,12 @@ namespace Tests.IntegrationTests
                 {
                     Console.WriteLine(innerException.Message);
                 }
+                throw;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-
+                throw;
             }
         }
 
@@ -134,12 +127,13 @@ namespace Tests.IntegrationTests
                 foreach (Exception innerException in a.Flatten().InnerExceptions)
                 {
                     Console.WriteLine(innerException.Message);
+                    throw;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-
+                throw;
             }
         }
 
@@ -200,12 +194,13 @@ namespace Tests.IntegrationTests
                 foreach (Exception innerException in a.Flatten().InnerExceptions)
                 {
                     Console.WriteLine(innerException.Message);
+                    throw;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-
+                throw;
             }
         }
 
@@ -219,20 +214,74 @@ namespace Tests.IntegrationTests
         [Fact]
         public void CreateWithInvalidColorFails()
         {
-            var nonPersistedPet = Context.RandomPetNotPersisted(Int32.MinValue, Context.PetSpecies1, Context.OwnerUser1.UserId);
-            Assert.ThrowsAsync<CritterException>(() => PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1));
+            try
+            {
+                var nonPersistedPet = Context.RandomPetNotPersisted(Int32.MinValue, Context.PetSpecies1, Context.OwnerUser1.UserId);
+                Assert.ThrowsAsync<CritterException>(() => PetDomain.CreatePet(nonPersistedPet, Context.OwnerUser1));
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+
+            }
         }
 
         [Fact]
         public void RetrieveSpecies()
         {
-            Assert.NotEmpty(PetDomain.RetrieveAvailableSpecies(Context.OwnerUser1).Result);
+            try
+            {
+                Assert.NotEmpty(PetDomain.RetrieveAvailableSpecies(Context.OwnerUser1).Result);
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+
+            }
+
         }
 
         [Fact]
         public void RetrieveColors()
         {
-            Assert.NotEmpty(PetDomain.RetrieveAvailableColors(Context.OwnerUser1).Result);
+            try
+            {
+                Assert.NotEmpty(PetDomain.RetrieveAvailableColors(Context.OwnerUser1).Result);
+            }
+            catch (AggregateException a)
+            {
+                Console.WriteLine(a.Message);
+                foreach (Exception innerException in a.Flatten().InnerExceptions)
+                {
+                    Console.WriteLine(innerException.Message);
+                }
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
         }
 
     }

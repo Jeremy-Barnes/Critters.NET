@@ -72,9 +72,9 @@ namespace Tests
 
         public IDbConnection GetNewDbConnection()
         {
-
+            System.Transactions.Transaction.Current = null;
             var dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-            dbConnection.ConnectionString = $"Server={Environment.GetEnvironmentVariable("PGHOST") ?? "localhost"}; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB;enlist=true;Timeout=90";
+            dbConnection.ConnectionString = $"Server={Environment.GetEnvironmentVariable("PGHOST") ?? "localhost"}; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB;enlist=true;Timeout=90;Command Timeout=90";
             return dbConnection;
         }
 

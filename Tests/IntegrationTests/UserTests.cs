@@ -241,12 +241,12 @@ namespace Tests.IntegrationTests
 
             using (var scope = new UserTestScope())
             {
-                Assert.NotEmpty(scope.UserAccountDomain.RetrieveFriends(randomFriend).Result);
                 Assert.True(scope.UserAccountDomain.UpdateFriendship(randomUser.UserName, randomFriend, false).Result.Friendship.Accepted);
             }
             using (var scope = new UserTestScope())
-            { 
-                Assert.True(scope.UserAccountDomain.RetrieveFriends(randomFriend).Result.First().Friendship.Accepted);//db check
+            {
+                var friends = scope.UserAccountDomain.RetrieveFriends(randomFriend).Result;
+                Assert.True(friends.First(x => x.Friendship.RequesterUserId == randomUser.UserId).Friendship.Accepted);//db check
             }
 
             using (var scope = new UserTestScope())
