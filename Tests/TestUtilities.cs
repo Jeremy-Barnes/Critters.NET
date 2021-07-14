@@ -74,7 +74,7 @@ namespace Tests
         {
 
             var dbConnection = DbProviderFactories.GetFactory("Npgsql").CreateConnection();
-            dbConnection.ConnectionString = $"Server={Environment.GetEnvironmentVariable("PGHOST") ?? "localhost"}; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB;enlist=true";
+            dbConnection.ConnectionString = $"Server={Environment.GetEnvironmentVariable("PGHOST") ?? "localhost"}; Port=5432; User Id=LocalApp;Password=localapplicationpassword;Database=CrittersDB;enlist=true;Timeout=90";
             return dbConnection;
         }
 
