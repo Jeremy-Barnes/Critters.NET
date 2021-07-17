@@ -17,18 +17,18 @@ export class BasicInfoComponent implements OnInit {
     public passwordsMatch = false;
     constructor(
         private router: Router,
-        private route: ActivatedRoute, 
-        public userService: UserService) { 
-            this.userService.userSubject.subscribe(u => { 
-                this.userState = u ?? new User(); 
+        private route: ActivatedRoute,
+        public userService: UserService) {
+            this.userService.userSubject.subscribe(u => {
+                this.userState = u ?? new User();
             });
     }
-    updateGlobalUser(user : User){
+    updateGlobalUser(user: User){
         this.userService.userSubject.next(user);
     }
 
     onSubmit(signUpForm: NgForm){
-        let link = ['1'];
+        const link = ['1'];
         this.router.navigate(link, { relativeTo: this.route.parent});
     }
 

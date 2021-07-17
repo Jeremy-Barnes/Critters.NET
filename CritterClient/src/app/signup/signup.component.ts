@@ -13,14 +13,14 @@ import { UserDetailsComponent } from './user-details/user-details.component';
 export class SignupComponent implements OnInit {
 
     constructor(
-        private router: Router, 
-        private route: ActivatedRoute, 
+        private router: Router,
+        private route: ActivatedRoute,
         private userService: UserService) {
             this.userService.userSubject.next(new User());
     }
 
     ngOnInit(): void {
-        let link = ['0'];
+        const link = ['0'];
         this.router.navigate(link, { relativeTo: this.route });
     }
 }

@@ -12,17 +12,17 @@ import { UserService } from 'src/app/user.service';
 })
 export class PetCreateComponent implements OnInit {
 
- 
+
     public userState = new User();
     public passwordConfirm = '';
     public passwordsMatch = false;
     constructor(
         private router: Router,
-        private route: ActivatedRoute, 
+        private route: ActivatedRoute,
         public petService: PetService,
-        public userService: UserService) { 
-            this.userService.userSubject.subscribe(u => { 
-                this.userState = u ?? new User(); 
+        public userService: UserService) {
+            this.userService.userSubject.subscribe(u => {
+                this.userState = u ?? new User();
             });
     }
 

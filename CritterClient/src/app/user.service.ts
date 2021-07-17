@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthResponse, SearchResult, User } from './dto';
+import { AuthResponse, FriendshipDetails, SearchResult, User } from './dto';
 import { environment } from './../environments/environment';
 import { HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, Observer, throwError } from 'rxjs';
@@ -12,31 +12,32 @@ import { catchError, retry } from 'rxjs/operators';
 })
 export class UserService {
 
-    public userSubject : BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
+    public userSubject: BehaviorSubject<User> = new BehaviorSubject<User>(null);
 
+    public friendSubject: BehaviorSubject<FriendshipDetails[]> = new BehaviorSubject<FriendshipDetails[]>(null);
     private jwtToken: string;
 
-    constructor(private http: HttpClient) { 
+    constructor(private http: HttpClient) {
         this.jwtToken = '';
         this.cookieSignIn();
     }
 
-    signIn(userNameOrEmail: string, password: string) {
+    signIn(userNameOrEmail: string, password: string): void {
         let email = null;
         let userName = null;
-        if(userNameOrEmail.includes('@')) {
+        if (userNameOrEmail.includes('@')) {
             email = userNameOrEmail;
         } else {
             userName = userNameOrEmail;
         }
-        this.http.post<AuthResponse>(environment.apiUrl + "/user/login/", 
+        this.http.post<AuthResponse>(environment.apiUrl + '/user/login/',
         {
             UserName: userName,
-            FirstName: "",
-            LastName: "",
+            FirstName: '',
+            LastName: '',
             EmailAddress: email,
             Password: password
-        }, 
+        },
         {
             withCredentials : true,
             headers: new HttpHeaders(
@@ -46,14 +47,14 @@ export class UserService {
         }).pipe(
             retry(2),
             catchError(this.handleError),
-        ).subscribe((data : AuthResponse) => {
+        ).subscribe((data: AuthResponse) => {
             this.jwtToken = data.AuthToken;
             this.userSubject.next(data.User);
         });
     }
 
-    cookieSignIn() {
-        this.http.get<User>(environment.apiUrl + "/user/", { withCredentials : true })
+    cookieSignIn(): void {
+        this.http.get<User>(environment.apiUrl + '/user/', { withCredentials : true })
         .pipe(
             retry(2),
             catchError(this.handleError),
@@ -61,7 +62,28 @@ export class UserService {
     }
 
     retrieveActiveUser() : Observable<User> {
-        return this.http.get<User>(environment.apiUrl + "/user/",
+        return this.http.get<User>(environment.apiUrl + '/user/',
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: this.jwtToken
+              })
+        })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        );
+    }
+
+    getUserFriends(): void {
+        this.retrieveFriends(this.jwtToken).subscribe(fds => {
+            this.friendSubject.next(fds);
+        });
+    }
+
+    retrieveFriends(jwt: string): Observable<FriendshipDetails[]> {
+        return this.http.get<FriendshipDetails[]>(environment.apiUrl + '/user/friend',
         {
             withCredentials : true,
             headers: new HttpHeaders({
@@ -76,7 +98,7 @@ export class UserService {
     }
 
     searchUsers(userSearchQuery: string) : Observable<SearchResult> {
-        return this.http.get<SearchResult>(environment.apiUrl + "/search/" + userSearchQuery,
+        return this.http.get<SearchResult>(environment.apiUrl + '/search/' + userSearchQuery,
         {
             withCredentials : true,
             headers: new HttpHeaders({
@@ -91,21 +113,22 @@ export class UserService {
     }
 
     getUser(userName: string) : Observable<User> {
-        return this.http.get<User>(environment.apiUrl + "/user/" + userName,
+        return this.http.get<User>(environment.apiUrl + '/user/' + userName,
         {
             withCredentials : true,
             headers: new HttpHeaders({
                 'Content-Type':  'application/json',
-                Authorization: 'Bearer ' + this.jwtToken
+                Authorization: this.jwtToken
               })
         })
         .pipe(
             retry(2),
             catchError(this.handleError),
-        )
+        );
     }
 
-    private handleError(error: HttpErrorResponse) {
+
+    private handleError(error: HttpErrorResponse): Observable<never> {
         if (error.error instanceof ErrorEvent) {
           // A client-side or network error occurred. Handle it accordingly.
           console.error('An error occurred:', error.error.message);

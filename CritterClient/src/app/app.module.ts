@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { UserDetailsComponent } from './signup/user-details/user-details.component';
 import { PetCreateComponent } from './signup/pet-create/pet-create.component';
 import { ProfileComponent } from './profile/profile.component';
+import { SocialComponent } from './social/social.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { ProfileComponent } from './profile/profile.component';
     UserDetailsComponent,
     PetCreateComponent,
     ProfileComponent,
+    SocialComponent,
   ],
   imports: [
     BrowserModule,
