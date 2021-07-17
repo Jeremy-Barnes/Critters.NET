@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthResponse, User } from './dto';
+import { AuthResponse, FriendshipDetails, User } from './dto';
 import { environment } from './../environments/environment';
 import { HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, Observer, throwError } from 'rxjs';
@@ -12,8 +12,9 @@ import { catchError, retry } from 'rxjs/operators';
 })
 export class UserService {
 
-    public userSubject : BehaviorSubject<User | null> = new BehaviorSubject<User | null>(null);
+    public userSubject: BehaviorSubject<User> = new BehaviorSubject<User>(null);
 
+    public friendSubject: BehaviorSubject<FriendshipDetails[]> = new BehaviorSubject<FriendshipDetails[]>(null);
     private jwtToken: string;
 
     constructor(private http: HttpClient) { 
@@ -24,16 +25,16 @@ export class UserService {
     signIn(userNameOrEmail: string, password: string) {
         let email = null;
         let userName = null;
-        if(userNameOrEmail.includes('@')) {
+        if (userNameOrEmail.includes('@')) {
             email = userNameOrEmail;
         } else {
             userName = userNameOrEmail;
         }
-        this.http.post<AuthResponse>(environment.apiUrl + "/user/login/", 
+        this.http.post<AuthResponse>(environment.apiUrl + '/user/login/', 
         {
             UserName: userName,
-            FirstName: "",
-            LastName: "",
+            FirstName: '',
+            LastName: '',
             EmailAddress: email,
             Password: password
         }, 
@@ -53,15 +54,36 @@ export class UserService {
     }
 
     cookieSignIn() {
-        this.http.get<User>(environment.apiUrl + "/user/", { withCredentials : true })
+        this.http.get<User>(environment.apiUrl + '/user/', { withCredentials : true })
         .pipe(
             retry(2),
             catchError(this.handleError),
         ).subscribe(o => this.userSubject.next(o));
     }
 
-    retrieveUser(jwt: string) : Observable<User> {
-        return this.http.get<User>(environment.apiUrl + "/user/",
+    getUserFriends(){
+        this.retrieveFriends(this.jwtToken).subscribe(fds => {
+            this.friendSubject.next(fds);
+        });
+    }
+
+    retrieveUser(jwt: string): Observable<User> {
+        return this.http.get<User>(environment.apiUrl + '/user/',
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: jwt
+              })
+        })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        );
+    }
+
+    retrieveFriends(jwt: string): Observable<FriendshipDetails[]> {
+        return this.http.get<FriendshipDetails[]>(environment.apiUrl + '/user/friend',
         {
             withCredentials : true,
             headers: new HttpHeaders({

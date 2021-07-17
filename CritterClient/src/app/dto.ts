@@ -1,19 +1,4 @@
 export class User {
-    constructor(){
-        this.UserName = "";
-        this.FirstName = "";
-        this.LastName = "";
-        this.EmailAddress = ""; 
-        this.Cash = 0;
-        this.Gender = "";
-        this.Birthdate = new Date();
-        this.City = "";
-        this.State = ""
-        this.Country = "";
-        this.Postcode = "";
-        this.Password = "";
-    }
-
     public UserName : string;
     public FirstName : string;
     public LastName : string;
@@ -29,17 +14,12 @@ export class User {
 }
 
 export class AuthResponse {
-    public AuthToken! : string;
-    public User!: User;
+    public AuthToken : string;
+    public User: User;
 }
 
-export class PetColorConfig {
-    constructor(){
-        this.PetColorConfigId = -1;
-        this.Name = "";
-        this.ImagePatternPath = "";
-    }
-
+export class PetColorConfig 
+{
     public PetColorConfigId : number;
     public Name : string;
     public ImagePatternPath : string;
@@ -47,9 +27,22 @@ export class PetColorConfig {
 
 export class PetSpeciesConfig
 {
-    public PetSpeciesConfigId!: number;
-    public Name!: number;
-    public MaxHitPoints!: number;
-    public Description!: string;
-    public ImageBasePath!: string;
+    public PetSpeciesConfigId: number;
+    public Name: number;
+    public MaxHitPoints: number;
+    public Description: string;
+    public ImageBasePath: string;
+}
+
+export class FriendshipDetails
+{
+    public RequesterUserName : string;
+    public RequestedUserName : string;
+    public Friendship : Friendship;
+}
+
+export class Friendship 
+{
+    public Accepted : boolean;
+    public DateSent : Date;
 }
