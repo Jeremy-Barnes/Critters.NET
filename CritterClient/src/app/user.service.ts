@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthResponse, User } from './dto';
+import { AuthResponse, SearchResult, User } from './dto';
 import { environment } from './../environments/environment';
 import { HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, Observer, throwError } from 'rxjs';
@@ -60,19 +60,49 @@ export class UserService {
         ).subscribe(o => this.userSubject.next(o));
     }
 
-    retrieveUser(jwt: string) : Observable<User> {
+    retrieveActiveUser() : Observable<User> {
         return this.http.get<User>(environment.apiUrl + "/user/",
         {
             withCredentials : true,
             headers: new HttpHeaders({
                 'Content-Type':  'application/json',
-                Authorization: jwt
+                Authorization: 'Bearer ' + this.jwtToken
               })
         })
         .pipe(
             retry(2),
             catchError(this.handleError),
         );
+    }
+
+    searchUsers(userSearchQuery: string) : Observable<SearchResult> {
+        return this.http.get<SearchResult>(environment.apiUrl + "/search/" + userSearchQuery,
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: 'Bearer ' + this.jwtToken
+              })
+        })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        )
+    }
+
+    getUser(userName: string) : Observable<User> {
+        return this.http.get<User>(environment.apiUrl + "/user/" + userName,
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: 'Bearer ' + this.jwtToken
+              })
+        })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        )
     }
 
     private handleError(error: HttpErrorResponse) {

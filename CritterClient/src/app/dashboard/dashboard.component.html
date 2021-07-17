@@ -14,7 +14,7 @@
     <ng-template #signIn>              
         <div>Sign in! </div>
         <form ngNativeValidate class="modal-body" (ngSubmit)="signInClicked(loginForm)" #loginForm="ngForm" >
-            <input class="form-control" type="email" name="emailAddress" placeholder="email address" required ngModel />
+            <input class="form-control" type="text" name="emailAddress" placeholder="email address" required ngModel />
             <input class="form-control" type="password" name="password" placeholder="password" required ngModel />
             <button class="btn btn-primary btn-block" type="submit">Login</button>
         </form>
@@ -24,4 +24,16 @@
 
     </ng-template>
 
-
+    <div>
+        <h2>Search by username</h2>
+        
+        <form>
+            <input class="form-control" type="search" name="search" placeholder="search" [(ngModel)]="this.searchQuery" />
+            <button class="btn btn-primary btn-block" type="submit" (click)="usernameSearch(searchQuery)">Search</button>
+        </form>
+        
+        <ul *ngIf="searchResult">
+            <li *ngFor="let user of searchResult.Users">Result: <a [routerLink]="['/user/' + user.UserName]">{{ user.UserName }}</a></li>
+            <li *ngIf="searchResult.Users.length == 0">No results</li>
+        </ul>
+    </div>

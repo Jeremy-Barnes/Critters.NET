@@ -53,3 +53,20 @@ export class PetSpeciesConfig
     public Description!: string;
     public ImageBasePath!: string;
 }
+
+export class Pet
+{
+    public Name!: string;
+    public Level!: number;
+    public CurrentHitPoints!: number;
+    public Gender!: string;
+    public SpeciesId!: number;
+    public ColorId!: number;
+    public IsAbandoned!: boolean;
+}
+
+export class SearchResult
+{
+    public Pets!: Pet[];
+    public Users!: User[];
+}

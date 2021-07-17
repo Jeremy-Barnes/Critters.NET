@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../user.service';
 import { FormsModule, NgForm }   from '@angular/forms';
-import { AuthResponse, User } from '../dto';
+import { AuthResponse, User, SearchResult } from '../dto';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -16,8 +16,19 @@ export class DashboardComponent implements OnInit {
         this.uo = this.userService.userSubject.asObservable();
     }
 
+    searchQuery : string = "";
+    searchResult! : SearchResult;
+    user : User|null = null;
+
     signInClicked(loginForm: NgForm){
         this.userService.signIn(loginForm.value.emailAddress, loginForm.value.password);
+    }
+
+    usernameSearch(userName: string) {
+        this.userService.searchUsers(userName)
+        .subscribe(s => 
+            this.searchResult = s
+            );
     }
 
     ngOnInit(): void {

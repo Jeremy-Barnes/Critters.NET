@@ -10,6 +10,7 @@ import { BasicInfoComponent } from './signup/basic-info/basic-info.component';
 import { FormsModule } from '@angular/forms';
 import { UserDetailsComponent } from './signup/user-details/user-details.component';
 import { PetCreateComponent } from './signup/pet-create/pet-create.component';
+import { ProfileComponent } from './profile/profile.component';
 
 @NgModule({
   declarations: [
@@ -19,6 +20,7 @@ import { PetCreateComponent } from './signup/pet-create/pet-create.component';
     BasicInfoComponent,
     UserDetailsComponent,
     PetCreateComponent,
+    ProfileComponent,
   ],
   imports: [
     BrowserModule,

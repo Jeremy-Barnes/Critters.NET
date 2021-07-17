@@ -1,0 +1,22 @@
+
+<img src="">
+<h1>{{ user.UserName }}</h1>
+<p>{{ user.FirstName }} {{ user.LastName }}</p>
+<hr />
+<button class="" ><img src=""></button>
+<button class="" ><img src=""></button>
+
+<div>
+    <div>
+        <p class="profile-description"> user.Description </p>
+    </div>
+    <div>
+        <p class="profile-details">
+            <strong>Location:</strong> {{ user.City }}, {{ user.State }}, {{ user.Country }}<br />
+            <strong>Age:</strong> {{ user.Birthdate }}<br />
+            <strong>Gender:</strong> {{ user.Gender }}<br /><br />
+            <strong>Last logged in:</strong>  user.LastLoggedIn <br />
+            <strong>Started playing:</strong>  user.CreatedDate 
+        </p>
+    </div>
+</div>

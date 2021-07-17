@@ -19,8 +19,6 @@ export class PetService {
     }
 
     getColors() : Observable<PetColorConfig[]>{
-        let email = null;
-        let userName = null;
      
         return this.http.get(environment.apiUrl + "/pet/colors/", 
         {
@@ -33,8 +31,6 @@ export class PetService {
     }
 
     getSpecies() : Observable<PetSpeciesConfig[]>{
-        let email = null;
-        let userName = null;
      
         return this.http.get(environment.apiUrl + "/pet/species/", 
         {
