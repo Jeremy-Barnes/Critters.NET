@@ -14,35 +14,29 @@ export class PetService {
 
     private jwtToken: string;
 
-    constructor(private http: HttpClient) { 
+    constructor(private http: HttpClient) {
         this.jwtToken = '';
     }
 
-    getColors() : Observable<PetColorConfig[]>{
-        let email = null;
-        let userName = null;
-     
-        return this.http.get(environment.apiUrl + "/pet/colors/", 
+    getColors(): Observable<PetColorConfig[]>{
+        return this.http.get(environment.apiUrl + '/pet/colors/',
         {
             withCredentials : true,
         }).pipe(
             retry(2),
             catchError(this.handleError),
-            map((r : any) => { return <PetColorConfig[]>r.Colors})
+            map((r: any) => r.Colors as PetColorConfig[])
         );
     }
 
-    getSpecies() : Observable<PetSpeciesConfig[]>{
-        let email = null;
-        let userName = null;
-     
-        return this.http.get(environment.apiUrl + "/pet/species/", 
+    getSpecies(): Observable<PetSpeciesConfig[]>{
+        return this.http.get(environment.apiUrl + '/pet/species/',
         {
             withCredentials : true,
         }).pipe(
             retry(2),
             catchError(this.handleError),
-            map((r : any) => { return <PetSpeciesConfig[]>r.Species})
+            map((r: any) => r.Species as PetSpeciesConfig[])
         );
     }
 

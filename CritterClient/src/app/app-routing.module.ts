@@ -11,8 +11,8 @@ import { UserDetailsComponent } from './signup/user-details/user-details.compone
 const routes: Routes = [
     { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
     { path: 'dashboard', component: DashboardComponent },
-    { path: 'signup', component: SignupComponent, 
-        children: [ {path: '0', component: BasicInfoComponent }, {path: '1', component: UserDetailsComponent }, {path: '2', component: PetCreateComponent } ] 
+    { path: 'signup', component: SignupComponent,
+        children: [ {path: '0', component: BasicInfoComponent }, {path: '1', component: UserDetailsComponent }, {path: '2', component: PetCreateComponent } ]
 
     }
 ];

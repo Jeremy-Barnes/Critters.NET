@@ -16,15 +16,15 @@ export class UserDetailsComponent implements OnInit {
     public passwordsMatch = false;
     constructor(
         private router: Router,
-        private route: ActivatedRoute, 
-        public userService: UserService) { 
-            this.userService.userSubject.subscribe(u => { 
-                this.userState = u ?? new User(); 
+        private route: ActivatedRoute,
+        public userService: UserService) {
+            this.userService.userSubject.subscribe(u => {
+                this.userState = u ?? new User();
             });
     }
 
     onSubmit(signUpForm: NgForm){
-        let link = ['2'];
+        const link = ['2'];
         this.router.navigate(link, { relativeTo: this.route.parent});
     }
 

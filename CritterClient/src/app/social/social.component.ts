@@ -4,7 +4,7 @@ import { FriendshipDetails } from '../dto';
 import { UserService } from '../user.service';
 
 @Component({
-  selector: 'social',
+  selector: 'social-pane',
   templateUrl: './social.component.html',
   styleUrls: ['./social.component.css']
 })

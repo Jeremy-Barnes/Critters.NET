@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 })
 export class DashboardComponent implements OnInit {
 
-    uo : Observable<User | null>;
+    uo : Observable<User>;
     constructor(private userService: UserService) { 
         this.uo = this.userService.userSubject.asObservable();
     }

@@ -17,12 +17,12 @@ export class UserService {
     public friendSubject: BehaviorSubject<FriendshipDetails[]> = new BehaviorSubject<FriendshipDetails[]>(null);
     private jwtToken: string;
 
-    constructor(private http: HttpClient) { 
+    constructor(private http: HttpClient) {
         this.jwtToken = '';
         this.cookieSignIn();
     }
 
-    signIn(userNameOrEmail: string, password: string) {
+    signIn(userNameOrEmail: string, password: string): void {
         let email = null;
         let userName = null;
         if (userNameOrEmail.includes('@')) {
@@ -30,14 +30,14 @@ export class UserService {
         } else {
             userName = userNameOrEmail;
         }
-        this.http.post<AuthResponse>(environment.apiUrl + '/user/login/', 
+        this.http.post<AuthResponse>(environment.apiUrl + '/user/login/',
         {
             UserName: userName,
             FirstName: '',
             LastName: '',
             EmailAddress: email,
             Password: password
-        }, 
+        },
         {
             withCredentials : true,
             headers: new HttpHeaders(
@@ -47,13 +47,13 @@ export class UserService {
         }).pipe(
             retry(2),
             catchError(this.handleError),
-        ).subscribe((data : AuthResponse) => {
+        ).subscribe((data: AuthResponse) => {
             this.jwtToken = data.AuthToken;
             this.userSubject.next(data.User);
         });
     }
 
-    cookieSignIn() {
+    cookieSignIn(): void {
         this.http.get<User>(environment.apiUrl + '/user/', { withCredentials : true })
         .pipe(
             retry(2),
@@ -61,7 +61,7 @@ export class UserService {
         ).subscribe(o => this.userSubject.next(o));
     }
 
-    getUserFriends(){
+    getUserFriends(): void {
         this.retrieveFriends(this.jwtToken).subscribe(fds => {
             this.friendSubject.next(fds);
         });
@@ -97,7 +97,7 @@ export class UserService {
         );
     }
 
-    private handleError(error: HttpErrorResponse) {
+    private handleError(error: HttpErrorResponse): Observable<never> {
         if (error.error instanceof ErrorEvent) {
           // A client-side or network error occurred. Handle it accordingly.
           console.error('An error occurred:', error.error.message);
