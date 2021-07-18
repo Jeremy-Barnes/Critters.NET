@@ -18,7 +18,7 @@ export class UserDetailsComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         public userService: UserService) {
-            this.userService.userSubject.subscribe(u => {
+            this.userService.activeUserSubject.subscribe(u => {
                 this.userState = u ?? new User();
             });
     }

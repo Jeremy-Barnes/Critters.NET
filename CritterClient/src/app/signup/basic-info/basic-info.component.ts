@@ -19,12 +19,12 @@ export class BasicInfoComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         public userService: UserService) {
-            this.userService.userSubject.subscribe(u => {
+            this.userService.activeUserSubject.subscribe(u => {
                 this.userState = u ?? new User();
             });
     }
     updateGlobalUser(user: User){
-        this.userService.userSubject.next(user);
+        this.userService.activeUserSubject.next(user);
     }
 
     onSubmit(signUpForm: NgForm){

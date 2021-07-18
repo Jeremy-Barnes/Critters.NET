@@ -16,7 +16,7 @@ export class ProfileComponent implements OnInit {
   
   constructor(private userService : UserService, private route: ActivatedRoute ) {
       const userName = <string>this.route.snapshot.paramMap.get('userName');
-      userService.getUser(userName)
+      userService.retrieveUser(userName)
       .subscribe(u => {
           this.user = u;
           this.findCurrentFriendship(this.user.UserName);
@@ -36,7 +36,7 @@ export class ProfileComponent implements OnInit {
   }
 
   findCurrentFriendship(friendUserName: string): void {
-    let friends: FriendshipDetails[] = this.userService.friendSubject.getValue();
+    let friends: FriendshipDetails[] = this.userService.friendsListSubject.getValue();
     this.friendship = friends.find(fsd => fsd.RequestedUserName == friendUserName || fsd.RequesterUserName == friendUserName);
   }
 

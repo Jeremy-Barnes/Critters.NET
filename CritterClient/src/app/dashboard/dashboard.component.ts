@@ -13,7 +13,7 @@ export class DashboardComponent implements OnInit {
 
     uo : Observable<User>;
     constructor(private userService: UserService) { 
-        this.uo = this.userService.userSubject.asObservable();
+        this.uo = this.userService.activeUserSubject.asObservable();
     }
 
     searchQuery : string = "";

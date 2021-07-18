@@ -4,13 +4,13 @@
             <p>Enter your basic account details — your username will be the name that other players identify you be, and your first name will be visible on your profile.</p>
 
             <input class="form-control" type="email" name="emailAddress" [(ngModel)]="this.userState.EmailAddress" 
-                (ngModelChange)="this.userService.userSubject.next(this.userState);" placeholder="email address" required />
+                (ngModelChange)="this.userService.activeUserSubject.next(this.userState);" placeholder="email address" required />
 
             <input class="form-control" type="text" name="userName" [(ngModel)]="this.userState.UserName" 
-                (ngModelChange)="this.userService.userSubject.next(this.userState);" placeholder="userName" required />
+                (ngModelChange)="this.userService.activeUserSubject.next(this.userState);" placeholder="userName" required />
 
             <input class="form-control" type="password" name="password" [(ngModel)]="this.userState.Password" 
-                (ngModelChange)="this.userService.userSubject.next(this.userState);" (blur)="this.confirmPassword();" placeholder="password" required />
+                (ngModelChange)="this.userService.activeUserSubject.next(this.userState);" (blur)="this.confirmPassword();" placeholder="password" required />
 
             <input class="form-control" type="password" name="password" placeholder="confirm password" [(ngModel)]="this.passwordConfirm" 
                 (blur)="this.confirmPassword();" [ngClass]="{'invalidField': !this.passwordsMatch }" required />
@@ -25,7 +25,7 @@
             
 
             <input class="form-control" type="text" name="firstName" placeholder="first name" [(ngModel)]="this.userState.FirstName" 
-            (ngModelChange)="this.userService.userSubject.next(this.userState);" required />
+            (ngModelChange)="this.userService.activeUserSubject.next(this.userState);" required />
             
             <input class="btn btn-primary" type="submit" value="Next" />
         

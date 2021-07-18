@@ -16,7 +16,7 @@ export class SignupComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         private userService: UserService) {
-            this.userService.userSubject.next(new User());
+            this.userService.activeUserSubject.next(new User());
     }
 
     ngOnInit(): void {

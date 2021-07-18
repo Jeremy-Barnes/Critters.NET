@@ -21,7 +21,7 @@ export class PetCreateComponent implements OnInit {
         private route: ActivatedRoute,
         public petService: PetService,
         public userService: UserService) {
-            this.userService.userSubject.subscribe(u => {
+            this.userService.activeUserSubject.subscribe(u => {
                 this.userState = u ?? new User();
             });
     }

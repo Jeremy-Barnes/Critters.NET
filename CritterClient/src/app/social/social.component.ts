@@ -15,8 +15,8 @@ export class SocialComponent implements OnInit {
     constructor(private userService: UserService) { }
 
     ngOnInit(): void {
-        this.friends = this.userService.friendSubject.asObservable();
-        this.user = this.userService.userSubject.asObservable();
+        this.friends = this.userService.friendsListSubject.asObservable();
+        this.user = this.userService.activeUserSubject.asObservable();
     }
 
     extractFriendName(friend: FriendshipDetails, activeUser: User){
