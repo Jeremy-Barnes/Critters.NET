@@ -1,5 +1,7 @@
-<div>
+<div *ngIf="(user | async) as activeUser">
+    Helllo {{activeUser.UserName}} here are your friends
+    <br><br><br>
     <div *ngFor="let friend of friends | async">
-        {{friend.RequestedUserName}}
+        {{ extractFriendName(friend, activeUser) }} - Accepted: {{friend.Friendship.Accepted}}
     </div>
 </div>

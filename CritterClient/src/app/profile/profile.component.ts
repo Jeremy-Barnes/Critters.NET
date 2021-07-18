@@ -1,4 +1,3 @@
-import { getMissingNgModuleMetadataErrorData } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from '../dto';
