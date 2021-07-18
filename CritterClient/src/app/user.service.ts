@@ -118,7 +118,22 @@ export class UserService {
             withCredentials : true,
             headers: new HttpHeaders({
                 'Content-Type':  'application/json',
-                Authorization: this.jwtToken
+                Authorization: 'Bearer ' + this.jwtToken
+              })
+        })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        );
+    }
+
+    addFriend(friendUserName: string) : Observable<FriendshipDetails> {
+        return this.http.put<FriendshipDetails>(environment.apiUrl + '/user/friend/' + friendUserName, null,
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: 'Bearer ' + this.jwtToken
               })
         })
         .pipe(
