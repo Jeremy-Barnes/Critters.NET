@@ -3,8 +3,12 @@
 <h1>{{ user.UserName }}</h1>
 <p>{{ user.FirstName }} {{ user.LastName }}</p>
 <hr />
-<button class="" ><img src=""></button>
-<button class="" (click)="addFriend(user.UserName)">Add friend</button>
+<button class="" >Chat</button>
+<button *ngIf="!friendship" class="" (click)="addFriend(user.UserName)">Add friend</button>
+<button *ngIf="friendship" class="" (click)="removeFriend(user.UserName)">
+    <span *ngIf="(friendship.Friendship.Accepted) else cancel">Remove friend</span>
+    <ng-template #cancel>Cancel friend request</ng-template> 
+</button>
 
 <div>
     <div>

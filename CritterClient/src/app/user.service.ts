@@ -144,6 +144,21 @@ export class UserService {
         );
     }
 
+    removeFriend(friendUserName: string) : Observable<FriendshipDetails> {
+        return this.http.delete<FriendshipDetails>(environment.apiUrl + '/user/friend/' + friendUserName,
+        {
+            withCredentials : true,
+            headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                Authorization: 'Bearer ' + this.jwtToken
+              })
+        })
+        .pipe(
+            retry(2),
+            catchError(this.handleError),
+        );
+    }
+
 
     private handleError(error: HttpErrorResponse): Observable<never> {
         if (error.error instanceof ErrorEvent) {
