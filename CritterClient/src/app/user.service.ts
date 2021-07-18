@@ -13,8 +13,8 @@ import { catchError, retry } from 'rxjs/operators';
 export class UserService {
 
     public userSubject: BehaviorSubject<User> = new BehaviorSubject<User>(null);
-
     public friendSubject: BehaviorSubject<FriendshipDetails[]> = new BehaviorSubject<FriendshipDetails[]>(null);
+    
     private jwtToken: string;
 
     constructor(private http: HttpClient) {
@@ -33,8 +33,6 @@ export class UserService {
         this.http.post<AuthResponse>(environment.apiUrl + '/user/login/',
         {
             UserName: userName,
-            FirstName: '',
-            LastName: '',
             EmailAddress: email,
             Password: password
         },
@@ -50,6 +48,7 @@ export class UserService {
         ).subscribe((data: AuthResponse) => {
             this.jwtToken = data.AuthToken;
             this.userSubject.next(data.User);
+            this.getUserFriends();
         });
     }
 
@@ -58,7 +57,10 @@ export class UserService {
         .pipe(
             retry(2),
             catchError(this.handleError),
-        ).subscribe(o => this.userSubject.next(o));
+        ).subscribe(user => {
+            this.userSubject.next(user);
+            this.getUserFriends();
+        });
     }
 
     retrieveActiveUser() : Observable<User> {

@@ -28,7 +28,7 @@ export class DashboardComponent implements OnInit {
         this.userService.searchUsers(userName)
         .subscribe(s => 
             this.searchResult = s
-            );
+        );
     }
 
     ngOnInit(): void {

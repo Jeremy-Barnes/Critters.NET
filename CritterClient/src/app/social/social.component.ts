@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { FriendshipDetails } from '../dto';
+import { FriendshipDetails, User } from '../dto';
 import { UserService } from '../user.service';
 
 @Component({
@@ -11,10 +11,16 @@ import { UserService } from '../user.service';
 export class SocialComponent implements OnInit {
 
     friends: Observable<FriendshipDetails[]>;
-  constructor(private userService: UserService) { }
+    user: Observable<User>;
+    constructor(private userService: UserService) { }
 
-  ngOnInit(): void {
-    this.friends = this.userService.friendSubject.asObservable();
-  }
+    ngOnInit(): void {
+        this.friends = this.userService.friendSubject.asObservable();
+        this.user = this.userService.userSubject.asObservable();
+    }
+
+    extractFriendName(friend: FriendshipDetails, activeUser: User){
+        return friend.RequestedUserName == activeUser.UserName ? friend.RequesterUserName : friend.RequestedUserName;
+    }
 
 }
