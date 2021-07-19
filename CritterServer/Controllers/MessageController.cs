@@ -58,7 +58,7 @@ namespace CritterServer.Controllers
 
         [HttpPatch]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> ReadMessage(List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
+        public async Task<ActionResult> ReadMessage([FromBody] List<int> messageIds, [ModelBinder(typeof(LoggedInUserModelBinder))] User activeUser)
         {
             await domain.ReadMessages(messageIds, activeUser);
             return Ok();

@@ -1,3 +1,4 @@
+
 export class User {
     public UserName: string;
     public FirstName: string;
@@ -62,4 +63,35 @@ export class Friendship
 {
     public Accepted: boolean;
     public DateSent: Date;
+}
+
+export class MessageResponse {
+    public ChannelDetails: ChannelDetails[];
+}
+
+export class ChannelDetails {
+    public Messages: MessageDetails[];
+    public Users: User[];
+    public UserNames: string[];
+    public Channel: Channel;
+}
+
+export class Channel {
+    public ChannelId: number;
+    public Name: string;
+    public CreateDate: string;
+}
+
+export class MessageDetails {
+    public SenderUserName: string;
+    public Message: Message;
+}
+
+export class Message { 
+    public MessageId: number;
+    public DateSent: Date;
+    public MessageText: string;
+    public Subject: string;
+    public ParentMessageId: number;
+    public ChannelId: number;
 }

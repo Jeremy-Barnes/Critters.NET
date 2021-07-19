@@ -22,6 +22,10 @@ export class UserService {
         this.initializeActiveUser();    
     }
 
+    isAuthenticated(): boolean {
+        return this.activeUserSubject.getValue() && this.jwtToken.length > 0;
+    }
+
     signIn(userNameOrEmail: string, password: string): void {
         let email = null;
         let userName = null;
@@ -109,7 +113,7 @@ export class UserService {
         );
     }
 
-    private httpOptionsAuthJson(){
+    httpOptionsAuthJson(){
         return {
             withCredentials : true,
             headers: new HttpHeaders({

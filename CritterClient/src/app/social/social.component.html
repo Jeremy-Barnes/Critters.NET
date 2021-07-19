@@ -4,4 +4,26 @@
     <div *ngFor="let friend of friends | async">
         {{ extractFriendName(friend, activeUser) }} - Accepted: {{friend.Friendship.Accepted}}
     </div>
+
+    <button class="btn btn-primary btn-block" type="submit" (click)="fetchMessages()">get more messages</button>
+
+    <div>Channels</div>
+    <div *ngFor="let channel of (channels | async)">
+       <b> {{ channel.Channel.ChannelId }} - {{channel.Channel.Name}}</b>
+        <div *ngFor="let mess of channel.Messages">
+            {{ mess.Message.MessageId }}
+        </div>
+    </div>
+
+    <br><br><br>
+    <div>Messages</div>
+    <div *ngFor="let mess of (messages | async)">
+        {{ mess.Message.MessageId }}
+    </div>
+
+    
+    <br><br><br>
+    <div>Unread 2 Messages</div>
+
+
 </div>
