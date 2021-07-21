@@ -83,7 +83,7 @@ export class Channel {
 }
 
 export class MessageDetails {
-    public SenderUserName: string;
+    public SenderUsername: string;
     public Message: Message;
 }
 

@@ -12,6 +12,7 @@ import { UserDetailsComponent } from './signup/user-details/user-details.compone
 import { PetCreateComponent } from './signup/pet-create/pet-create.component';
 import { ProfileComponent } from './profile/profile.component';
 import { SocialComponent } from './social/social.component';
+import { MessagePopupComponent } from './message-popup/message-popup.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { SocialComponent } from './social/social.component';
     PetCreateComponent,
     ProfileComponent,
     SocialComponent,
+    MessagePopupComponent,
   ],
   imports: [
     BrowserModule,

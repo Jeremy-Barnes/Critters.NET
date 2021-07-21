@@ -1,0 +1,11 @@
+<div *ngIf="channel && channel.visible" style="float: left; position: absolute; bottom: 0; height: 400px;">
+    <div style=" height: 300px; overflow: scroll;" (click)="changeMe()">
+        <div *ngFor="let mess of channel.channel.Messages">
+            {{ mess.Message.MessageText }}
+        </div>
+    </div>
+    <form style="position: relative; bottom: 0;">
+        <input type="text" name="userName" [(ngModel)]="this.currentMessage" placeholder="send a message" required />
+        <button class="btn btn-primary btn-block" type="submit" (click)="sendMessage(this.currentMessage)">Search</button>
+    </form>
+</div>

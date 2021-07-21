@@ -1,29 +1,35 @@
 <div *ngIf="(user | async) as activeUser">
-    Helllo {{activeUser.UserName}} here are your friends
-    <br><br><br>
-    <div *ngFor="let friend of friends | async">
-        {{ extractFriendName(friend, activeUser) }} - Accepted: {{friend.Friendship.Accepted}}
-    </div>
+    <div id="message-sidebar" style="float:right">
+        Hello {{activeUser.UserName}} here are your friends
+        <br><br><br>
+        <div *ngFor="let friend of friends | async;"> 
+            <div *ngIf="extractFriendName(friend, activeUser) as friendUserName">
+                <a [routerLink]="['/user/' + friendUserName]">{{ friendUserName }} - Accepted: {{friend.Friendship.Accepted}}</a>
+            </div>
+        </div>
 
-    <button class="btn btn-primary btn-block" type="submit" (click)="fetchMessages()">get more messages</button>
+        <button type="submit" (click)="fetchMessages()">get more messages</button>
 
-    <div>Channels</div>
-    <div *ngFor="let channel of (channels | async)">
-       <b> {{ channel.Channel.ChannelId }} - {{channel.Channel.Name}}</b>
-        <div *ngFor="let mess of channel.Messages">
+        <div>Channels</div>
+        <div *ngFor="let channel of (channels | async)" (click)="openChannel(channel)">
+        <b>Conversation: {{channel.Channel.Name}}</b>
+        <div *ngIf="getMessagePreview(channel) as prev; else emptyConvo">
+            <i> {{prev.BodyPreview}} {{[prev.DateSent]}} </i>
+            <div>{{prev.Sender.UserName}}</div>
+        </div>
+        <ng-template #emptyConvo><i>It's quiet...</i></ng-template>
+        </div>
+
+        <br><br><br>
+        <div>New Messages!</div>
+        <div *ngFor="let mess of (messages | async).slice(0, 20)">
             {{ mess.Message.MessageId }}
         </div>
     </div>
 
-    <br><br><br>
-    <div>Messages</div>
-    <div *ngFor="let mess of (messages | async)">
-        {{ mess.Message.MessageId }}
+    <div id="bottom-bar-message-host">
+        <div *ngFor="let channel of activeChannels;"> 
+            <message-popup [channel]="channel"></message-popup>
+        </div>
     </div>
-
-    
-    <br><br><br>
-    <div>Unread 2 Messages</div>
-
-
 </div>
